@@ -14,8 +14,14 @@ Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on A
 ## Before launch
 
 1. **Connect the signup form.** In `index.html`, replace `YOUR_FORM_ID` in the form's `action` with a real endpoint from Formspree, Buttondown or similar. Until then the form shows a "not connected" message instead of failing silently. Set the service's redirect to `https://highturtle.com/thanks.html` for visitors without JavaScript.
-2. **Add a social image** (1200 x 630) and an `og:image` meta tag in `index.html` if you want link previews.
-3. **Check the copy.** The statuses in "What we make" (skills "drafted, in testing", playbooks and micro-tools "planned") and the activity counts come from the skills map. Update them as things ship.
+2. **Check the copy.** The statuses in "What we make" (skills "drafted, in testing", playbooks and micro-tools "planned") and the activity counts come from the skills map. Update them as things ship.
+
+## Design
+
+- **Logo:** vector traces of the original artwork in `assets/` (`logo-horizontal.svg`, `logo-stacked.svg`, `mark.svg`, `wordmark.svg`). They use `currentColor`, so they follow the light and dark themes.
+- **Palette:** cool neutral stone with one muted sage accent, defined as variables at the top of `assets/styles.css`. A dark theme follows the visitor's system setting.
+- **Type:** Newsreader for headlines and Hanken Grotesk for text, both open-licensed and self-hosted in `assets/fonts/` (licenses included).
+- **Social preview and icons:** `assets/og.png`, `favicon.svg` and `apple-touch-icon.png`, all made from the logo.
 
 ## AWS setup
 
