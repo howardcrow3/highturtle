@@ -28,8 +28,9 @@ jobs:
             echo "::notice title=${title}::${out}"
           }
           report "identity" aws sts get-caller-identity --query Arn --output text
-          report "route53 zone" aws route53 list-hosted-zones-by-name --dns-name highturtle.com --max-items 1 --query 'HostedZones[].[Name,Id]' --output text
-          report "route53 domains" aws route53domains list-domains --query 'Domains[].DomainName' --output text
-          report "acm certs us-east-1" aws acm list-certificates --query 'CertificateSummaryList[].[DomainName,CertificateArn]' --output text
-          report "cloudfront" aws cloudfront list-distributions --query 'DistributionList.Items[].[Id,Aliases.Items[0]]' --output text
-          report "buckets" aws s3api list-buckets --query 'Buckets[].Name' --output text
+          report "bucket region" aws s3api get-bucket-location --bucket highturtle.com
+          report "bucket objects" aws s3 ls s3://highturtle.com --recursive --human-readable --summarize
+          report "bucket website" aws s3api get-bucket-website --bucket highturtle.com
+          report "bucket public access" aws s3api get-public-access-block --bucket highturtle.com
+          report "bucket policy" aws s3api get-bucket-policy --bucket highturtle.com --query Policy --output text
+          report "dns records" aws route53 list-resource-record-sets --hosted-zone-id Z06718022U4OGOJU3B5U4 --query 'ResourceRecordSets[].[Name,Type]' --output text
