@@ -28,9 +28,6 @@ jobs:
             echo "::notice title=${title}::${out}"
           }
           report "identity" aws sts get-caller-identity --query Arn --output text
-          report "bucket region" aws s3api get-bucket-location --bucket highturtle.com
-          report "bucket objects" aws s3 ls s3://highturtle.com --recursive --human-readable --summarize
-          report "bucket website" aws s3api get-bucket-website --bucket highturtle.com
-          report "bucket public access" aws s3api get-public-access-block --bucket highturtle.com
-          report "bucket policy" aws s3api get-bucket-policy --bucket highturtle.com --query Policy --output text
-          report "dns records" aws route53 list-resource-record-sets --hosted-zone-id Z06718022U4OGOJU3B5U4 --query 'ResourceRecordSets[].[Name,Type]' --output text
+          report "apex and wildcard records" aws route53 list-resource-record-sets --hosted-zone-id Z06718022U4OGOJU3B5U4 --query "ResourceRecordSets[?(Name=='highturtle.com.' && (Type=='A' || Type=='MX')) || Name=='\\052.highturtle.com.' || contains(Name,'www')]" --output json
+          report "bucket tags" aws s3api get-bucket-tagging --bucket highturtle.com
+          report "backups bucket count" aws s3 ls s3://high-turtle-backups --summarize
