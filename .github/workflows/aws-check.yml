@@ -1,7 +1,7 @@
 name: AWS check (read-only)
 
 # Confirms the AWS credentials work and shows what already exists for highturtle.com.
-# Makes no changes. Run it from the Actions tab.
+# Makes no changes. Results appear as annotations on the run. Run it from the Actions tab.
 
 on:
   workflow_dispatch:
@@ -19,25 +19,17 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
-      - name: Who am I
-        run: aws sts get-caller-identity --query Arn --output text
-
-      - name: Route 53 hosted zone for highturtle.com
-        continue-on-error: true
-        run: aws route53 list-hosted-zones-by-name --dns-name highturtle.com --max-items 1 --query 'HostedZones[].{Name:Name,Id:Id}' --output table
-
-      - name: Domains registered in Route 53
-        continue-on-error: true
-        run: aws route53domains list-domains --query 'Domains[].DomainName' --output text
-
-      - name: Existing certificates in us-east-1
-        continue-on-error: true
-        run: aws acm list-certificates --query 'CertificateSummaryList[].{Domain:DomainName,Arn:CertificateArn}' --output table
-
-      - name: Existing CloudFront aliases
-        continue-on-error: true
-        run: aws cloudfront list-distributions --query 'DistributionList.Items[].{Id:Id,Aliases:Aliases.Items}' --output json
-
-      - name: Existing buckets
-        continue-on-error: true
-        run: aws s3api list-buckets --query 'Buckets[].Name' --output text
+      - name: Report
+        run: |
+          report() {
+            title="$1"; shift
+            out="$("$@" 2>&1)" || out="FAILED: ${out}"
+            out="${out//'%'/'%25'}"; out="${out//$'\n'/'%0A'}"; out="${out//$'\r'/'%0D'}"
+            echo "::notice title=${title}::${out}"
+          }
+          report "identity" aws sts get-caller-identity --query Arn --output text
+          report "route53 zone" aws route53 list-hosted-zones-by-name --dns-name highturtle.com --max-items 1 --query 'HostedZones[].[Name,Id]' --output text
+          report "route53 domains" aws route53domains list-domains --query 'Domains[].DomainName' --output text
+          report "acm certs us-east-1" aws acm list-certificates --query 'CertificateSummaryList[].[DomainName,CertificateArn]' --output text
+          report "cloudfront" aws cloudfront list-distributions --query 'DistributionList.Items[].[Id,Aliases.Items[0]]' --output text
+          report "buckets" aws s3api list-buckets --query 'Buckets[].Name' --output text
