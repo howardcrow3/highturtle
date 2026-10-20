@@ -16,6 +16,12 @@ concurrency:
   group: deploy
   cancel-in-progress: false
 
+env:
+  AWS_ROLE_ARN: arn:aws:iam::022621302198:role/highturtle-github-deploy
+  AWS_REGION: us-east-2
+  S3_BUCKET: highturtle.com
+  CLOUDFRONT_DISTRIBUTION_ID: E3GVOW0DH898BT
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,17 +30,17 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload assets (cached for a day)
         run: |
-          aws s3 sync assets "s3://${{ vars.S3_BUCKET }}/assets" \
+          aws s3 sync assets "s3://${{ env.S3_BUCKET }}/assets" \
             --delete --cache-control "public, max-age=86400"
 
       - name: Upload pages and root files (always revalidated)
         run: |
-          aws s3 sync . "s3://${{ vars.S3_BUCKET }}" \
+          aws s3 sync . "s3://${{ env.S3_BUCKET }}" \
             --delete \
             --exclude ".git/*" --exclude ".github/*" --exclude "assets/*" \
             --exclude "README.md" --exclude "infra/*" \
@@ -43,5 +49,5 @@ jobs:
       - name: Clear the CloudFront cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" \
             --paths "/*"
