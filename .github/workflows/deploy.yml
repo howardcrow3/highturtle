@@ -37,7 +37,7 @@ jobs:
           aws s3 sync . "s3://${{ vars.S3_BUCKET }}" \
             --delete \
             --exclude ".git/*" --exclude ".github/*" --exclude "assets/*" \
-            --exclude "README.md" \
+            --exclude "README.md" --exclude "infra/*" \
             --cache-control "no-cache"
 
       - name: Clear the CloudFront cache
