@@ -28,5 +28,4 @@ jobs:
             echo "::notice title=${title}::${out}"
           }
           report "identity" aws sts get-caller-identity --query Arn --output text
-          report "dns all" aws route53 list-resource-record-sets --hosted-zone-id Z06718022U4OGOJU3B5U4 --output json
-          report "cloudfront status" aws cloudfront get-distribution --id E3GVOW0DH898BT --query 'Distribution.[Status,DomainName]' --output text
+          report "dns compact" aws route53 list-resource-record-sets --hosted-zone-id Z06718022U4OGOJU3B5U4 --query 'ResourceRecordSets[].[Type,Name,AliasTarget.DNSName]' --output text
