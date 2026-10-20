@@ -1,0 +1,47 @@
+name: Deploy to AWS
+
+# Publishes the site to S3 and clears the CloudFront cache on every push to main.
+# One-time setup is described in README.md.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Upload assets (cached for a day)
+        run: |
+          aws s3 sync assets "s3://${{ vars.S3_BUCKET }}/assets" \
+            --delete --cache-control "public, max-age=86400"
+
+      - name: Upload pages and root files (always revalidated)
+        run: |
+          aws s3 sync . "s3://${{ vars.S3_BUCKET }}" \
+            --delete \
+            --exclude ".git/*" --exclude ".github/*" --exclude "assets/*" \
+            --exclude "README.md" \
+            --cache-control "no-cache"
+
+      - name: Clear the CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/*"
