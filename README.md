@@ -15,7 +15,7 @@ Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on A
 
 1. **Connect the signup form.** In `index.html`, replace `YOUR_FORM_ID` in the form's `action` with a real endpoint from Formspree, Buttondown or similar. Until then the form shows a "not connected" message instead of failing silently. Set the service's redirect to `https://highturtle.com/thanks.html` for visitors without JavaScript.
 2. **Add a social image** (1200 x 630) and an `og:image` meta tag in `index.html` if you want link previews.
-3. **Check the copy.** The statuses in "What we make" (skills "drafted, in testing", playbooks and micro-tools "planned") and the activity counts come from the PM skills map. Update them as things ship.
+3. **Check the copy.** The statuses in "What we make" (skills "drafted, in testing", playbooks and micro-tools "planned") and the activity counts come from the skills map. Update them as things ship.
 
 ## AWS setup
 
