@@ -19,8 +19,8 @@ Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on A
 ## Design
 
 - **Logo:** vector traces of the original artwork in `assets/` (`logo-horizontal.svg`, `logo-stacked.svg`, `mark.svg`, `wordmark.svg`). They use `currentColor`, so they follow the light and dark themes.
-- **Palette:** cool neutral stone with one muted sage accent, defined as variables at the top of `assets/styles.css`. A dark theme follows the visitor's system setting.
-- **Type:** Newsreader for headlines and Hanken Grotesk for text, both open-licensed and self-hosted in `assets/fonts/` (licenses included).
+- **Palette:** Graphite, true neutral greys with one steel-blue accent, defined as variables at the top of `assets/styles.css`. A dark theme follows the visitor's system setting.
+- **Type:** Literata for headlines and Figtree for text, both open-licensed and self-hosted in `assets/fonts/` (licenses included).
 - **Social preview and icons:** `assets/og.png`, `favicon.svg` and `apple-touch-icon.png`, all made from the logo.
 
 ## AWS setup

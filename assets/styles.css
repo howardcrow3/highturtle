@@ -1,69 +1,76 @@
-/* High Turtle
-   Palette: cool neutral stone with one muted sage accent.
-   Type: Newsreader (headlines) + Hanken Grotesk (text and interface). */
+/* High Turtle: Graphite brand kit.
+   True neutral greys, one steel-blue accent (harbor).
+   Type: Literata (headlines) + Figtree (text and interface). */
 
 @font-face {
-  font-family: "Newsreader";
-  src: url("/assets/fonts/newsreader-latin-wght-normal.woff2") format("woff2");
-  font-weight: 200 800;
+  font-family: "Literata";
+  src: url("/assets/fonts/Literata-Variable.woff2") format("woff2");
+  font-weight: 200 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: "Hanken Grotesk";
-  src: url("/assets/fonts/hanken-grotesk-latin-wght-normal.woff2") format("woff2");
-  font-weight: 100 900;
+  font-family: "Figtree";
+  src: url("/assets/fonts/Figtree-Variable.woff2") format("woff2");
+  font-weight: 300 900;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --paper: #f4f5f3;
-  --surface: #fbfbfa;
-  --mist: #eaece9;
-  --line: #d8dbd7;
-  --ink: #1b1d1c;
-  --ink-soft: #565c58;
-  --accent: #5b7266;
-  --on-ink: #f4f5f3;
+  --paper: #f6f6f5;
+  --surface: #ececea;
+  --mist: #ececea;
+  --line: #d6d6d3;
+  --border-control: #85878a;
+  --ink: #17181a;
+  --graphite: #2e3033;
+  --ink-soft: #66686b;
+  --accent: #2f5c8f;
+  --on-accent: #ffffff;
+  --on-ink: #f6f6f5;
+  --danger: #a33a2b;
 
-  /* shell: one tonal ramp, light to dark, with matching label colors */
-  --s1: #e6e8e5; --t1: #1b1d1c;
-  --s2: #d5d8d4; --t2: #1b1d1c;
-  --s3: #c2c6c1; --t3: #1b1d1c;
-  --s4: #aab0aa; --t4: #1b1d1c;
-  --s5: #6f7772; --t5: #ffffff;
-  --s6: #4a524e; --t6: #ffffff;
-  --shell-body: #e3e5e2;
-  --shell-ring: #d1d4d0;
-  --shell-active: #1b1d1c; --shell-active-text: #f4f5f3;
-  --shell-hover: #5b7266; --shell-hover-text: #ffffff;
+  --s1: #e8e8e6; --t1: #17181a;
+  --s2: #d7d7d5; --t2: #17181a;
+  --s3: #c4c4c2; --t3: #17181a;
+  --s4: #acacaa; --t4: #17181a;
+  --s5: #707072; --t5: #ffffff;
+  --s6: #4b4c4e; --t6: #ffffff;
+  --shell-body: #e8e8e6;
+  --shell-ring: #d6d6d3;
+  --shell-active: #17181a; --shell-active-text: #f6f6f5;
+  --shell-hover: #2f5c8f; --shell-hover-text: #ffffff;
 
-  --font-head: "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  --font-body: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-head: "Literata", "Iowan Old Style", Georgia, serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #141615;
-    --surface: #1a1c1b;
-    --mist: #1d201e;
-    --line: #2e3230;
-    --ink: #eceeeb;
-    --ink-soft: #a2a9a4;
-    --accent: #9db3a6;
-    --on-ink: #141615;
+    --paper: #131415;
+    --surface: #1c1d1f;
+    --mist: #1c1d1f;
+    --line: #303236;
+    --border-control: #7a7d82;
+    --ink: #f0f1f2;
+    --graphite: #d3d5d8;
+    --ink-soft: #a4a7ab;
+    --accent: #8db4e2;
+    --on-accent: #0f1a28;
+    --on-ink: #131415;
+    --danger: #e58e80;
 
-    --s1: #252927; --t1: #eceeeb;
-    --s2: #2f3331; --t2: #eceeeb;
-    --s3: #3b413e; --t3: #eceeeb;
-    --s4: #555d58; --t4: #f4f5f3;
-    --s5: #8f9893; --t5: #141615;
-    --s6: #b4bbb6; --t6: #141615;
-    --shell-body: #212523;
-    --shell-ring: #2e3230;
-    --shell-active: #eceeeb; --shell-active-text: #141615;
-    --shell-hover: #9db3a6; --shell-hover-text: #141615;
+    --s1: #262729; --t1: #f0f1f2;
+    --s2: #303133; --t2: #f0f1f2;
+    --s3: #3c3d40; --t3: #f0f1f2;
+    --s4: #56585b; --t4: #f4f5f6;
+    --s5: #909295; --t5: #131415;
+    --s6: #b5b7ba; --t6: #131415;
+    --shell-body: #232426;
+    --shell-ring: #303236;
+    --shell-active: #f0f1f2; --shell-active-text: #131415;
+    --shell-hover: #8db4e2; --shell-hover-text: #0f1a28;
   }
 }
 
@@ -74,7 +81,7 @@ html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
 body {
   margin: 0;
   background: var(--paper);
-  color: var(--ink);
+  color: var(--graphite);
   font-family: var(--font-body);
   font-size: 1.0625rem;
   line-height: 1.6;
@@ -83,6 +90,7 @@ body {
 }
 
 h1, h2, h3 {
+  color: var(--ink);
   font-family: var(--font-head);
   font-weight: 450;
   line-height: 1.08;
@@ -91,7 +99,7 @@ h1, h2, h3 {
 }
 
 p { margin: 0; }
-a { color: var(--ink); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
+a { color: var(--accent); text-underline-offset: 0.2em; text-decoration-thickness: 1px; }
 
 .wrap { width: min(100% - 2rem, 1120px); margin-inline: auto; }
 
@@ -154,7 +162,7 @@ a { color: var(--ink); text-underline-offset: 0.2em; text-decoration-thickness: 
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
-.btn:hover { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.btn:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn-small { padding: 0.65rem 1rem; font-size: 0.93rem; }
 .link { font-weight: 600; }
 
@@ -298,7 +306,7 @@ h1 {
   width: 0.62rem;
   height: 0.62rem;
   border-radius: 50%;
-  border: 1.5px solid var(--ink-soft);
+  border: 1.5px solid var(--border-control);
 }
 .status-testing::before { background: var(--accent); border-color: var(--accent); }
 .formats p { max-width: 38em; }
@@ -323,7 +331,7 @@ h1 {
   min-width: 0;
   font: inherit;
   padding: 0.9rem 1rem;
-  border: 1px solid var(--ink-soft);
+  border: 1px solid var(--border-control);
   border-radius: 3px;
   background: var(--surface);
   color: var(--ink);
@@ -333,11 +341,8 @@ h1 {
 .hp { position: absolute; left: -9999px; }
 .form .fine { margin-top: 0.85rem; font-size: 0.9rem; color: var(--ink-soft); }
 .form-status { margin-top: 0.8rem; font-weight: 600; min-height: 1.6em; }
-.form-status.is-error { color: #a33a2b; }
-.form-status.is-ok { color: var(--accent); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .form-status.is-error { color: #e08a7b; }
-}
+.form-status.is-error { color: var(--danger); }
+.form-status.is-ok { color: var(--ink); }
 
 /* Footer */
 .site-footer { padding-block: 2.5rem; border-top: 1px solid var(--line); font-size: 0.95rem; color: var(--ink-soft); }
