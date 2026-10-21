@@ -355,12 +355,47 @@ h1 {
 .simple p { margin-top: 1rem; max-width: 32em; color: var(--ink-soft); }
 .simple .btn { margin-top: 1.75rem; }
 
+/* Skills map page */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.bar nav a[aria-current="page"] { color: var(--ink); font-weight: 600; }
+.map-hero { padding-block: clamp(2.75rem, 7vw, 5rem) clamp(1.5rem, 3vw, 2.5rem); }
+.eyebrow { color: var(--accent); font-weight: 600; font-size: 0.95rem; margin-bottom: 0.75rem; }
+.map-hero h1 { font-size: clamp(2.1rem, 4.4vw, 3.2rem); max-width: 18em; text-wrap: balance; }
+.map-hero .lede { margin-top: 1.1rem; max-width: 38em; }
+.stats { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: 2rem 0 0; padding: 1.25rem 0; border-block: 1px solid var(--line); }
+.stats div { min-width: 5.5rem; }
+.stats dt { color: var(--ink-soft); font-size: 0.9rem; }
+.stats dd { margin: 0.1rem 0 0; font-family: var(--font-head); font-weight: 500; font-size: 2rem; line-height: 1.1; color: var(--ink); }
+.map-hero .fine { margin-top: 1rem; max-width: 40em; color: var(--ink-soft); font-size: 0.95rem; }
+.jump { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; margin-top: 1.25rem; font-weight: 600; font-size: 0.95rem; }
+.tag { display: inline-block; padding: 0.05rem 0.5rem; border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); font-size: 0.78rem; font-weight: 600; line-height: 1.5; vertical-align: 0.1em; }
+.map-body { padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
+.map-phase { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr); gap: 1rem 3rem; padding-block: 2.25rem; border-top: 1px solid var(--line); }
+.map-phase h2 { font-size: clamp(1.5rem, 2.6vw, 1.95rem); }
+.map-phase .tagline { margin-top: 0.35rem; }
+.acts { list-style: none; margin: 0; padding: 0; }
+.acts li { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.4rem 1rem; padding: 0.7rem 0; border-top: 1px solid var(--line); }
+.acts li:first-child { border-top: 0; padding-top: 0; }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 0.35rem; }
+.chip, .matrix code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.8rem; color: var(--graphite); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 0.1rem 0.4rem; }
+.chip.is-tested { border-color: var(--accent); }
+.table-scroll { position: relative; grid-column: 1 / -1; min-width: 0; max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+.matrix { width: 100%; border-collapse: collapse; font-size: 0.93rem; min-width: 46rem; }
+.matrix th, .matrix td { padding: 0.6rem 0.75rem; border-top: 1px solid var(--line); text-align: center; }
+.matrix thead th { border-top: 0; background: var(--surface); font-size: 0.85rem; font-weight: 600; color: var(--ink-soft); }
+.matrix th:first-child { text-align: left; }
+.matrix tbody th { font-weight: 600; color: var(--ink); }
+.matrix tbody th code { display: block; width: fit-content; margin-top: 0.2rem; font-weight: 400; }
+.yes { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--accent); }
+.map-body .map-phase:last-child .map-phase-head { grid-column: 1 / -1; }
+
 /* Small screens */
 @media (max-width: 860px) {
   .hero-grid { grid-template-columns: 1fr; }
   .shell-wrap { position: static; order: -1; max-width: 24rem; margin-inline: auto; }
   .signup-grid { grid-template-columns: 1fr; }
   .formats li { grid-template-columns: 1fr; gap: 0.75rem; }
+  .map-phase { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
   .bar nav a:not(.btn) { display: none; }
   .logo-h { height: 1.9rem; }
   .logo-s { height: 2.8rem; }

@@ -6,6 +6,7 @@ Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on A
 
 - `index.html`: the home page
 - `assets/styles.css`, `assets/site.js`: styles and behavior
+- `skills-map.html`: the skills map (every product activity and the skill that covers it), generated from the skills-map data and kept as plain static HTML
 - `thanks.html`: confirmation page (used if the form falls back to a normal post)
 - `404.html`: not-found page
 - `favicon.svg`, `robots.txt`, `sitemap.xml`
