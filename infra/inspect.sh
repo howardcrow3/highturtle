@@ -3,7 +3,7 @@ set -uo pipefail
 ZONE_ID=Z06718022U4OGOJU3B5U4
 aws sts get-caller-identity --query Arn --output text
 aws route53 list-resource-record-sets --hosted-zone-id $ZONE_ID \
-  --query "ResourceRecordSets[?Type!='NS' && Type!='SOA'].[Name,Type,TTL,join(' | ',ResourceRecords[].Value)]" --output text | cut -c1-200 > /tmp/records.txt
+  --query "ResourceRecordSets[?Type!='NS' && Type!='SOA'].[Name,Type,to_string(ResourceRecords[].Value)]" --output text | cut -c1-220 > /tmp/records.txt
 echo "$(wc -l </tmp/records.txt) records"
 aws sesv2 get-account --region us-east-1 --query '{prod:ProductionAccessEnabled,sending:SendingEnabled,quota:SendQuota}' --output json 2>&1 | tr -d '\n '
 echo
