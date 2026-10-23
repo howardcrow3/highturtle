@@ -14,5 +14,5 @@ jobs:
           aws-region: us-east-1
       - run: |
           bash infra/inspect.sh > /tmp/out.txt 2>&1 || true
-          i=0
-          while IFS= read -r line; do i=$((i+1)); echo "::notice title=r$i::${line}"; done < <(cat /tmp/out.txt /tmp/records.txt)
+          body=$(cut -c1-110 /tmp/records.txt | sed 's/\t/ /g' | awk '{printf "%s%%0A", $0}')
+          echo "::notice title=records::${body}"
