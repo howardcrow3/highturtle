@@ -69,7 +69,7 @@ aws iam attach-role-policy --role-name $FN_ROLE --policy-arn arn:aws:iam::aws:po
 cat > /tmp/lambda-policy.json <<JSON
 {"Version":"2012-10-17","Statement":[
  {"Effect":"Allow","Action":["dynamodb:PutItem","dynamodb:GetItem","dynamodb:DeleteItem"],"Resource":"arn:aws:dynamodb:$REGION:$ACCOUNT:table/$TABLE"},
- {"Effect":"Allow","Action":["ses:SendEmail"],"Resource":["arn:aws:ses:$REGION:$ACCOUNT:identity/$DOMAIN","arn:aws:ses:$REGION:$ACCOUNT:configuration-set/$CONFIG_SET"]},
+ {"Effect":"Allow","Action":["ses:SendEmail"],"Resource":["arn:aws:ses:$REGION:$ACCOUNT:identity/*","arn:aws:ses:$REGION:$ACCOUNT:configuration-set/$CONFIG_SET"]},
  {"Effect":"Allow","Action":["ses:GetContact","ses:CreateContact","ses:UpdateContact"],"Resource":"arn:aws:ses:$REGION:$ACCOUNT:contact-list/$LIST"}
 ]}
 JSON

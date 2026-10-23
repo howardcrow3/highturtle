@@ -17,6 +17,8 @@ jobs:
           set +e
           out=""
           E=howardcrow@gmail.com
+          K=$(printf %s $E | sha256sum | cut -d" " -f1)
+          aws dynamodb delete-item --table-name highturtle-pending --key "{\"pk\":{\"S\":\"t#$K\"}}"
           a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Accept: application/json' -d "email=$E" https://highturtle.com/api/subscribe)
           out="subscribe=$a"
           sleep 3
