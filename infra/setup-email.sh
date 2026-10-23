@@ -127,10 +127,10 @@ jq --arg dom "$URL_HOST" --arg cp "$CP" --arg orp "$ORP" '
       CustomOriginConfig:{HTTPPort:80, HTTPSPort:443, OriginProtocolPolicy:"https-only",
         OriginSslProtocols:{Quantity:1, Items:["TLSv1.2"]}, OriginReadTimeout:30, OriginKeepaliveTimeout:5}}])
   | .Origins.Quantity = (.Origins.Items | length)
-  | .CacheBehaviors.Items = (((.CacheBehaviors.Items // []) | map(select(.PathPattern != "/api/*"))) + [{
+  | .CacheBehaviors.Items = (((.CacheBehaviors.Items // []) | map(select(.PathPattern != "/api/*"))) + [(.DefaultCacheBehavior + {
       PathPattern:"/api/*", TargetOriginId:"api-lambda", ViewerProtocolPolicy:"redirect-to-https", Compress:true, SmoothStreaming:false,
       AllowedMethods:{Quantity:7, Items:["GET","HEAD","OPTIONS","PUT","PATCH","POST","DELETE"], CachedMethods:{Quantity:2, Items:["GET","HEAD"]}},
-      CachePolicyId:$cp, OriginRequestPolicyId:$orp}])
+      CachePolicyId:$cp, OriginRequestPolicyId:$orp})])
   | .CacheBehaviors.Quantity = (.CacheBehaviors.Items | length)' /tmp/cf.json > /tmp/cf-new.json
 aws cloudfront update-distribution --id $DIST_ID --if-match "$ETAG" --distribution-config file:///tmp/cf-new.json >/dev/null
 
