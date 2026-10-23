@@ -33,4 +33,8 @@ jobs:
           echo "::notice title=direct::$c"
           P=$(aws lambda get-policy --function-name highturtle-subscribe --query Policy --output text | jq -c '[.Statement[]|{Sid,Action:.Action,C:.Condition}]')
           echo "::notice title=policy::$P"
+          CB=$(aws cloudfront get-distribution-config --id E3GVOW0DH898BT --query 'DistributionConfig.CacheBehaviors' --output json | jq -c '.')
+          echo "::notice title=behaviors::$CB"
+          H=$(curl -s -i -X POST -H 'Accept: application/json' -d 'email=notanemail' https://highturtle.com/api/subscribe | head -c 600 | tr '\r\n' '  ')
+          echo "::notice title=viacf::$H"
           tail -n 12 /tmp/log.txt | sed 's/^/::notice title=log::/' | head -12
