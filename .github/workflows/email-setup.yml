@@ -20,7 +20,11 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
-      - run: bash infra/setup-email.sh 2>&1 | tee /tmp/log.txt
+      - name: Run setup
+        shell: bash
+        run: |
+          set -o pipefail
+          bash infra/setup-email.sh 2>&1 | tee /tmp/log.txt
       - name: Smoke test
         if: always()
         run: |
@@ -37,4 +41,4 @@ jobs:
           echo "::notice title=behaviors::$CB"
           H=$(curl -s -i -X POST -H 'Accept: application/json' -d 'email=notanemail' https://highturtle.com/api/subscribe | head -c 600 | tr '\r\n' '  ')
           echo "::notice title=viacf::$H"
-          tail -n 12 /tmp/log.txt | sed 's/^/::notice title=log::/' | head -12
+          tail -n 6 /tmp/log.txt | cut -c1-300 | awk '{printf "%s%%0A", $0}' | sed 's/^/::notice title=log::/'
