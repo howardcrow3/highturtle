@@ -42,7 +42,7 @@ jobs:
           S=$(aws lambda get-function-configuration --function-name highturtle-subscribe --query 'Environment.Variables.SECRET' --output text)
           echo "::add-mask::$S"
           echo "UNSUBSCRIBE_SECRET=$S" >> "$GITHUB_ENV"
-      - run: pip install boto3 markdown
+      - run: pip install -U boto3 markdown
       - name: Send
         run: |
           if [ "${{ inputs.mode }}" = "send" ]; then
