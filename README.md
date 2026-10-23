@@ -14,7 +14,7 @@ Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on A
 
 ## Before launch
 
-1. **Connect the signup form.** In `index.html`, replace `YOUR_FORM_ID` in the form's `action` with a real endpoint from Formspree, Buttondown or similar. Until then the form shows a "not connected" message instead of failing silently. Set the service's redirect to `https://highturtle.com/thanks.html` for visitors without JavaScript.
+1. **Signup is built in.** See the Email list section below.
 2. **Check the copy.** The statuses in "What we make" (skills "drafted, in testing", playbooks and micro-tools "planned") and the activity counts come from the skills map. Update them as things ship.
 
 ## Design
@@ -44,3 +44,16 @@ After setup, delete the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` repo sec
     python3 -m http.server 8000
 
 Then open http://localhost:8000. Paths start with `/`, so serve from the repo root.
+
+
+## Email list
+
+Signup, confirmation and sending run on AWS in `us-east-2` and cost well under $1 a month at small scale.
+
+- **Signup:** the form posts to `/api/subscribe`. CloudFront routes `/api/*` to the `highturtle-subscribe` Lambda (`lambda/handler.py`). A pending signup is stored in DynamoDB (`highturtle-pending`) for 48 hours and a confirmation email goes out through SES.
+- **Confirm:** the link in that email calls `/api/confirm`, which adds the address to the SES contact list `highturtle-subscribers`.
+- **Unsubscribe:** every issue carries a signed link and the one-click `List-Unsubscribe` headers. Bounces and complaints go to the SES suppression list automatically.
+- **Setup:** `infra/setup-email.sh`, run by the `Email setup (one time)` workflow. Safe to re-run. It leaves the apex MX, SPF, DMARC and existing DKIM records alone and adds a `bounce.highturtle.com` MAIL FROM subdomain.
+- **Lambda changes:** edit `lambda/handler.py` and push. The deploy workflow updates the function.
+- **Sending:** write an issue as Markdown in `issues/` (see `issues/example-first-issue.md`), then run the `Send an issue` workflow. Use mode `test` first. Sending to the list needs mode `send` and `SEND` typed in the confirm box.
+- **Before the first real send:** set `postal_address` in `infra/mail-config.json` (marketing email must carry one) and wait for SES production access (the `Request SES production access` workflow files the request).

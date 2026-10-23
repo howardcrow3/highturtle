@@ -1,0 +1,22 @@
+name: Request SES production access (one time)
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - shell: bash
+        run: |
+          set -o pipefail
+          r=$(aws sesv2 put-account-details --production-access-enabled --mail-type MARKETING \
+            --website-url https://highturtle.com --contact-language EN \
+            --use-case-description "High Turtle is a small independent studio that publishes Claude skills, playbooks and tools for people building AI products. Visitors join a newsletter list on highturtle.com with a double opt-in: they submit their address, we send one confirmation email, and they are added only after clicking the link. Unconfirmed signups are deleted after 48 hours. We send a short update a few times a month to confirmed subscribers only. Every message carries a one-click unsubscribe link and List-Unsubscribe headers, and unsubscribes take effect immediately. Bounces and complaints are suppressed automatically with the SES account-level suppression list. We expect fewer than 1,000 subscribers in the first year." 2>&1) || true
+          echo "::notice title=result::${r:-requested}"
+          s=$(aws sesv2 get-account --query '{prod:ProductionAccessEnabled,review:Details.ReviewDetails}' --output json | tr -d '\n ')
+          echo "::notice title=status::$s"
