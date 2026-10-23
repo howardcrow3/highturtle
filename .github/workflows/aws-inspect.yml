@@ -14,5 +14,5 @@ jobs:
           aws-region: us-east-1
       - run: |
           bash infra/inspect.sh > /tmp/out.txt 2>&1 || true
-          body=$(cut -c1-110 /tmp/records.txt | sed 's/\t/ /g' | awk '{printf "%s%%0A", $0}')
+          body=$(cat /tmp/records.txt | awk '{printf "%s%%0A", $0}')
           echo "::notice title=records::${body}"
