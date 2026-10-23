@@ -29,30 +29,27 @@
     select(valid ? fromHash : 'discover');
   }
 
-  // Signup form: send without leaving the page when the endpoint allows it.
+  // Signup form: send without leaving the page, fall back to a normal post.
   var form = document.getElementById('signup-form');
   var status = document.getElementById('form-status');
 
   if (form && status && window.fetch) {
     form.addEventListener('submit', function (e) {
-      if (form.action.indexOf('YOUR_FORM_ID') !== -1) {
-        e.preventDefault();
-        status.className = 'form-status is-error';
-        status.textContent = 'The signup form is not connected yet. Add your form endpoint in index.html.';
-        return;
-      }
       e.preventDefault();
       status.className = 'form-status';
       status.textContent = 'Sending…';
       fetch(form.action, {
         method: 'POST',
-        body: new FormData(form),
+        body: new URLSearchParams(new FormData(form)),
         headers: { 'Accept': 'application/json' }
       }).then(function (res) {
         if (res.ok) {
           form.reset();
           status.className = 'form-status is-ok';
-          status.textContent = 'You are on the list. Watch your inbox for the sample skill.';
+          status.textContent = 'Almost done. Check your inbox and confirm your address.';
+        } else if (res.status === 400) {
+          status.className = 'form-status is-error';
+          status.textContent = 'That address does not look right. Check it and try again.';
         } else {
           throw new Error('bad response');
         }

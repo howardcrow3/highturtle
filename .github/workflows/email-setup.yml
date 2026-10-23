@@ -1,0 +1,31 @@
+name: Email setup (one time)
+
+# Creates the SES settings, DynamoDB table, subscription Lambda and the /api route. Safe to re-run.
+# Uses the temporary AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets; delete them after setup.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - run: bash infra/setup-email.sh 2>&1 | tee /tmp/log.txt
+      - name: Smoke test
+        if: always()
+        run: |
+          sleep 5
+          a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Accept: application/json' -d 'email=notanemail' https://highturtle.com/api/subscribe || true)
+          b=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' 'https://highturtle.com/api/confirm?t=bogus' || true)
+          echo "::notice title=smoke::bad-email=$a bad-token=$b"
+          tail -n 12 /tmp/log.txt | sed 's/^/::notice title=log::/' | head -12

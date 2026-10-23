@@ -1,0 +1,53 @@
+name: Send an issue
+
+# Sends a Markdown file from issues/ through Amazon SES.
+# mode "test" sends one copy to the address you give. mode "send" sends to every confirmed subscriber and
+# only runs when confirm is typed as SEND.
+
+on:
+  workflow_dispatch:
+    inputs:
+      file:
+        description: Path to the issue, for example issues/2026-11-05-first.md
+        required: true
+      mode:
+        description: test or send
+        required: true
+        default: test
+        type: choice
+        options: [test, send]
+      test_to:
+        description: Address for a test send
+        required: false
+        default: howardcrow@gmail.com
+      confirm:
+        description: Type SEND to send to the whole list
+        required: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::022621302198:role/highturtle-github-send
+          aws-region: us-east-2
+      - name: Get the unsubscribe signing key
+        run: |
+          S=$(aws lambda get-function-configuration --function-name highturtle-subscribe --query 'Environment.Variables.SECRET' --output text)
+          echo "::add-mask::$S"
+          echo "UNSUBSCRIBE_SECRET=$S" >> "$GITHUB_ENV"
+      - run: pip install boto3 markdown
+      - name: Send
+        run: |
+          if [ "${{ inputs.mode }}" = "send" ]; then
+            [ "${{ inputs.confirm }}" = "SEND" ] || { echo "Type SEND in confirm to send to the list."; exit 1; }
+            python3 infra/send_issue.py "${{ inputs.file }}" --send
+          else
+            python3 infra/send_issue.py "${{ inputs.file }}" --test "${{ inputs.test_to }}"
+          fi

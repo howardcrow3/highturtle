@@ -43,8 +43,13 @@ jobs:
           aws s3 sync . "s3://${{ env.S3_BUCKET }}" \
             --delete \
             --exclude ".git/*" --exclude ".github/*" --exclude "assets/*" \
-            --exclude "README.md" --exclude "infra/*" \
+            --exclude "README.md" --exclude "infra/*" --exclude "lambda/*" --exclude "issues/*" \
             --cache-control "no-cache"
+
+      - name: Update the subscription function
+        run: |
+          (cd lambda && zip -q ../lambda.zip handler.py)
+          aws lambda update-function-code --function-name highturtle-subscribe --zip-file fileb://lambda.zip >/dev/null
 
       - name: Clear the CloudFront cache
         run: |
