@@ -28,4 +28,9 @@ jobs:
           a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Accept: application/json' -d 'email=notanemail' https://highturtle.com/api/subscribe || true)
           b=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' 'https://highturtle.com/api/confirm?t=bogus' || true)
           echo "::notice title=smoke::bad-email=$a bad-token=$b"
+          U=$(aws lambda get-function-url-config --function-name highturtle-subscribe --query FunctionUrl --output text)
+          c=$(curl -s -w ' [%{http_code}]' -X POST -H 'Accept: application/json' -d 'email=notanemail' "${U}api/subscribe" | head -c 200)
+          echo "::notice title=direct::$c"
+          P=$(aws lambda get-policy --function-name highturtle-subscribe --query Policy --output text | jq -c '[.Statement[]|{Sid,Action:.Action,C:.Condition}]')
+          echo "::notice title=policy::$P"
           tail -n 12 /tmp/log.txt | sed 's/^/::notice title=log::/' | head -12
