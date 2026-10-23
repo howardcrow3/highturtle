@@ -128,7 +128,7 @@ jq --arg dom "$URL_HOST" --arg cp "$CP" --arg orp "$ORP" '
         OriginSslProtocols:{Quantity:1, Items:["TLSv1.2"]}, OriginReadTimeout:30, OriginKeepaliveTimeout:5}}])
   | .Origins.Quantity = (.Origins.Items | length)
   | .CacheBehaviors.Items = (((.CacheBehaviors.Items // []) | map(select(.PathPattern != "/api/*"))) + [{
-      PathPattern:"/api/*", TargetOriginId:"api-lambda", ViewerProtocolPolicy:"redirect-to-https", Compress:true,
+      PathPattern:"/api/*", TargetOriginId:"api-lambda", ViewerProtocolPolicy:"redirect-to-https", Compress:true, SmoothStreaming:false,
       AllowedMethods:{Quantity:7, Items:["GET","HEAD","OPTIONS","PUT","PATCH","POST","DELETE"], CachedMethods:{Quantity:2, Items:["GET","HEAD"]}},
       CachePolicyId:$cp, OriginRequestPolicyId:$orp}])
   | .CacheBehaviors.Quantity = (.CacheBehaviors.Items | length)' /tmp/cf.json > /tmp/cf-new.json
