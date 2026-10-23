@@ -38,3 +38,4 @@ jobs:
           p=$(curl -s -o /dev/null -w '%{http_code}' -X POST -d 'List-Unsubscribe=One-Click' "https://highturtle.com/api/unsubscribe?e=$E&s=$sig")
           st2=$(aws sesv2 get-contact --contact-list-name highturtle-subscribers --email-address $E --query 'UnsubscribeAll' --output text 2>&1 | head -c 50)
           echo "::notice title=unsub::get=$g badsig=[$bad] post=$p unsubscribed=$st2"
+          aws sesv2 delete-contact --contact-list-name highturtle-subscribers --email-address $E >/dev/null 2>&1
