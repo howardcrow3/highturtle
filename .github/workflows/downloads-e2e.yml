@@ -35,7 +35,7 @@ jobs:
           loc=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "https://turtlebox.studio/api/get?t=$T")
           code=${loc%% *}; url=${loc#* }
           out="$out get=$code host=$(echo $url | cut -d/ -f3)"
-          body=$(curl -s "$url")
+          body=$(curl -s "$url" | tr -d "\n" | head -c 200)
           out="$out file=[$body]"
           c=$(aws sesv2 get-contact --contact-list-name highturtle-subscribers --email-address $E --query '[UnsubscribeAll]' --output text 2>&1 | head -c 60)
           out="$out contact_unsub=$c"

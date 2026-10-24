@@ -33,7 +33,8 @@ CONFIG_SET = os.environ.get("CONFIG_SET", "")
 
 ses = boto3.client("sesv2", region_name=REGION)
 ddb = boto3.client("dynamodb", region_name=REGION)
-s3 = boto3.client("s3", region_name=REGION, config=boto3.session.Config(signature_version="s3v4"))
+s3 = boto3.client("s3", region_name=REGION, endpoint_url=f"https://s3.{REGION}.amazonaws.com",
+                  config=boto3.session.Config(signature_version="s3v4", s3={"addressing_style": "virtual"}))
 
 EMAIL_RE = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$")
 SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,60}$")
