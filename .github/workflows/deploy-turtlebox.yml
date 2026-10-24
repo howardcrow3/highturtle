@@ -20,7 +20,7 @@ env:
   AWS_ROLE_ARN: arn:aws:iam::022621302198:role/turtlebox-github-deploy
   AWS_REGION: us-east-2
   S3_BUCKET: turtlebox.studio
-  CLOUDFRONT_DISTRIBUTION_ID: REPLACE_AFTER_SETUP
+  CLOUDFRONT_DISTRIBUTION_ID: E3AFT58QXC1DZ0
 
 jobs:
   deploy:
