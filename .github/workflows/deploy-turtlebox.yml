@@ -45,3 +45,9 @@ jobs:
         run: |
           aws cloudfront create-invalidation \
             --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"
+      - name: Check the live site
+        run: |
+          sleep 20
+          for u in https://turtlebox.studio/ https://turtlebox.studio/apps/ https://www.turtlebox.studio/ https://turtlebox.studio/nope https://highturtle.com/turtlebox/index.html; do
+            echo "$u $(curl -s -o /dev/null -w '%{http_code}' "$u")"
+          done | awk '{printf "%s%%0A", $0}' | sed 's/^/::notice title=live::/'
