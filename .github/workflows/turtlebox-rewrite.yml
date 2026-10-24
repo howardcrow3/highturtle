@@ -1,0 +1,18 @@
+name: Turtlebox folder index rewrite (one time)
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - run: bash infra/turtlebox-rewrite.sh
+      - run: |
+          sleep 10
+          for u in https://turtlebox.studio/ https://turtlebox.studio/apps/ https://turtlebox.studio/apps https://turtlebox.studio/nope; do echo "$u $(curl -s -o /dev/null -w '%{http_code}' "$u")"; done | awk '{printf "%s%%0A", $0}' | sed 's/^/::notice title=live::/'
