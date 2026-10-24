@@ -5,7 +5,7 @@ name: Deploy turtlebox.studio
 on:
   push:
     branches: [main]
-    paths: ["turtlebox/**", ".github/workflows/deploy-turtlebox.yml"]
+    paths: ["turtlebox/**", "lambda/downloads.py", ".github/workflows/deploy-turtlebox.yml"]
   workflow_dispatch:
 
 permissions:
@@ -41,6 +41,11 @@ jobs:
             --delete \
             --exclude "assets/*" --exclude "build.py" --exclude "apps.json" \
             --cache-control "no-cache"
+      - name: Update the downloads function
+        run: |
+          (cd lambda && zip -q ../downloads.zip downloads.py)
+          aws lambda update-function-code --function-name turtlebox-downloads --zip-file fileb://downloads.zip >/dev/null
+
       - name: Clear the CloudFront cache
         run: |
           aws cloudfront create-invalidation \

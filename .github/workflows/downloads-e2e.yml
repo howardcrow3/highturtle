@@ -1,0 +1,48 @@
+name: Downloads end-to-end test (temporary)
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - shell: bash
+        run: |
+          set +e
+          E=howardcrow@gmail.com
+          B=turtlebox-downloads
+          for i in $(seq 1 30); do
+            v=$(aws sesv2 get-email-identity --email-identity turtlebox.studio --query 'VerifiedForSendingStatus' --output text)
+            [ "$v" = "True" ] && break; sleep 10
+          done
+          out="identity_verified=$v"
+          echo "hello from turtlebox" > /tmp/hello.txt
+          aws s3 cp /tmp/hello.txt s3://$B/e2e-test/hello.txt --metadata "title=E2E test app" >/dev/null
+          K=$(printf %s "$E|e2e-test" | sha256sum | cut -d" " -f1)
+          aws dynamodb delete-item --table-name highturtle-pending --key "{\"pk\":{\"S\":\"dt#$K\"}}"
+          a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Accept: application/json' -d "email=$E&app=e2e-test" https://turtlebox.studio/api/download)
+          out="$out request=$a"
+          unk=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Accept: application/json' -d "email=$E&app=not-an-app" https://turtlebox.studio/api/download)
+          out="$out unknown_app=$unk"
+          sleep 3
+          T=$(aws dynamodb scan --table-name highturtle-pending --query "Items[?email.S=='$E' && app.S=='e2e-test'].pk.S | [0]" --output text | sed 's/^d#//')
+          out="$out token=${T:0:5}.."
+          loc=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "https://turtlebox.studio/api/get?t=$T")
+          code=${loc%% *}; url=${loc#* }
+          out="$out get=$code host=$(echo $url | cut -d/ -f3)"
+          body=$(curl -s "$url")
+          out="$out file=[$body]"
+          c=$(aws sesv2 get-contact --contact-list-name highturtle-subscribers --email-address $E --query '[UnsubscribeAll]' --output text 2>&1 | head -c 60)
+          out="$out contact_unsub=$c"
+          pub=$(curl -s -o /dev/null -w '%{http_code}' https://$B.s3.us-east-2.amazonaws.com/e2e-test/hello.txt)
+          out="$out public_s3=$pub"
+          echo "::notice title=e2e::$out"
+          aws s3 rm s3://$B/e2e-test/hello.txt >/dev/null
+          aws sesv2 delete-contact --contact-list-name highturtle-subscribers --email-address $E >/dev/null 2>&1
+          L=$(aws logs filter-log-events --log-group-name /aws/lambda/turtlebox-downloads --filter-pattern '"error"' --query 'events[-2:].message' --output text 2>&1 | head -c 500 | tr '\n\t' '  ')
+          echo "::notice title=logs::$L"

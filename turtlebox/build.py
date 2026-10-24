@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Generates the Turtlebox pages from apps.json. Run from the repo root: python3 turtlebox/build.py
-Add an app by adding an entry to apps.json. Set "status" to "Live" and add "url" (for example /apps/my-app/)
+Add an app by adding an entry to apps.json. Set "download": true on an app whose file is uploaded to the downloads bucket
+(see infra/upload-app.sh) to show the email form on its card. Set "status" to "Live" and add "url" (for example /apps/my-app/)
 to show an Open button."""
 import html, json, os, re
 
@@ -8,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb1"
+V = "tb2"
 
 def page(title, desc, body, path, robots=True, nav_current=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
@@ -60,19 +61,34 @@ def page(title, desc, body, path, robots=True, nav_current=""):
     <p>Also from us: <a href="https://highturtle.com">High Turtle</a> &middot; &copy; 2026 Turtlebox</p>
   </div>
 </footer>
+  <script src="/assets/site.js?v={V}" defer></script>
 </body>
 </html>
 """
+
+def dl_form(a):
+    slug = html.escape(a["slug"])
+    return f"""<form class="dl-form" action="/api/download" method="POST">
+          <input type="hidden" name="app" value="{slug}">
+          <label for="e-{slug}">Email address</label>
+          <input id="e-{slug}" name="email" type="email" autocomplete="email" required placeholder="you@company.com">
+          <p class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></p>
+          <button class="btn btn-small" type="submit">Email me the download</button>
+          <p class="fine">We email you a download link. You also join the High Turtle list for release news and can unsubscribe any time. <a href="https://highturtle.com/privacy.html">Privacy</a></p>
+          <p class="form-status" role="status"></p>
+        </form>"""
 
 def card(a):
     live = a.get("status", "").lower() == "live" and a.get("url")
     cls = "status status-live" if live else ("status status-testing" if a.get("status", "").lower() == "in testing" else "status")
     action = f'<div class="action"><a class="btn btn-small" href="{html.escape(a["url"])}">Open {html.escape(a["name"])}</a></div>' if live else ""
+    form = dl_form(a) if a.get("download") else ""
     return f"""      <li class="app-card">
         <h3>{html.escape(a["name"])}</h3>
         <p class="{cls}">{html.escape(a["status"])}</p>
         <p>{html.escape(a["description"])}</p>
         {action}
+        {form}
       </li>"""
 
 apps = json.load(open(os.path.join(HERE, "apps.json")))
@@ -123,12 +139,24 @@ nf = """  <div class="simple wrap">
     <a class="btn" href="/apps/">See the apps</a>
   </div>"""
 
+sent = """  <div class="simple wrap">
+    <h1>Check your inbox.</h1>
+    <p>We sent your download link. It works for 7 days. If it does not arrive in a few minutes, check your spam folder.</p>
+    <a class="btn" href="/apps/">Back to the apps</a>
+  </div>"""
+prob = """  <div class="simple wrap">
+    <h1>That did not go through.</h1>
+    <p>The link may have expired, or the address may not look right. Request the download again from the apps page.</p>
+    <a class="btn" href="/apps/">Go to the apps</a>
+  </div>"""
 root = os.path.join(HERE)
 def w(rel, content):
     p = os.path.join(root, rel); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, "w").write(content)
 
 w("index.html", page("Turtlebox | Small AI apps that each do one job", "Turtlebox builds small AI apps that run in your browser. Each one does one job.", home, "/"))
 w("apps/index.html", page("Apps | Turtlebox", "Small AI apps from Turtlebox. Each one does one job and runs in your browser.", apps_page, "/apps/", nav_current="apps"))
+w("download-sent.html", page("Check your inbox | Turtlebox", "Download link sent.", sent, "/download-sent.html", robots=False))
+w("download-problem.html", page("Download problem | Turtlebox", "Download problem.", prob, "/download-problem.html", robots=False))
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
 w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n</urlset>\n')

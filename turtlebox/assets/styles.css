@@ -216,3 +216,16 @@ a { color: var(--accent); text-underline-offset: 0.2em; text-decoration-thicknes
   .points { grid-template-columns: 1fr; }
   .bar nav a:not(.btn) { font-size: 0.95rem; }
 }
+
+/* Download form */
+.dl-form { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.dl-form label { font-weight: 600; font-size: 0.95rem; }
+.dl-form input[type="email"] { font: inherit; padding: 0.75rem 0.9rem; border: 1px solid var(--border-control); border-radius: 3px; background: var(--paper); color: var(--ink); min-width: 0; }
+.dl-form input::placeholder { color: var(--ink-soft); opacity: 0.8; }
+.dl-form .btn { align-self: flex-start; }
+.dl-form .fine { font-size: 0.85rem; line-height: 1.5; color: var(--ink-soft); }
+.hp { position: absolute; left: -9999px; }
+.form-status { font-weight: 600; min-height: 1.4em; font-size: 0.95rem; }
+.form-status.is-error { color: var(--danger); }
+.form-status.is-ok { color: var(--ink); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; border-radius: 3px; }
