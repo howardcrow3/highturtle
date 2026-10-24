@@ -57,3 +57,13 @@ Signup, confirmation and sending run on AWS in `us-east-2` and cost well under $
 - **Lambda changes:** edit `lambda/handler.py` and push. The deploy workflow updates the function.
 - **Sending:** write an issue as Markdown in `issues/` (see `issues/example-first-issue.md`), then run the `Send an issue` workflow. Use mode `test` first. Sending to the list needs mode `send` and `SEND` typed in the confirm box.
 - **Before the first real send:** set `postal_address` in `infra/mail-config.json` (marketing email must carry one) and wait for SES production access (the `Request SES production access` workflow files the request).
+
+## Turtlebox app downloads
+
+Apps for download live in the private S3 bucket `turtlebox-downloads` as `<app-slug>/<file>`. The newest file under a slug is served.
+
+1. Upload: `bash infra/upload-app.sh <slug> <file> "App title"` (or drag the file into that folder in the S3 console).
+2. In `turtlebox/apps.json` set `"download": true` on the app, run `python3 turtlebox/build.py`, and push. The card then shows an email form.
+3. Someone enters their address, gets an email from `downloads@turtlebox.studio` with a link (valid 7 days), and clicking it adds them to the High Turtle list and starts a 5-minute download. People who unsubscribed earlier are not re-added.
+
+Code: `lambda/downloads.py`, set up by `infra/setup-downloads.sh`. Pushes to `lambda/downloads.py` or `turtlebox/` deploy through the `Deploy turtlebox.studio` workflow.
