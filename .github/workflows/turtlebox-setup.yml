@@ -1,0 +1,24 @@
+name: Turtlebox hosting setup (one time)
+
+# Creates the certificate, CloudFront distribution, DNS records and deploy role.
+# Safe to re-run. Uses the temporary AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets;
+# delete those secrets and the key after setup.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - run: bash infra/setup-turtlebox.sh

@@ -1,0 +1,47 @@
+name: Deploy turtlebox.studio
+
+# Publishes the turtlebox/ folder to S3 and clears the CloudFront cache when it changes on main.
+
+on:
+  push:
+    branches: [main]
+    paths: ["turtlebox/**", ".github/workflows/deploy-turtlebox.yml"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-turtlebox
+  cancel-in-progress: false
+
+env:
+  AWS_ROLE_ARN: arn:aws:iam::022621302198:role/turtlebox-github-deploy
+  AWS_REGION: us-east-2
+  S3_BUCKET: turtlebox.studio
+  CLOUDFRONT_DISTRIBUTION_ID: REPLACE_AFTER_SETUP
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Upload assets
+        run: |
+          aws s3 sync turtlebox/assets "s3://${{ env.S3_BUCKET }}/assets" \
+            --delete --cache-control "public, max-age=3600, must-revalidate"
+      - name: Upload pages and root files (always revalidated)
+        run: |
+          aws s3 sync turtlebox "s3://${{ env.S3_BUCKET }}" \
+            --delete \
+            --exclude "assets/*" --exclude "build.py" --exclude "apps.json" \
+            --cache-control "no-cache"
+      - name: Clear the CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ env.CLOUDFRONT_DISTRIBUTION_ID }}" --paths "/*"

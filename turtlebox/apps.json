@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "opportunity-sizer",
+    "name": "Opportunity sizer",
+    "status": "Planned",
+    "description": "Estimate how big a product opportunity is from a few inputs, with the assumptions shown so you can change them."
+  },
+  {
+    "slug": "spec-checker",
+    "name": "Spec checker",
+    "status": "Planned",
+    "description": "Paste a product spec and get a list of gaps and open questions before it goes to engineering."
+  }
+]
