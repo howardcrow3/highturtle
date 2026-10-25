@@ -1,9 +1,9 @@
 /* Turtlebox: Grains design language (prototype).
-   Warm neutrals, one gold accent. Cormorant Garamond for the voice, Inter for the interface.
+   Warm neutrals, one gold accent. Inter for body copy and interface, Cormorant Garamond for headings and the wordmark.
    Source of the tokens: howardcrow3/grains, docs/brand/ (colors, typography, ui).
    Rules carried over: no pure white, no cool greys, no added colours, gold is never text,
-   Cormorant is never used for buttons or labels, Inter is never used for headings or body copy,
-   ragged-right text, 8px spacing rhythm. */
+   Cormorant is never used for buttons or labels, ragged-right text, 8px spacing rhythm.
+   Change from the Grains system: Inter carries body copy (Grains sets it in Cormorant Light). */
 
 @font-face { font-family: "Cormorant Garamond"; src: url("/assets/fonts/CormorantGaramond-Light.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
 @font-face { font-family: "Cormorant Garamond"; src: url("/assets/fonts/CormorantGaramond-LightItalic.woff2") format("woff2"); font-weight: 300; font-style: italic; font-display: swap; }
@@ -49,7 +49,7 @@
   --g-space-3xl: 96px;
 
   --font-head: "Cormorant Garamond", Georgia, serif;
-  --font-body: "Cormorant Garamond", Georgia, serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
@@ -78,8 +78,8 @@ body {
   color: var(--body);
   font-family: var(--font-body);
   font-weight: 300;
-  font-size: 1.125rem;     /* 18px */
-  line-height: 1.85;
+  font-size: 1.0625rem;    /* 17px */
+  line-height: 1.75;
   text-align: left;        /* ragged right, never justified */
   font-synthesis: none;
   -webkit-font-smoothing: antialiased;
@@ -191,7 +191,7 @@ a:hover { text-decoration-thickness: 2px; }
   max-width: 12em;
   text-wrap: balance;
 }
-.lede { margin-top: var(--g-space-lg); font-size: 1.375rem; line-height: 1.6; max-width: 30em; }
+.lede { margin-top: var(--g-space-lg); font-size: 1.25rem; line-height: 1.6; max-width: 30em; }
 .cta-row { margin-top: var(--g-space-xl); display: flex; flex-wrap: wrap; align-items: center; gap: var(--g-space-lg); }
 
 /* Sections */
@@ -200,7 +200,7 @@ a:hover { text-decoration-thickness: 2px; }
 .section .intro { margin-top: var(--g-space-md); max-width: 34em; }
 .points { list-style: none; margin: var(--g-space-xl) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--g-space-xl); }
 .points h3 { font-size: 1.75rem; line-height: 1.2; }
-.points p { margin-top: var(--g-space-xs); font-size: 1.0625rem; }
+.points p { margin-top: var(--g-space-xs); font-size: 1rem; }
 
 /* App catalog: each card is a plate with film-frame corners (the one motif carried over from Grains) */
 .apps { list-style: none; margin: var(--g-space-xl) 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr)); gap: var(--g-space-lg); }
@@ -227,7 +227,7 @@ a:hover { text-decoration-thickness: 2px; }
   gap: var(--g-space-sm);
 }
 .app-card h3 { font-size: 1.75rem; line-height: 1.2; }
-.app-card p { font-size: 1.0625rem; line-height: 1.7; }
+.app-card p { font-size: 1rem; line-height: 1.65; }
 .app-card .action { margin-top: auto; padding-top: var(--g-space-sm); }
 .status, .app-card p.status { font: 400 0.6875rem/1.4 var(--font-ui); letter-spacing: 0.3em; text-transform: uppercase; color: var(--body); display: flex; align-items: center; gap: 12px; }
 .status::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border-control); }
@@ -235,7 +235,7 @@ a:hover { text-decoration-thickness: 2px; }
 .empty { margin-top: var(--g-space-lg); }
 .page-head { padding-block: var(--g-space-3xl) 0; }
 .page-head h1 { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; }
-.page-head p { margin-top: var(--g-space-md); max-width: 32em; font-size: 1.375rem; line-height: 1.6; }
+.page-head p { margin-top: var(--g-space-md); max-width: 32em; font-size: 1.25rem; line-height: 1.6; }
 .page-head + .section { padding-top: var(--g-space-xl); }
 .page-head + .section .apps { margin-top: 0; }
 
@@ -247,7 +247,7 @@ a:hover { text-decoration-thickness: 2px; }
 /* Simple pages (404, thanks) */
 .simple { padding-block: var(--g-space-3xl); }
 .simple h1 { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; }
-.simple p { margin-top: var(--g-space-md); max-width: 30em; font-size: 1.375rem; line-height: 1.6; }
+.simple p { margin-top: var(--g-space-md); max-width: 30em; font-size: 1.25rem; line-height: 1.6; }
 .simple .btn { margin-top: var(--g-space-xl); }
 
 /* Download form: Inter, because it is interface */
