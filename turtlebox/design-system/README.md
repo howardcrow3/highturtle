@@ -1,11 +1,11 @@
-Turtlebox builds small AI apps that each do one job. The brand is Grains-derived: warm neutrals, one gold accent, Cormorant Garamond for the voice and Inter for everything you read and press. It should feel quiet, exact and unhurried, like a well-set page with a smiling turtle on it.
+Turtlebox builds small AI apps that each do one job. The brand is Grains-derived: warm neutrals, one gold accent, Inter, and only Inter, for everything you read and press. It should feel quiet, exact and unhurried, like a well-set page with a smiling turtle on it.
 
 ## Principles
 
 - Warm neutrals only. Every surface is ivory, warm white or charcoal. No pure white, no cool greys, no added hues. The one exception is `danger`, for errors.
 - One accent. `accent` (gold) marks underlines, filled status dots and the hover fill of the primary button. It is 1.9:1 on `paper`, so it is never text and never carries meaning alone.
 - Borders, not shadows. Separate things with a 1px `line` rule or a `surface` plate. No drop shadows, no gradients, no rounded corners.
-- Inter for reading, Cormorant for the voice. Headings and the wordmark are Cormorant. Body copy, ledes, buttons, labels and forms are Inter. This departs from Grains, which sets body copy in Cormorant Light.
+- One family, no serifs. Everything is Inter: Light for headings and body, Regular and Medium for UI, Medium for the wordmark.
 - Say what it is. Name an app by what it does and write copy as `voice.md` describes. No AI-generated imagery.
 
 ## Color
@@ -20,8 +20,8 @@ Turtlebox builds small AI apps that each do one job. The brand is Grains-derived
 
 ## Type
 
-- Display and headings use Cormorant Garamond: `display` (Light 300, 56 to 96px) once per page, `page-title`, `heading` and `title` (Regular 400). `wordmark` (Semibold 600) is used only for the name.
-- Everything else uses Inter: `lede`, `body`, `body-sm` (Light 300), `fine`, `field`, `message` (Regular or Medium) and the uppercase `label` and `button` styles (11px, 0.3em tracking).
+- Display and headings use Inter: `display` (Light 300, 48 to 80px) once per page, `page-title`, `heading` and `title` (Regular 400). `wordmark` (Medium 500) is used only for the name.
+- Everything else is also Inter: `lede`, `body`, `body-sm` (Light 300), `fine`, `field`, `message` (Regular or Medium) and the uppercase `label` and `button` styles (11px, 0.3em tracking).
 - Write sentence case in headings and in the text of buttons and labels. The stylesheet sets labels in uppercase for you.
 - Keep running text near 34em wide, left aligned and ragged right.
 - Both fonts are SIL Open Font License and ship as woff2 files in `fonts/`. Self-host them.

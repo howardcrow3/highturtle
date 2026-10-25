@@ -23,7 +23,7 @@ body {
 
 h1, h2, h3 {
   color: var(--ink);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 400;
   margin: 0;
 }
@@ -71,8 +71,8 @@ a:hover { text-decoration-thickness: 2px; }
 }
 .brand { display: inline-flex; gap: 12px; align-items: center; color: var(--ink); text-decoration: none; }
 .brand-mark { height: 32px; width: auto; display: block; color: var(--ink); }
-/* The wordmark is the one place Cormorant Semibold is used */
-.brand-name { font-family: var(--font-serif); font-weight: 600; font-size: 1.625rem; letter-spacing: 0.005em; color: var(--ink); line-height: 1; }
+/* The wordmark is set in Inter Medium */
+.brand-name { font-family: var(--font-sans); font-weight: 500; font-size: 1.625rem; letter-spacing: -0.02em; color: var(--ink); line-height: 1; }
 .bar nav { display: flex; align-items: center; gap: var(--space-lg); }
 .bar nav a:not(.btn) {
   color: var(--body);
@@ -119,10 +119,10 @@ a:hover { text-decoration-thickness: 2px; }
 /* Hero */
 .hero { padding-block: var(--space-3xl) var(--space-2xl); }
 .hero h1 {
-  font-size: clamp(3.5rem, 8vw, 6rem);   /* 56 to 96px */
+  font-size: clamp(3rem, 7vw, 5rem);   /* 48 to 80px */
   font-weight: 300;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
+  letter-spacing: -0.04em;
+  line-height: 1;
   max-width: 12em;
   text-wrap: balance;
 }
@@ -131,7 +131,7 @@ a:hover { text-decoration-thickness: 2px; }
 
 /* Sections */
 .section { padding-block: var(--space-3xl); border-top: 1px solid var(--line); }
-.section h2 { font-size: clamp(1.875rem, 3.4vw, 2.25rem); letter-spacing: -0.01em; line-height: 1.15; }
+.section h2 { font-size: clamp(1.875rem, 3.4vw, 2.25rem); letter-spacing: -0.02em; line-height: 1.15; }
 .section .intro { margin-top: var(--space-md); max-width: 34em; }
 .points { list-style: none; margin: var(--space-xl) 0 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-xl); }
 .points h3 { font-size: 1.75rem; line-height: 1.2; }
@@ -169,7 +169,7 @@ a:hover { text-decoration-thickness: 2px; }
 .status-live::before, .status-testing::before { background: var(--accent); border-color: var(--accent); }
 .empty { margin-top: var(--space-lg); }
 .page-head { padding-block: var(--space-3xl) 0; }
-.page-head h1 { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; }
+.page-head h1 { font-size: clamp(2.5rem, 5vw, 3.75rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
 .page-head p { margin-top: var(--space-md); max-width: 32em; font-size: 1.25rem; line-height: 1.6; }
 .page-head + .section { padding-top: var(--space-xl); }
 .page-head + .section .apps { margin-top: 0; }
@@ -181,7 +181,7 @@ a:hover { text-decoration-thickness: 2px; }
 
 /* Simple pages (404, thanks) */
 .simple { padding-block: var(--space-3xl); }
-.simple h1 { font-size: clamp(3rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.05; }
+.simple h1 { font-size: clamp(2.5rem, 5vw, 3.75rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
 .simple p { margin-top: var(--space-md); max-width: 30em; font-size: 1.25rem; line-height: 1.6; }
 .simple .btn { margin-top: var(--space-xl); }
 

@@ -7,4 +7,4 @@ Buttons start the one action a page is about. The primary button is an ink fill 
 **States.** Hover turns a primary button from `ink` to `accent` with `on-accent` text. Keyboard focus is a 2px `focus-ring` outline at a 4px offset. A link thickens its underline from 2px to 3px.
 
 **Do** keep one `btn` per view and keep the label the same through a flow ("Email me the download", then "Sent").
-**Do not** round the corners, add a shadow, use gold as a text color, or set button text in Cormorant. Buttons and labels are always Inter.
+**Do not** round the corners, add a shadow or use gold as a text color. Buttons and labels are Inter Medium, uppercase.

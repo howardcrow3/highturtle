@@ -1,6 +1,6 @@
 The site header holds the turtle mark, the wordmark and the main navigation. It sticks to the top and sits on a 92% `paper` wash over a 1px `line` rule.
 
-**Structure.** `header.site-header > div.wrap.bar` containing `a.brand` (the mark at 32px high, then the wordmark in Cormorant Semibold 26px) and a `nav` of links.
+**Structure.** `header.site-header > div.wrap.bar` containing `a.brand` (the mark at 32px high, then the wordmark in Inter Medium 26px) and a `nav` of links.
 
 **You provide** two or three short nav labels in sentence case. The stylesheet sets them in Inter, uppercase and tracked. The current page gets `aria-current="page"`, which draws the gold underline.
 

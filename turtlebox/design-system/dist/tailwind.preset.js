@@ -27,9 +27,6 @@ module.exports = {
         "dark-line": "var(--dark-line)"
       },
       "fontFamily": {
-        "serif": [
-          "\"Cormorant Garamond\", Georgia, serif"
-        ],
         "sans": [
           "\"Inter\", system-ui, -apple-system, \"Segoe UI\", sans-serif"
         ]

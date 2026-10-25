@@ -1,6 +1,6 @@
 An app card is one entry in the catalog: a plate on `surface` with film-frame corner marks, the app name, a status, a one-sentence description and, when the app is live, one action.
 
-**Structure.** `ul.apps > li.app-card` holding an `h3` (Cormorant, the app name), a `p.status`, a `p` description and an optional `div.action` with a `btn btn-small`. An app with a download adds a `form.dl-form` after the description.
+**Structure.** `ul.apps > li.app-card` holding an `h3` (Inter, the app name), a `p.status`, a `p` description and an optional `div.action` with a `btn btn-small`. An app with a download adds a `form.dl-form` after the description.
 
 **You provide** the app name as people would say it ("Spec checker"), the status word and one plain sentence that says what the app does and for whom. No marketing adjectives.
 

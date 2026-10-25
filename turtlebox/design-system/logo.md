@@ -1,6 +1,6 @@
 # Logo
 
-The Turtlebox logo is a smiling turtle with the word Turtlebox set in Cormorant Garamond Semibold. It is a single ink. The files are in `assets/Logo`, in ink and reversed. The wordmark is drawn from the font as outlines, so it renders the same everywhere.
+The Turtlebox logo is a smiling turtle with the word Turtlebox set in Inter Medium. It is a single ink. The files are in `assets/Logo`, in ink and reversed. The wordmark is drawn from the font as outlines, so it renders the same everywhere.
 
 ## Lockups
 

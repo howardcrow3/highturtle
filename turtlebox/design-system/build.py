@@ -39,7 +39,7 @@ for t in col:
 out.append("\n  /* Spacing, 8px base */")
 for t in T["spacing"]["tokens"]: out.append(f"  --{t['name']}: {t['value']};")
 out.append("\n  /* Type, shape, motion */")
-out += [f"  --font-serif: {fam['serif']};", f"  --font-sans: {fam['sans']};"]
+out += [f"  --font-sans: {fam['sans']};"]
 for t in T["radius"]["tokens"]: out.append(f"  --{t['name']}: {t['value']};")
 for t in T["duration"]["tokens"]: out.append(f"  --{t['name']}: {t['value']};")
 for t in T["easing"]["tokens"]: out.append(f"  --{t['name']}: {t['value']};")
@@ -61,7 +61,7 @@ tw_colors = {t["name"]: f"var({var(t['name'])})" for t in col}
 preset = {
   "theme": {"extend": {
     "colors": tw_colors,
-    "fontFamily": {"serif": [fam["serif"]], "sans": [fam["sans"]]},
+    "fontFamily": {"sans": [fam["sans"]]},
     "spacing": {t["name"].replace("space-", ""): f"var(--{t['name']})" for t in T["spacing"]["tokens"]},
     "borderRadius": {t["name"].replace("radius-", ""): t["value"] for t in T["radius"]["tokens"]},
     "transitionTimingFunction": {"out": "var(--ease-out)"},
