@@ -10,72 +10,71 @@
 
 :root {
   /* Palette */
-  --g-charcoal: #1c1c1c;
-  --g-ivory: #f5f0e7;
-  --g-dark-ink: #3a3530;
-  --g-stone: #c8b99a;
-  --g-ash: #8a8278;
-  --g-warm-white: #f0e8d8;
-  --g-grain-line: #d9d2c5;
-  --g-gold: #d4a853;
-  --g-dark-surface: #282828;
-  --g-dark-line: #2e2e2e;
+  --charcoal: #1c1c1c;
+  --ivory: #f5f0e7;
+  --dark-ink: #3a3530;
+  --stone: #c8b99a;
+  --ash: #8a8278;
+  --warm-white: #f0e8d8;
+  --grain-line: #d9d2c5;
+  --gold: #d4a853;
+  --dark-surface: #282828;
+  --dark-line: #2e2e2e;
 
   /* Roles, light */
-  --paper: var(--g-ivory);
-  --surface: var(--g-warm-white);
-  --line: var(--g-grain-line);
-  --frame: var(--g-stone);
-  --ink: var(--g-charcoal);
-  --body: var(--g-dark-ink);
-  --border-control: var(--g-ash);
-  --accent: var(--g-gold);
-  --on-ink: var(--g-ivory);
-  --on-accent: var(--g-charcoal);
+  --paper: var(--ivory);
+  --surface: var(--warm-white);
+  --line: var(--grain-line);
+  --frame: var(--stone);
+  --ink: var(--charcoal);
+  --body: var(--dark-ink);
+  --border-control: var(--ash);
+  --accent: var(--gold);
+  --on-ink: var(--ivory);
+  --on-accent: var(--charcoal);
   --danger: #8f3b2a;
   --focus-ring: var(--ink);
 
   /* Spacing, 8px base */
-  --g-space-xs: 8px;
-  --g-space-sm: 16px;
-  --g-space-md: 24px;
-  --g-space-lg: 32px;
-  --g-space-xl: 48px;
-  --g-space-2xl: 64px;
-  --g-space-3xl: 96px;
+  --space-xs: 8px;
+  --space-sm: 16px;
+  --space-md: 24px;
+  --space-lg: 32px;
+  --space-xl: 48px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
 
   /* Type, shape, motion */
-  --font-head: "Cormorant Garamond", Georgia, serif;
-  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --radius-none: 0;
   --radius-round: 50%;
   --radius-app-icon: 22%;
   --duration-base: 300ms;
   --duration-slow: 400ms;
-  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: var(--g-charcoal);
-    --surface: var(--g-dark-surface);
-    --line: var(--g-dark-line);
+    --paper: var(--charcoal);
+    --surface: var(--dark-surface);
+    --line: var(--dark-line);
     --frame: #3a3a3a;
-    --ink: var(--g-ivory);
-    --body: var(--g-stone);
-    --on-ink: var(--g-charcoal);
+    --ink: var(--ivory);
+    --body: var(--stone);
+    --on-ink: var(--charcoal);
     --danger: #e58e80;
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: var(--g-charcoal);
-  --surface: var(--g-dark-surface);
-  --line: var(--g-dark-line);
+  --paper: var(--charcoal);
+  --surface: var(--dark-surface);
+  --line: var(--dark-line);
   --frame: #3a3a3a;
-  --ink: var(--g-ivory);
-  --body: var(--g-stone);
-  --on-ink: var(--g-charcoal);
+  --ink: var(--ivory);
+  --body: var(--stone);
+  --on-ink: var(--charcoal);
   --danger: #e58e80;
 }

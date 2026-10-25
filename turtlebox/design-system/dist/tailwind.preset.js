@@ -15,16 +15,16 @@ module.exports = {
         "on-accent": "var(--on-accent)",
         "danger": "var(--danger)",
         "focus-ring": "var(--focus-ring)",
-        "charcoal": "var(--g-charcoal)",
-        "ivory": "var(--g-ivory)",
-        "dark-ink": "var(--g-dark-ink)",
-        "stone": "var(--g-stone)",
-        "ash": "var(--g-ash)",
-        "warm-white": "var(--g-warm-white)",
-        "grain-line": "var(--g-grain-line)",
-        "gold": "var(--g-gold)",
-        "dark-surface": "var(--g-dark-surface)",
-        "dark-line": "var(--g-dark-line)"
+        "charcoal": "var(--charcoal)",
+        "ivory": "var(--ivory)",
+        "dark-ink": "var(--dark-ink)",
+        "stone": "var(--stone)",
+        "ash": "var(--ash)",
+        "warm-white": "var(--warm-white)",
+        "grain-line": "var(--grain-line)",
+        "gold": "var(--gold)",
+        "dark-surface": "var(--dark-surface)",
+        "dark-line": "var(--dark-line)"
       },
       "fontFamily": {
         "serif": [
@@ -35,13 +35,13 @@ module.exports = {
         ]
       },
       "spacing": {
-        "xs": "var(--g-space-xs)",
-        "sm": "var(--g-space-sm)",
-        "md": "var(--g-space-md)",
-        "lg": "var(--g-space-lg)",
-        "xl": "var(--g-space-xl)",
-        "2xl": "var(--g-space-2xl)",
-        "3xl": "var(--g-space-3xl)"
+        "xs": "var(--space-xs)",
+        "sm": "var(--space-sm)",
+        "md": "var(--space-md)",
+        "lg": "var(--space-lg)",
+        "xl": "var(--space-xl)",
+        "2xl": "var(--space-2xl)",
+        "3xl": "var(--space-3xl)"
       },
       "borderRadius": {
         "none": "0",
@@ -49,7 +49,7 @@ module.exports = {
         "app-icon": "22%"
       },
       "transitionTimingFunction": {
-        "out": "var(--ease)"
+        "out": "var(--ease-out)"
       }
     }
   }

@@ -51,3 +51,8 @@ Turtlebox builds small AI apps that each do one job. The brand is Grains-derived
 ## Origin
 
 Turtlebox borrows the Grains design language (`howardcrow3/grains`, `docs/brand/`) on purpose, so the two products feel related. It keeps its own turtle mark, its own components and its own voice. The Granule mark is Grains' and is not used here.
+
+## Where it lives
+
+- Repo: `turtlebox/design-system/` on branch `grains-design-prototype` of `howardcrow3/highturtle`.
+- Design System artifact: https://claude.ai/artifact/Wmu4iwBcjEh7T7E6pdrcZY
