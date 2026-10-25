@@ -154,7 +154,21 @@ def subscribe(event):
     ddb.put_item(TableName=TABLE, Item={
         "pk": {"S": "p#" + token}, "email": {"S": email}, "ttl": {"N": str(now + PENDING_TTL)},
     })
-    send_confirmation(email, token)
+    try:
+        send_confirmation(email, token)
+    except ClientError as e:
+        # SES sandbox: it only emails verified addresses. Keep the signup on a waiting list so
+        # a confirmation can be sent once sending is open, and tell the visitor the truth.
+        if e.response["Error"]["Code"] == "MessageRejected" and "not verified" in str(e):
+            ddb.delete_item(TableName=TABLE, Key={"pk": {"S": "p#" + token}})
+            ddb.put_item(TableName=TABLE, Item={
+                "pk": {"S": "w#" + hashlib.sha256(email.encode()).hexdigest()}, "email": {"S": email},
+                "ttl": {"N": str(now + 60 * 24 * 3600)}, "queuedAt": {"N": str(now)},
+            })
+            if wants_json(event):
+                return respond(200, json.dumps({"ok": True, "queued": True}), ctype="application/json")
+            return redirect("/waiting.html")
+        raise
     return ok()
 
 

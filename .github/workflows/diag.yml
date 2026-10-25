@@ -23,3 +23,4 @@ jobs:
           page=$(curl -s https://highturtle.com/ | grep -o '<form[^>]*>' | head -2)
           js=$(curl -s https://highturtle.com/assets/site.js | grep -c "api\|YOUR_FORM_ID\|formspree")
           echo "::notice title=page::$page jsmatches=$js"
+          aws dynamodb delete-item --table-name highturtle-pending --key "{\"pk\":{\"S\":\"w#$(printf %s diag-test@example.com | sha256sum | cut -d' ' -f1)\"}}"

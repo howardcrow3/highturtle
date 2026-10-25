@@ -44,9 +44,13 @@
         headers: { 'Accept': 'application/json' }
       }).then(function (res) {
         if (res.ok) {
-          form.reset();
-          status.className = 'form-status is-ok';
-          status.textContent = 'Almost done. Check your inbox and confirm your address.';
+          return res.json().then(function (d) { return d; }, function () { return {}; }).then(function (d) {
+            form.reset();
+            status.className = 'form-status is-ok';
+            status.textContent = d.queued
+              ? "You're on the list. We'll email you to confirm your address as soon as sending opens."
+              : 'Almost done. Check your inbox and confirm your address.';
+          });
         } else if (res.status === 400) {
           status.className = 'form-status is-error';
           status.textContent = 'That address does not look right. Check it and try again.';
