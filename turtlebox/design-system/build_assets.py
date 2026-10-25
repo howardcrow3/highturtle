@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """Generate logo SVGs, icons and the social image from the turtle mark + fonts. Run after build.py."""
-import re, pathlib, asyncio, base64
+import re, pathlib, asyncio, base64, os
 from fontTools.ttLib import TTFont
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
 HERE = pathlib.Path(__file__).parent
+# Brand parameters: Turtlebox by default; High Turtle runs it with BRAND_* set (see build_highturtle.py).
+NAME = os.environ.get("BRAND_NAME", "Turtlebox")
+HEAD = os.environ.get("BRAND_HEAD", "Small AI apps that each do one job.")
+DOMAIN = os.environ.get("BRAND_DOMAIN", "turtlebox.studio")
+OUT = pathlib.Path(os.environ.get("BRAND_OUT", str(HERE)))
 INK, IVORY, CHAR = "#1c1c1c", "#f5f0e7", "#1c1c1c"
 mark_src = (HERE.parent.parent / "assets" / "mark.svg").read_text()
 mark_d = re.search(r' d="([^"]+)"', mark_src).group(1)
@@ -24,25 +29,26 @@ asc = font["hhea"].ascent / upm
 def svg(w, h, body, bg=None):
     r = f'<rect width="{w}" height="{h}" fill="{bg}"/>' if bg else ""
     return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {w:g} {h:g}" width="{w:g}" height="{h:g}">{r}{body}</svg>\n'
-def write(p, s): (HERE / p).write_text(s)
+def write(p, s):
+    f = OUT / p; f.parent.mkdir(parents=True, exist_ok=True); f.write_text(s)
 
 for suffix, fill in (("", INK), ("-reversed", IVORY)):
     # mark alone
     write(f"assets/Logo/mark{suffix}.svg", svg(MW, MH, f'<path fill="{fill}" fill-rule="evenodd" d="{mark_d}"/>'))
     # wordmark alone (26px type, scaled up 4x for a usable viewBox)
-    size = 104; wd, ww = word_path("Turtlebox", size, 0, size * 0.78)
+    size = 104; wd, ww = word_path(NAME, size, 0, size * 0.78)
     write(f"assets/Logo/wordmark{suffix}.svg", svg(round(ww, 1), size, f'<path fill="{fill}" d="{wd}"/>'))
     # horizontal lockup: mark 32px high, 12px gap, 26px type -> scale x(100/32)
     k = 100 / 32; mh = 32 * k; mw = MW * mh / MH; gap = 12 * k; tsize = 26 * k
-    wd, ww = word_path("Turtlebox", tsize, mw + gap, mh / 2 + tsize * 0.3)
+    wd, ww = word_path(NAME, tsize, mw + gap, mh / 2 + tsize * 0.3)
     w = ww; 
     body = (f'<g transform="scale({mh/MH:.5f})"><path fill="{fill}" fill-rule="evenodd" d="{mark_d}"/></g>'
             f'<path fill="{fill}" d="{wd}"/>')
     write(f"assets/Logo/logo-horizontal{suffix}.svg", svg(round(w, 1), round(mh, 1), body))
     # stacked lockup
-    tsize = 120; _, tw = word_path("Turtlebox", tsize, 0, 0)
+    tsize = 120; _, tw = word_path(NAME, tsize, 0, 0)
     W = tw; mkw = W * 0.5; mkh = mkw * MH / MW; gapv = tsize * 0.45
-    wd, _ = word_path("Turtlebox", tsize, 0, mkh + gapv + tsize * 0.7)
+    wd, _ = word_path(NAME, tsize, 0, mkh + gapv + tsize * 0.7)
     body = (f'<g transform="translate({(W-mkw)/2:.1f} 0) scale({mkw/MW:.5f})"><path fill="{fill}" fill-rule="evenodd" d="{mark_d}"/></g>'
             f'<path fill="{fill}" d="{wd}"/>')
     write(f"assets/Logo/logo-stacked{suffix}.svg", svg(round(W, 1), round(mkh + gapv + tsize * 0.95, 1), body))
@@ -69,18 +75,18 @@ social = f"""<style>{fontcss}*{{margin:0;box-sizing:border-box}}body{{width:1200
 h1{{position:absolute;left:96px;top:236px;width:900px;font:300 104px/0.98 "Cormorant Garamond";letter-spacing:-0.03em}}
 .u{{position:absolute;left:96px;bottom:92px;font:500 15px/1 Inter;letter-spacing:.3em;text-transform:uppercase}}
 .u i{{display:inline-block;width:10px;height:10px;border-radius:50%;background:#d4a853;margin-right:14px}}</style>
-<div class=b></div><svg class=m viewBox="0 0 {MW} {MH}"><path fill="{INK}" fill-rule="evenodd" d="{mark_d}"/></svg><div class=n>Turtlebox</div>
-<h1>Small AI apps that each do one job.</h1><div class=u><i></i>turtlebox.studio</div>"""
-(HERE / "_social.html").write_text(social)
+<div class=b></div><svg class=m viewBox="0 0 {MW} {MH}"><path fill="{INK}" fill-rule="evenodd" d="{mark_d}"/></svg><div class=n>{NAME}</div>
+<h1>{HEAD}</h1><div class=u><i></i>{DOMAIN}</div>"""
+(OUT / "_social.html").write_text(social)
 from playwright.async_api import async_playwright
 async def shoot():
     async with async_playwright() as p:
         b = await p.chromium.launch()
-        pg = await b.new_page(viewport={"width": 1200, "height": 630}); await pg.goto(f"file://{HERE}/_social.html"); await pg.evaluate("document.fonts.ready")
-        await pg.screenshot(path=str(HERE / "assets/Social/og.png"))
+        pg = await b.new_page(viewport={"width": 1200, "height": 630}); await pg.goto(f"file://{OUT}/_social.html"); await pg.evaluate("document.fonts.ready")
+        await pg.screenshot(path=str(OUT / "assets/Social/og.png"))
         for name, f in (("app-icon-1024", "app-icon-light.svg"), ("apple-touch-icon", "app-icon-light.svg")):
             sz = 180 if "apple" in name else 1024
-            pg = await b.new_page(viewport={"width": sz, "height": sz}); await pg.goto(f"file://{HERE}/assets/Icons/{f}"); await pg.set_viewport_size({"width": sz, "height": sz}); await pg.evaluate(f"document.documentElement.setAttribute('width','{sz}');document.documentElement.setAttribute('height','{sz}')"); await pg.screenshot(path=str(HERE / f"assets/Icons/{name}.png"))
+            pg = await b.new_page(viewport={"width": sz, "height": sz}); await pg.goto(f"file://{OUT}/assets/Icons/{f}"); await pg.set_viewport_size({"width": sz, "height": sz}); await pg.evaluate(f"document.documentElement.setAttribute('width','{sz}');document.documentElement.setAttribute('height','{sz}')"); await pg.screenshot(path=str(OUT / f"assets/Icons/{name}.png"))
         await b.close()
-asyncio.run(shoot()); (HERE / "_social.html").unlink()
+asyncio.run(shoot()); (OUT / "_social.html").unlink()
 print("assets built")

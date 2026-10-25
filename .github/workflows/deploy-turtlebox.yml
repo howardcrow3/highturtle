@@ -39,7 +39,7 @@ jobs:
         run: |
           aws s3 sync turtlebox "s3://${{ env.S3_BUCKET }}" \
             --delete \
-            --exclude "assets/*" --exclude "build.py" --exclude "apps.json" \
+            --exclude "assets/*" --exclude "build.py" --exclude "apps.json" --exclude "design-system/*" \
             --cache-control "no-cache"
       - name: Update the downloads function
         run: |
