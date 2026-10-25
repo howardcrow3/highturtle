@@ -12,14 +12,14 @@ DOMAIN = os.environ.get("BRAND_DOMAIN", "turtlebox.studio")
 MARKC = os.environ.get("BRAND_MARK", "#1c1c1c")      # mark colour on icons and the social image
 GROUND = os.environ.get("BRAND_GROUND", "#f5f0e7")    # their ground
 TEXTC = os.environ.get("BRAND_TEXT", "#1c1c1c")       # headline colour on the social image
-HSIZE = os.environ.get("BRAND_HEAD_SIZE", "104")      # social headline size in px
+HSIZE = os.environ.get("BRAND_HEAD_SIZE", "84")      # social headline size in px
 OUT = pathlib.Path(os.environ.get("BRAND_OUT", str(HERE)))
 INK, IVORY, CHAR = "#1c1c1c", "#f5f0e7", "#1c1c1c"
 mark_src = (HERE.parent.parent / "assets" / "mark.svg").read_text()
 mark_d = re.search(r' d="([^"]+)"', mark_src).group(1)
 MW, MH = 426, 225
 
-font = TTFont(HERE / "fonts" / "CormorantGaramond-SemiBold.woff2")
+font = TTFont(HERE / "fonts" / "Inter-Medium.woff2")
 gs, cmap, upm = font.getGlyphSet(), font.getBestCmap(), font["head"].unitsPerEm
 def word_path(text, size, x0=0, baseline=0):
     s = size / upm; x = x0; d = []
@@ -71,12 +71,11 @@ fav = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {MW} {MW}"><style>
 write("assets/Icons/favicon.svg", fav)
 
 # Social image + PNG icons rendered with the real fonts
-fontcss = "".join(f'@font-face{{font-family:"Cormorant Garamond";src:url(data:font/woff2;base64,{base64.b64encode((HERE/"fonts"/f).read_bytes()).decode()});font-weight:{wt}}}' for f, wt in (("CormorantGaramond-Light.woff2", 300), ("CormorantGaramond-SemiBold.woff2", 600))) + \
-    f'@font-face{{font-family:Inter;src:url(data:font/woff2;base64,{base64.b64encode((HERE/"fonts"/"Inter-Medium.woff2").read_bytes()).decode()});font-weight:500}}'
+fontcss = "".join(f'@font-face{{font-family:Inter;src:url(data:font/woff2;base64,{base64.b64encode((HERE/"fonts"/f).read_bytes()).decode()});font-weight:{wt}}}' for f, wt in (("Inter-Light.woff2", 300), ("Inter-Medium.woff2", 500)))
 social = f"""<style>{fontcss}*{{margin:0;box-sizing:border-box}}body{{width:1200px;height:630px;background:{GROUND};color:{TEXTC};position:relative;overflow:hidden}}
 .b{{position:absolute;inset:48px;border:1px solid #d9d2c5}}.m{{position:absolute;left:96px;top:92px;height:64px}}
-.n{{position:absolute;left:240px;top:96px;font:600 52px/1 "Cormorant Garamond"}}
-h1{{position:absolute;left:96px;top:236px;width:1000px;font:300 {HSIZE}px/0.98 "Cormorant Garamond";letter-spacing:-0.03em}}
+.n{{position:absolute;left:240px;top:96px;font:500 44px/1 Inter;letter-spacing:-0.02em}}
+h1{{position:absolute;left:96px;top:236px;width:1000px;font:300 {HSIZE}px/1.02 Inter;letter-spacing:-0.04em}}
 .u{{position:absolute;left:96px;bottom:92px;font:500 15px/1 Inter;letter-spacing:.3em;text-transform:uppercase}}
 .u i{{display:inline-block;width:10px;height:10px;border-radius:50%;background:#d4a853;margin-right:14px}}</style>
 <div class=b></div><svg class=m viewBox="0 0 {MW} {MH}"><path fill="{MARKC}" fill-rule="evenodd" d="{mark_d}"/></svg><div class=n>{NAME}</div>

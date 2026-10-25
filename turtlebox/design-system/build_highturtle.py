@@ -19,7 +19,7 @@ for f in (HERE / "fonts").iterdir(): shutil.copy(f, A / "fonts" / f.name)
 with tempfile.TemporaryDirectory() as tmp:
     env = dict(os.environ, BRAND_NAME="High Turtle", BRAND_DOMAIN="highturtle.com", BRAND_OUT=tmp,
                BRAND_HEAD="Everything it takes to make a good AI product.",
-               BRAND_MARK="#d4a853", BRAND_GROUND="#1c1c1c", BRAND_TEXT="#f5f0e7", BRAND_HEAD_SIZE="84")
+               BRAND_MARK="#d4a853", BRAND_GROUND="#1c1c1c", BRAND_TEXT="#f5f0e7", BRAND_HEAD_SIZE="72")
     subprocess.run([sys.executable, "-I", str(HERE / "build_assets.py")], check=True, env=env)
     T = pathlib.Path(tmp) / "assets"
     for n in ("logo-horizontal", "logo-stacked", "wordmark"):
