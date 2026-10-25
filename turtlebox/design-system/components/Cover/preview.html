@@ -1,0 +1,27 @@
+<!-- @dsCard height=336 -->
+<style>
+html,body{margin:0;background:var(--paper)}
+.cover{position:relative;width:960px;height:336px;background:var(--paper);overflow:hidden}
+svg{position:absolute;left:480px;top:0;width:480px;height:336px}
+.b-ink{fill:var(--ink)}.b-stone{fill:var(--g-stone)}.b-warm{fill:var(--g-warm-white)}.b-gold{fill:var(--accent)}.b-ash{fill:var(--g-ash)}
+.t{fill:none;stroke-width:2}.t-dark{stroke:var(--g-charcoal)}.t-cut{stroke:var(--paper)}
+.txt{position:absolute;left:var(--g-space-xl);bottom:var(--g-space-xl);width:400px}
+.name{margin:0;font-family:var(--font-head);font-weight:600;font-size:84px;line-height:.95;letter-spacing:.005em;color:var(--ink)}
+.tag{margin:var(--g-space-sm) 0 0;font-family:var(--font-body);font-weight:300;font-size:14px;line-height:20px;color:var(--body)}
+</style>
+<div class="cover">
+<svg viewBox="0 0 480 336" aria-hidden="true">
+<!-- Derivation
+ blocks: ink 192x336 slab bleeding off top and right; stone 288x144; warm-white 144x192 bleeding off the bottom; gold 144x96; ash 144x96. Sides are multiples of space-xl (48px); corners are radius-none.
+ arrangement: a flush modular grid with one tall ink slab, so charcoal leads and gold stays small. Palette tokens that do not change between themes carry the tints, so no block vanishes in dark.
+ pattern: the film-frame corner marks from the app card, built from 24px rules at a 16px inset (space-sm), cut out of the slab in the ground color and drawn in charcoal on the stone block. Row: a literal motif, because the corners are the one shape the system owns.
+ steps and radii: space-xl for the block unit and the name inset, space-sm under the name, no radius. -->
+<rect class="b-ink" x="288" y="0" width="192" height="336"/>
+<rect class="b-stone" x="0" y="0" width="288" height="144"/>
+<rect class="b-warm" x="0" y="144" width="144" height="192"/>
+<rect class="b-gold" x="144" y="144" width="144" height="96"/>
+<rect class="b-ash" x="144" y="240" width="144" height="96"/>
+<path class="t t-dark" d="M16 40V16H40"/><path class="t t-dark" d="M272 40V16H248"/><path class="t t-dark" d="M16 104V128H40"/><path class="t t-dark" d="M272 104V128H248"/><path class="t t-cut" d="M304 40V16H328"/><path class="t t-cut" d="M464 40V16H440"/><path class="t t-cut" d="M304 296V320H328"/><path class="t t-cut" d="M464 296V320H440"/>
+</svg>
+<div class="txt"><p class="name">Turtlebox</p><p class="tag">Small AI apps that each do one job.</p></div>
+</div>

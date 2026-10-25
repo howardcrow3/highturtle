@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb4"
+V = "tb6"
 
 def page(title, desc, body, path, robots=True, nav_current=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
@@ -160,6 +160,6 @@ w("download-problem.html", page("Download problem | Turtlebox", "Download proble
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
 w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n</urlset>\n')
-fav = open(os.path.join(HERE, "..", "favicon.svg")).read()
+fav = open(os.path.join(HERE, "design-system", "assets", "Icons", "favicon.svg")).read()
 w("favicon.svg", fav)
 print("built")
