@@ -18,6 +18,7 @@ jobs:
           echo "::notice title=ses::$acct"
           L=$(aws logs filter-log-events --log-group-name /aws/lambda/highturtle-subscribe --start-time $(( ($(date +%s) - 172800) * 1000 )) --filter-pattern '"error"' --query 'events[-6:].message' --output text 2>&1 | head -c 1500 | tr '\n\t' '  ')
           echo "::notice title=logs::$L"
+          aws dynamodb delete-item --table-name highturtle-pending --key "{\"pk\":{\"S\":\"t#$(printf %s diag-test@example.com | sha256sum | cut -d' ' -f1)\"}}"
           code=$(curl -s -o /tmp/r.txt -w '%{http_code}' -X POST -H 'Accept: application/json' -d 'email=diag-test@example.com' https://highturtle.com/api/subscribe)
           echo "::notice title=post::$code $(head -c 200 /tmp/r.txt)"
           page=$(curl -s https://highturtle.com/ | grep -o '<form[^>]*>' | head -2)
