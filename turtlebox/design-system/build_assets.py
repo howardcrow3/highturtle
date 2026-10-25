@@ -9,6 +9,10 @@ HERE = pathlib.Path(__file__).parent
 NAME = os.environ.get("BRAND_NAME", "Turtlebox")
 HEAD = os.environ.get("BRAND_HEAD", "Small AI apps that each do one job.")
 DOMAIN = os.environ.get("BRAND_DOMAIN", "turtlebox.studio")
+MARKC = os.environ.get("BRAND_MARK", "#1c1c1c")      # mark colour on icons and the social image
+GROUND = os.environ.get("BRAND_GROUND", "#f5f0e7")    # their ground
+TEXTC = os.environ.get("BRAND_TEXT", "#1c1c1c")       # headline colour on the social image
+HSIZE = os.environ.get("BRAND_HEAD_SIZE", "104")      # social headline size in px
 OUT = pathlib.Path(os.environ.get("BRAND_OUT", str(HERE)))
 INK, IVORY, CHAR = "#1c1c1c", "#f5f0e7", "#1c1c1c"
 mark_src = (HERE.parent.parent / "assets" / "mark.svg").read_text()
@@ -58,24 +62,24 @@ def icon_svg(size, bg, fill, rx=0, inset=0.62):
     mw = size * inset; mh = mw * MH / MW; x = (size - mw) / 2; y = (size - mh) / 2
     r = f'<rect width="{size}" height="{size}" rx="{rx}" fill="{bg}"/>'
     return svg(size, size, f'{r}<g transform="translate({x:.1f} {y:.1f}) scale({mw/MW:.5f})"><path fill="{fill}" fill-rule="evenodd" d="{mark_d}"/></g>')
-write("assets/Icons/app-icon-light.svg", icon_svg(1024, IVORY, INK))
+write("assets/Icons/app-icon-light.svg", icon_svg(1024, GROUND, MARKC))
 write("assets/Icons/app-icon-dark.svg", icon_svg(1024, CHAR, IVORY))
-write("assets/Icons/app-icon-rounded.svg", icon_svg(1024, IVORY, INK, rx=225))
+write("assets/Icons/app-icon-rounded.svg", icon_svg(1024, GROUND, MARKC, rx=225))
 # Adaptive favicon: transparent ground, ink follows the colour scheme
-fav = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {MW} {MW}"><style>path{{fill:{INK}}}@media (prefers-color-scheme:dark){{path{{fill:{IVORY}}}}}</style>'
+fav = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {MW} {MW}"><style>path{{fill:{MARKC}}}@media (prefers-color-scheme:dark){{path{{fill:{MARKC if MARKC != INK else IVORY}}}}}</style>'
        f'<g transform="translate(0 {(MW-MH)/2})"><path fill-rule="evenodd" d="{mark_d}"/></g></svg>\n')
 write("assets/Icons/favicon.svg", fav)
 
 # Social image + PNG icons rendered with the real fonts
 fontcss = "".join(f'@font-face{{font-family:"Cormorant Garamond";src:url(data:font/woff2;base64,{base64.b64encode((HERE/"fonts"/f).read_bytes()).decode()});font-weight:{wt}}}' for f, wt in (("CormorantGaramond-Light.woff2", 300), ("CormorantGaramond-SemiBold.woff2", 600))) + \
     f'@font-face{{font-family:Inter;src:url(data:font/woff2;base64,{base64.b64encode((HERE/"fonts"/"Inter-Medium.woff2").read_bytes()).decode()});font-weight:500}}'
-social = f"""<style>{fontcss}*{{margin:0;box-sizing:border-box}}body{{width:1200px;height:630px;background:{IVORY};color:{INK};position:relative;overflow:hidden}}
+social = f"""<style>{fontcss}*{{margin:0;box-sizing:border-box}}body{{width:1200px;height:630px;background:{GROUND};color:{TEXTC};position:relative;overflow:hidden}}
 .b{{position:absolute;inset:48px;border:1px solid #d9d2c5}}.m{{position:absolute;left:96px;top:92px;height:64px}}
 .n{{position:absolute;left:240px;top:96px;font:600 52px/1 "Cormorant Garamond"}}
-h1{{position:absolute;left:96px;top:236px;width:900px;font:300 104px/0.98 "Cormorant Garamond";letter-spacing:-0.03em}}
+h1{{position:absolute;left:96px;top:236px;width:1000px;font:300 {HSIZE}px/0.98 "Cormorant Garamond";letter-spacing:-0.03em}}
 .u{{position:absolute;left:96px;bottom:92px;font:500 15px/1 Inter;letter-spacing:.3em;text-transform:uppercase}}
 .u i{{display:inline-block;width:10px;height:10px;border-radius:50%;background:#d4a853;margin-right:14px}}</style>
-<div class=b></div><svg class=m viewBox="0 0 {MW} {MH}"><path fill="{INK}" fill-rule="evenodd" d="{mark_d}"/></svg><div class=n>{NAME}</div>
+<div class=b></div><svg class=m viewBox="0 0 {MW} {MH}"><path fill="{MARKC}" fill-rule="evenodd" d="{mark_d}"/></svg><div class=n>{NAME}</div>
 <h1>{HEAD}</h1><div class=u><i></i>{DOMAIN}</div>"""
 (OUT / "_social.html").write_text(social)
 from playwright.async_api import async_playwright

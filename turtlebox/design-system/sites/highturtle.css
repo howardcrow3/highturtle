@@ -28,6 +28,8 @@
 }
 
 .brand-name { white-space: nowrap; }
+/* The gold turtle. Gold is 1.9:1 on ivory, so the mark is large and always sits beside the name. */
+.brand-mark { color: var(--accent); }
 .foot-brand { gap: 12px; }
 .foot-brand .brand-mark { height: 28px; }
 .foot-brand .brand-name { font-size: 1.375rem; }
