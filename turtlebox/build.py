@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb2"
+V = "tb3"
 
 def page(title, desc, body, path, robots=True, nav_current=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
@@ -19,8 +19,8 @@ def page(title, desc, body, path, robots=True, nav_current=""):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#f6f6f5" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#131415" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F5F0E7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1C1C1C" media="(prefers-color-scheme: dark)">
   {'' if robots else '<meta name="robots" content="noindex">'}
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(desc)}">
@@ -33,8 +33,8 @@ def page(title, desc, body, path, robots=True, nav_current=""):
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="preload" href="/assets/fonts/Literata-Variable.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="/assets/fonts/Figtree-Variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/CormorantGaramond-Light.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/styles.css?v={V}">
 </head>
 <body>
