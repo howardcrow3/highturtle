@@ -9,18 +9,17 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb6"
+V = "tb7"
 
 def page(title, desc, body, path, robots=True, nav_current=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
     return f"""<!doctype html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#F5F0E7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#1C1C1C" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#F5F0E7">
   {'' if robots else '<meta name="robots" content="noindex">'}
   <title>{html.escape(title)}</title>
   <meta name="description" content="{html.escape(desc)}">
