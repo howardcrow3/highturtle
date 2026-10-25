@@ -44,7 +44,7 @@ Turtlebox builds small AI apps that each do one job. The brand is Grains-derived
 
 ## Using the system
 
-- `tokens.json` is the only source of values. `python3 build.py` writes `tokens.css`, `dist/tailwind.preset.js` and `dist/TurtleboxTokens.swift`, and rebuilds `../assets/styles.css` for the site. `python3 build_assets.py` regenerates the logos, icons and social image.
+- `tokens.json` is the only source of values. `python3 build.py` writes `tokens.css`, `dist/tailwind.preset.js` and `dist/TurtleboxTokens.swift`, and rebuilds `../assets/styles.css` for the site. `python3 build_assets.py` regenerates the logos, icons and social image, and `python3 build_colorways.py` the palette colorways in `assets/Logo/colorways`.
 - Components are plain CSS in `components/bundle.css`. Each component folder says which classes to use and what it expects.
 - Read `logo.md` for clear space and misuse, and `voice.md` for tone and real copy.
 
