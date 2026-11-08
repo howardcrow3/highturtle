@@ -1,0 +1,40 @@
+name: Deploy montoya.ai
+
+# Publishes the montoya/ folder to S3 and clears the CloudFront cache when it changes on main.
+# Run "Montoya hosting setup (one time)" first.
+
+on:
+  push:
+    branches: [main]
+    paths: ["montoya/**", ".github/workflows/deploy-montoya.yml"]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-montoya
+  cancel-in-progress: false
+
+env:
+  AWS_ROLE_ARN: arn:aws:iam::022621302198:role/montoya-github-deploy
+  AWS_REGION: us-east-2
+  S3_BUCKET: montoya.ai
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Upload the site (always revalidated)
+        run: aws s3 sync montoya "s3://${{ env.S3_BUCKET }}" --delete --cache-control "no-cache"
+      - name: Clear the CloudFront cache
+        run: |
+          ID=$(aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items!=null && contains(Aliases.Items,'montoya.ai')].Id | [0]" --output text)
+          aws cloudfront create-invalidation --distribution-id "$ID" --paths "/*"

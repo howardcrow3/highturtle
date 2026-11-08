@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Montoya.ai</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@300;400;500&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+  /* Layout: one quiet column, left-aligned, set like the cover sheet of a file. The only risk is the redaction bars. */
+  :root {
+    --bg: #eceeef;
+    --fg: #14181c;
+    --muted: #4d565d;
+    --rule: #cdd2d6;
+    --bar: #14181c;
+    --signal: #1f6f63;
+    --display: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --body: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0e1215; --fg: #e5e9eb; --muted: #98a2a9; --rule: #252c31; --bar: #e5e9eb; --signal: #5db3a4;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1215; --fg: #e5e9eb; --muted: #98a2a9; --rule: #252c31; --bar: #e5e9eb; --signal: #5db3a4;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-weight: 300;
+    font-size: 1.0625rem;
+    line-height: 1.65;
+    padding-block: 2rem 2.5rem;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 44rem; margin-inline: auto; display: flex; flex-direction: column; gap: clamp(3.5rem, 11vh, 7rem); }
+
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+  .name { font-family: var(--display); font-weight: 500; font-size: 1.125rem; letter-spacing: -0.01em; }
+  .name span { color: var(--muted); font-weight: 400; }
+  .tag { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); display: inline-flex; align-items: center; gap: 0.6rem; }
+  .tag i { width: 7px; height: 7px; border-radius: 50%; background: var(--signal); display: inline-block; }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 300;
+    font-size: clamp(2.25rem, 6.2vw, 3.75rem);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
+    margin: 0 0 1.75rem;
+    text-wrap: balance;
+    max-width: 14em;
+  }
+  .lede { margin: 0; max-width: 32rem; color: var(--muted); text-wrap: pretty; }
+
+  dl { margin: 0; border-top: 1px solid var(--rule); }
+  .row { display: grid; grid-template-columns: 8rem minmax(0, 1fr); gap: 1rem; padding-block: 0.9rem; border-bottom: 1px solid var(--rule); align-items: center; }
+  dt { font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  dd { margin: 0; font-size: 1rem; min-width: 0; }
+  .bar { display: inline-block; height: 0.9em; background: var(--bar); vertical-align: -0.1em; border-radius: 1px; max-width: 100%; }
+
+  footer { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; font-size: 0.875rem; color: var(--muted); }
+
+  :focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+  @media (max-width: 480px) { .row { grid-template-columns: 1fr; gap: 0.25rem; } }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <header>
+    <div class="name">Montoya<span>.ai</span></div>
+    <div class="tag"><i aria-hidden="true"></i>Early stage</div>
+  </header>
+
+  <main>
+    <h1>Montoya is an early-stage AI company.</h1>
+    <p class="lede">We are building something and are not ready to describe it. When there is more to say, it will be said here.</p>
+  </main>
+
+  <section aria-label="File">
+    <dl>
+      <div class="row"><dt>Stage</dt><dd>Early</dd></div>
+      <div class="row"><dt>Working on</dt><dd><span class="bar" style="width:11ch" role="img" aria-label="Not disclosed"></span></dd></div>
+      <div class="row"><dt>For</dt><dd><span class="bar" style="width:7ch" role="img" aria-label="Not disclosed"></span></dd></div>
+      <div class="row"><dt>Team</dt><dd><span class="bar" style="width:9ch" role="img" aria-label="Not disclosed"></span></dd></div>
+      <div class="row"><dt>Release</dt><dd>When it is ready</dd></div>
+    </dl>
+  </section>
+
+  <footer>
+    <span>&copy; 2026 Montoya.ai</span>
+    <span>We are not taking enquiries through this site yet.</span>
+  </footer>
+</div>
+</body>
+</html>

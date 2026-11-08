@@ -43,11 +43,13 @@ jobs:
           aws s3 sync . "s3://${{ env.S3_BUCKET }}" \
             --delete \
             --exclude ".git/*" --exclude ".github/*" --exclude "assets/*" \
-            --exclude "README.md" --exclude "infra/*" --exclude "lambda/*" --exclude "issues/*" --exclude "turtlebox/*" \
+            --exclude "README.md" --exclude "infra/*" --exclude "lambda/*" --exclude "issues/*" --exclude "turtlebox/*" --exclude "montoya/*" \
             --cache-control "no-cache"
 
       - name: Remove folders that belong to other sites
-        run: aws s3 rm "s3://${{ env.S3_BUCKET }}/turtlebox/" --recursive
+        run: |
+          aws s3 rm "s3://${{ env.S3_BUCKET }}/turtlebox/" --recursive
+          aws s3 rm "s3://${{ env.S3_BUCKET }}/montoya/" --recursive
 
       - name: Update the subscription function
         run: |
