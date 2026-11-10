@@ -70,11 +70,7 @@ Code: `lambda/downloads.py`, set up by `infra/setup-downloads.sh`. Pushes to `la
 
 ## Turtlebox mail and extra domains
 
-- **info@turtlebox.studio** receives mail through SES in us-east-2 and forwards it to the owner's inbox
-  (`FORWARD_TO` in `infra/setup-turtlebox-mail.sh`). Forwards arrive as "Sender via Turtlebox" from
-  info@turtlebox.studio, and replying goes to the original sender. Raw messages are kept in the
-  `turtlebox-inbound-mail-<account>` bucket for 30 days. Spam and virus hits are not forwarded.
-  Setup: run the "Turtlebox mail forwarding setup" workflow (safe to re-run).
+- **info@turtlebox.studio:** turtlebox.studio's MX points at MXroute, so this mailbox (or a forward) is set up in the MXroute panel, not AWS.
 - **turtlebox.app, .io and .co** (apex and www) 301-redirect to turtlebox.studio, keeping the path,
   through their own CloudFront distribution and a CloudFront Function. Setup: run the
   "Turtlebox domain redirects setup" workflow. A domain whose apex or www already has records is skipped.
