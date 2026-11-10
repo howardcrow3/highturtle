@@ -1,0 +1,44 @@
+name: Turtlebox mail forwarding setup (one time)
+
+# Makes info@turtlebox.studio receive mail and forwards it to the owner's inbox.
+# Safe to re-run. Uses the temporary AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Run setup
+        shell: bash
+        run: |
+          set -o pipefail
+          bash infra/setup-turtlebox-mail.sh 2>&1 | tee /tmp/log.txt
+      - name: Send a test message to info@ and check it was forwarded
+        shell: bash
+        run: |
+          sleep 20
+          START=$(($(date +%s) * 1000))
+          aws sesv2 send-email --from-email-address "Turtlebox setup <downloads@turtlebox.studio>" \
+            --destination ToAddresses=info@turtlebox.studio \
+            --content '{"Simple":{"Subject":{"Data":"[Test] info@turtlebox.studio forwarding works"},"Body":{"Text":{"Data":"This is a test sent during setup. Mail to info@turtlebox.studio now reaches this inbox. Replying goes to the original sender."}}}}' >/dev/null
+          for i in $(seq 1 18); do
+            sleep 10
+            hits=$(aws logs filter-log-events --log-group-name /aws/lambda/turtlebox-mail-forward --start-time $START \
+              --filter-pattern '"forwarded"' --query 'length(events)' --output text 2>/dev/null || echo 0)
+            if [ "$hits" != "0" ]; then echo "::notice title=smoke::test message forwarded"; exit 0; fi
+          done
+          echo "::error title=smoke::no forward logged within 3 minutes"
+          aws logs filter-log-events --log-group-name /aws/lambda/turtlebox-mail-forward --start-time $START --query 'events[].message' --output text 2>/dev/null | tail -20 || true
+          exit 1

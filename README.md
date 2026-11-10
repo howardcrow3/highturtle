@@ -67,3 +67,14 @@ Apps for download live in the private S3 bucket `turtlebox-downloads` as `<app-s
 3. Someone enters their address, gets an email from `downloads@turtlebox.studio` with a link (valid 7 days), and clicking it adds them to the High Turtle list and starts a 5-minute download. People who unsubscribed earlier are not re-added.
 
 Code: `lambda/downloads.py`, set up by `infra/setup-downloads.sh`. Pushes to `lambda/downloads.py` or `turtlebox/` deploy through the `Deploy turtlebox.studio` workflow.
+
+## Turtlebox mail and extra domains
+
+- **info@turtlebox.studio** receives mail through SES in us-east-2 and forwards it to the owner's inbox
+  (`FORWARD_TO` in `infra/setup-turtlebox-mail.sh`). Forwards arrive as "Sender via Turtlebox" from
+  info@turtlebox.studio, and replying goes to the original sender. Raw messages are kept in the
+  `turtlebox-inbound-mail-<account>` bucket for 30 days. Spam and virus hits are not forwarded.
+  Setup: run the "Turtlebox mail forwarding setup" workflow (safe to re-run).
+- **turtlebox.app, .io and .co** (apex and www) 301-redirect to turtlebox.studio, keeping the path,
+  through their own CloudFront distribution and a CloudFront Function. Setup: run the
+  "Turtlebox domain redirects setup" workflow. A domain whose apex or www already has records is skipped.
