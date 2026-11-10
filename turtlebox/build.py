@@ -47,6 +47,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
     </a>
     <nav aria-label="Main">
       <a href="/apps/"{cur("apps")}>Apps</a>
+      <a href="/backer/"{cur("backer")}>Backer</a>
       <a href="https://highturtle.com">High Turtle</a>
     </nav>
   </div>
@@ -80,7 +81,12 @@ def dl_form(a):
 def card(a):
     live = a.get("status", "").lower() == "live" and a.get("url")
     cls = "status status-live" if live else ("status status-testing" if a.get("status", "").lower() == "in testing" else "status")
-    action = f'<div class="action"><a class="btn btn-small" href="{html.escape(a["url"])}">Open {html.escape(a["name"])}</a></div>' if live else ""
+    if live:
+        action = f'<div class="action"><a class="btn btn-small" href="{html.escape(a["url"])}">Open {html.escape(a["name"])}</a></div>'
+    elif a.get("url"):
+        action = f'<div class="action"><a class="btn btn-small" href="{html.escape(a["url"])}">Learn about {html.escape(a["name"])}</a></div>'
+    else:
+        action = ""
     form = dl_form(a) if a.get("download") else ""
     return f"""      <li class="app-card">
         <h3>{html.escape(a["name"])}</h3>
@@ -116,8 +122,17 @@ home = f"""  <section class="hero">
   </section>
   <section class="section">
     <div class="wrap">
+      <h2>Backer</h2>
+      <p class="intro">Backer is a desktop app that backs up your photos and videos from a Mac or PC to a NAS you own. No cloud, no subscription.</p>
+      <div class="cta-row">
+        <a class="btn" href="/backer/">See Backer</a>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="wrap">
       <h2>On the way</h2>
-      <p class="intro">These are the first apps we are working on. None are open yet.</p>
+      <p class="intro">These are the apps we are working on. Backer is in testing; the browser apps are not open yet.</p>
       {grid}
     </div>
   </section>"""
@@ -158,7 +173,7 @@ w("download-sent.html", page("Check your inbox | Turtlebox", "Download link sent
 w("download-problem.html", page("Download problem | Turtlebox", "Download problem.", prob, "/download-problem.html", robots=False))
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
-w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n</urlset>\n')
+w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n</urlset>\n')
 fav = open(os.path.join(HERE, "design-system", "assets", "Icons", "favicon.svg")).read()
 w("favicon.svg", fav)
 print("built")

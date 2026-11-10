@@ -1,5 +1,12 @@
 [
   {
+    "slug": "backer",
+    "name": "Backer",
+    "status": "In testing",
+    "url": "/backer/",
+    "description": "A desktop app that backs up your photos and videos from a Mac or PC to a NAS you own, on a schedule or on demand."
+  },
+  {
     "slug": "opportunity-sizer",
     "name": "Opportunity sizer",
     "status": "Planned",
