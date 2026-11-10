@@ -85,8 +85,8 @@ INDEX = '''
   <main id="main">
     <div class="hero" id="download">
       <p class="hero-app"><svg aria-hidden="true"><use href="#icon"/></svg>Backer, a Turtlebox app</p>
-      <h1>Back up your folders to your NAS.</h1>
-      <p class="lede">Backer copies folders from a Mac or PC to a Synology or other NAS, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>
+      <h1>Back up your photos and videos.</h1>
+      <p class="lede">Backer copies your photo and video folders from a Mac or PC to a Synology or other NAS you own, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>
 
       <div class="downloads">
         <div class="dl dl-mac">
@@ -113,10 +113,10 @@ INDEX = '''
     <section id="features" aria-labelledby="features-h">
       <h2 id="features-h">What Backer does</h2>
       <ul class="features">
-        <li><h3>Scheduled or on demand</h3><p>Set a schedule and forget it, or run a backup yourself when you want one.</p></li>
-        <li><h3>Handles <span class="mono">100,000+</span> files</h3><p>Built for big folders such as photo libraries and project archives.</p></li>
-        <li><h3>Verify</h3><p>Compares what is on the NAS with the source, so you know the copy matches.</p></li>
-        <li><h3>Asks before deleting</h3><p>Backer never removes anything from the NAS without asking you first.</p></li>
+        <li><h3>Scheduled or on demand</h3><p>Set a schedule and forget it, or back up new photos and videos yourself when you want to.</p></li>
+        <li><h3>Big libraries</h3><p>Handles <span class="mono">100,000+</span> files, so years of photos and video footage are fine.</p></li>
+        <li><h3>Verify</h3><p>Compares what is on the NAS with your originals, so you know every photo and video was copied intact.</p></li>
+        <li><h3>Asks before deleting</h3><p>Backer never removes a photo or video from the NAS without asking you first.</p></li>
         <li><h3>Optional AI assistant integration</h3><p>A local MCP server lets an AI assistant work with Backer. It is off by default.</p></li>
         <li><h3>Stays out of the way</h3><p>Lives in the menu bar on a Mac and in the system tray on Windows.</p></li>
       </ul>
@@ -318,7 +318,7 @@ SENT = '''
   </main>'''
 
 PAGES = [  # file, title, description, body, extra script, noindex
-    ("index.html", "Backer NAS backup", "Backer backs up folders on a Mac or PC to a NAS on a schedule or on demand. It never deletes anything on the NAS without asking. No cloud, no subscription.", INDEX, VERSION_JS, False),
+    ("index.html", "Backer photo and video backup", "Backer backs up your photos and videos from a Mac or PC to a NAS on a schedule or on demand. It never deletes anything on the NAS without asking. No cloud, no subscription.", INDEX, VERSION_JS, False),
     ("thanks.html", "Thanks for buying Backer", "", THANKS, "", True),
     ("report.html", "Report an issue with Backer", "Tell us what went wrong with Backer.", REPORT, "", False),
     ("report-sent.html", "Report received", "", SENT, "", True),
