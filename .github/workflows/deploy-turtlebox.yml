@@ -5,7 +5,7 @@ name: Deploy turtlebox.studio
 on:
   push:
     branches: [main]
-    paths: ["turtlebox/**", "lambda/downloads.py", ".github/workflows/deploy-turtlebox.yml"]
+    paths: ["turtlebox/**", "backer/**", "lambda/downloads.py", "lambda/report.py", ".github/workflows/deploy-turtlebox.yml"]
   workflow_dispatch:
 
 permissions:
@@ -31,6 +31,8 @@ jobs:
         with:
           role-to-assume: ${{ env.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+      - name: Build Backer pages (skipped until backer/config.json is complete)
+        run: python3 backer/build.py
       - name: Upload assets
         run: |
           aws s3 sync turtlebox/assets "s3://${{ env.S3_BUCKET }}/assets" \
@@ -45,6 +47,12 @@ jobs:
         run: |
           (cd lambda && zip -q ../downloads.zip downloads.py)
           aws lambda update-function-code --function-name turtlebox-downloads --zip-file fileb://downloads.zip >/dev/null
+      - name: Update the report function (if it exists)
+        run: |
+          if aws lambda get-function --function-name backer-report >/dev/null 2>&1; then
+            (cd lambda && zip -q ../report.zip report.py)
+            aws lambda update-function-code --function-name backer-report --zip-file fileb://report.zip >/dev/null
+          fi
 
       - name: Clear the CloudFront cache
         run: |

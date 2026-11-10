@@ -1,0 +1,35 @@
+name: Backer report endpoint setup (one time)
+
+# Creates the table, role, function and CloudFront route for /api/report. Safe to re-run.
+# Needs a repository variable REPORT_REPO (owner/name of the private issues repo).
+# Uses the temporary AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets; delete them after setup.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      REPORT_REPO: ${{ vars.REPORT_REPO }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Run setup
+        shell: bash
+        run: |
+          set -o pipefail
+          bash infra/setup-report.sh 2>&1 | tee /tmp/log.txt
+      - name: Smoke test
+        if: always()
+        run: |
+          a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"summary":"","details":""}' https://turtlebox.studio/api/report || true)
+          echo "::notice title=smoke::empty-report=$a (400 expected)"
