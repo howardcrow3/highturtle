@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the Backer pages that live at turtlebox.studio/backer/.
 
-  python3 backer/build.py                 build into turtlebox/backer/ (needs every value in backer/config.json)
+  python3 backer/build.py                 build into turtlebox/backer/ (values missing from backer/config.json show as 'Coming soon')
   python3 backer/build.py --artifact DIR  write review copies into DIR (placeholders left visible, Google Fonts, inline CSS)
 
 Config values:
@@ -65,7 +65,7 @@ VERSION_JS = '''<script>
 /* Show the current version from latest.json. If the request fails, the version stays hidden. */
 (function () {
   var base = '{{BASE_URL}}';
-  if (!window.fetch || base.indexOf('{{') === 0) return;
+  if (!window.fetch || !base || base.indexOf('{{') === 0) return;
   var ctl = window.AbortController ? new AbortController() : null;
   var timer = ctl ? setTimeout(function () { ctl.abort(); }, 4000) : null;
   fetch(base + '/latest.json', { cache: 'no-cache', signal: ctl ? ctl.signal : undefined })
@@ -368,6 +368,16 @@ def render(cfg, artifact):
     return out
 
 def fill(s, cfg):
+    """Fill placeholders. Anything not configured yet is shown honestly as "Coming soon" instead of a dead link."""
+    soon = '<span class="btn" aria-disabled="true" style="opacity:.6;cursor:default">Coming soon</span>'
+    if not cfg["base_url"].strip():
+        s = re.sub(r'<a class="btn" href="\{\{BASE_URL\}\}/download/[^"]*">.*?</a>', soon, s)
+    if not cfg["fastspring_url"].strip():
+        s = re.sub(r'<a class="btn" href="\{\{FASTSPRING_URL\}\}">.*?</a>', soon, s)
+    if not cfg["company"].strip():
+        cfg = dict(cfg, company="Turtlebox")
+    if not cfg["support_email"].strip():
+        s = re.sub(r'<a class="support-mail" href="mailto:\{\{SUPPORT_EMAIL\}\}">.*?</a>', "the form above", s)
     return (s.replace("{{BASE_URL}}", cfg["base_url"].rstrip("/")).replace("{{FASTSPRING_URL}}", cfg["fastspring_url"])
              .replace("{{SUPPORT_EMAIL}}", cfg["support_email"]).replace("{{COMPANY}}", cfg["company"]))
 
@@ -394,9 +404,6 @@ def main():
                 p = p.replace("<html", "<html")
             open(os.path.join(d, "artifact-" + f if f == "index.html" else f), "w").write(p)
         print("review copies written to", d); return
-    missing = [k for k in ("base_url", "fastspring_url", "support_email", "company") if not cfg.get(k, "").strip()]
-    if missing:
-        print("Backer pages skipped: fill in", ", ".join(missing), "in backer/config.json"); return
     pages = render(cfg, False)
     os.makedirs(os.path.join(OUT, "backer"), exist_ok=True)
     for f, p in pages.items():
