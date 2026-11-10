@@ -18,7 +18,7 @@ TABLE=highturtle-pending
 LIST=highturtle-subscribers
 CONFIG_SET=highturtle
 FROM_ADDR="Turtlebox <downloads@$DOMAIN>"
-REPLY_TO="hello@highturtle.com"
+REPLY_TO="info@turtlebox.studio"
 DEPLOY_ROLE=turtlebox-github-deploy
 export AWS_DEFAULT_REGION=$REGION
 
