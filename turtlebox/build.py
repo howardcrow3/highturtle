@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb7"
+V = "tb8"
 
 def page(title, desc, body, path, robots=True, nav_current=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
@@ -101,13 +101,22 @@ cards = "\n".join(card(a) for a in apps)
 grid = f'<ul class="apps">\n{cards}\n    </ul>' if apps else '<p class="empty">The first apps are in the works.</p>'
 
 home = f"""  <section class="hero">
-    <div class="wrap">
-      <h1>Small AI apps that each do one job.</h1>
-      <p class="lede">Turtlebox builds AI apps that run in your browser. Each one is built for a single task, so you can open it, use it and get on with your day.</p>
-      <div class="cta-row">
-        <a class="btn" href="/apps/">See the apps</a>
-        <a class="link" href="https://highturtle.com">Visit High Turtle</a>
+    <div class="wrap hero-split">
+      <div class="hero-text">
+        <h1>Small AI apps that each do one job.</h1>
+        <p class="lede">Turtlebox builds AI apps that run in your browser. Each one is built for a single task, so you can open it, use it and get on with your day.</p>
+        <div class="cta-row">
+          <a class="btn" href="/apps/">See the apps</a>
+          <a class="link" href="https://highturtle.com">Visit High Turtle</a>
+        </div>
       </div>
+      <aside class="app-card feature-plate" aria-labelledby="backer-h">
+        <p class="eyebrow">For your desktop</p>
+        <h2 id="backer-h" style="font-size:1.75rem;line-height:1.2">Backer</h2>
+        <p class="status status-testing">In testing</p>
+        <p>Backs up your photos and videos from a Mac or PC to a NAS you own. No cloud, no subscription.</p>
+        <div class="action"><a class="btn btn-small" href="/backer/">See Backer</a></div>
+      </aside>
     </div>
   </section>
   <section class="section">
@@ -118,15 +127,6 @@ home = f"""  <section class="hero">
         <li><h3>In your browser</h3><p>Open the page and use it. There is nothing to install.</p></li>
         <li><h3>Honest status</h3><p>Every app is marked Planned, In testing or Live, so you know what you are opening.</p></li>
       </ul>
-    </div>
-  </section>
-  <section class="section">
-    <div class="wrap">
-      <h2>Backer</h2>
-      <p class="intro">Backer is a desktop app that backs up your photos and videos from a Mac or PC to a NAS you own. No cloud, no subscription.</p>
-      <div class="cta-row">
-        <a class="btn" href="/backer/">See Backer</a>
-      </div>
     </div>
   </section>
   <section class="section">

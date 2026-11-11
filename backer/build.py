@@ -16,7 +16,8 @@ import json, os, re, shutil, sys, urllib.parse
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "turtlebox")
-V = "bk1"
+V = "bk2"
+TB_V = re.search(r'V = "(\w+)"', open(os.path.join(OUT, "build.py")).read()).group(1)  # same cache tag as the Turtlebox pages
 
 mark_svg = open(os.path.join(ROOT, "assets", "mark.svg")).read()
 MARK_PATH = re.search(r"<path[^>]*/>", mark_svg).group(0)
@@ -25,11 +26,9 @@ icon_svg = open(os.path.join(HERE, "icon-placeholder.svg")).read()
 ICON_INNER = re.sub(r"^<svg[^>]*>|</svg>$", "", icon_svg.strip())
 CSS = open(os.path.join(HERE, "backer.css")).read()
 
-FONTFACE = '''@font-face { font-family: "Instrument Sans"; src: url("/assets/fonts/InstrumentSans-Variable.woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "JetBrains Mono"; src: url("/assets/fonts/JetBrainsMono-Variable.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
-'''
+TB_CSS = open(os.path.join(OUT, "assets", "styles.css")).read()
 GFONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">')
+          '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap">')
 
 DETECT = '''<script>
 /* Mark the visitor's OS before first paint so the right download comes first. Both downloads stay available. */
@@ -47,17 +46,30 @@ DETECT = '''<script>
 })();
 </script>'''
 
-HEADER = '''<header class="top">
-    <a class="brand" href="/" aria-label="Turtlebox home"><svg viewBox="%s" aria-hidden="true"><use href="#mark"/></svg>Turtlebox</a>
-    <nav aria-label="Main"><a href="/apps/">Apps</a><a href="/backer/">Backer</a></nav>
-  </header>''' % MARK_VB
+HEADER = '''<header class="site-header">
+  <div class="wrap bar">
+    <a class="brand" href="/" aria-label="Turtlebox home">
+      <svg class="brand-mark" viewBox="%s" aria-hidden="true"><use href="#mark"/></svg>
+      <span class="brand-name">Turtlebox</span>
+    </a>
+    <nav aria-label="Main">
+      <a href="/apps/">Apps</a>
+      <a href="/backer/" aria-current="page">Backer</a>
+      <a href="https://highturtle.com">High Turtle</a>
+    </nav>
+  </div>
+</header>''' % MARK_VB
 
 def footer(extra=""):
-    return f'''<footer>
-    <p><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
-    <p class="foot-links"><a href="/backer/report.html">Report an issue</a><a href="/">Turtlebox</a><a href="/apps/">Apps</a></p>
-    <p>&copy; {{{{COMPANY}}}}</p>{extra}
-  </footer>'''
+    return f'''<footer class="site-footer">
+  <div class="wrap">
+    <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
+    <div class="foot" style="margin-top:var(--space-sm)">
+      <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
+      <p>&copy; 2026 {{{{COMPANY}}}}</p>
+    </div>{extra}
+  </div>
+</footer>'''
 
 SPRITES = f'<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="mark" viewBox="{MARK_VB}">{MARK_PATH}</symbol><symbol id="icon" viewBox="0 0 64 64">{ICON_INNER}</symbol></svg>'
 
@@ -83,8 +95,8 @@ VERSION_JS = '''<script>
 
 INDEX = '''
   <main id="main">
-    <div class="hero" id="download">
-      <p class="hero-app"><svg aria-hidden="true"><use href="#icon"/></svg>Backer, a Turtlebox app</p>
+    <section class="bk-hero" id="download"><div class="wrap">
+      <p class="eyebrow"><svg aria-hidden="true"><use href="#icon"/></svg>Backer, a Turtlebox app</p>
       <h1>Back up your photos and videos.</h1>
       <p class="lede">Backer copies your photo and video folders from a Mac or PC to a Synology or other NAS you own, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>
 
@@ -108,21 +120,21 @@ INDEX = '''
         <span id="version-wrap" hidden>Version <span id="version"></span></span>
         <span>Free for 14 days with every feature. <a href="#pricing">Pricing</a></span>
       </div>
-    </div>
+    </div></section>
 
-    <section id="features" aria-labelledby="features-h">
+    <section class="section" id="features" aria-labelledby="features-h"><div class="wrap">
       <h2 id="features-h">What Backer does</h2>
       <ul class="features">
         <li><h3>Scheduled or on demand</h3><p>Set a schedule and forget it, or back up new photos and videos yourself when you want to.</p></li>
-        <li><h3>Big libraries</h3><p>Handles <span class="mono">100,000+</span> files, so years of photos and video footage are fine.</p></li>
+        <li><h3>Big libraries</h3><p>Handles <span class="num">100,000+</span> files, so years of photos and video footage are fine.</p></li>
         <li><h3>Verify</h3><p>Compares what is on the NAS with your originals, so you know every photo and video was copied intact.</p></li>
         <li><h3>Asks before deleting</h3><p>Backer never removes a photo or video from the NAS without asking you first.</p></li>
         <li><h3>Optional AI assistant integration</h3><p>A local MCP server lets an AI assistant work with Backer. It is off by default.</p></li>
         <li><h3>Stays out of the way</h3><p>Lives in the menu bar on a Mac and in the system tray on Windows.</p></li>
       </ul>
-    </section>
+    </div></section>
 
-    <section id="pricing" aria-labelledby="pricing-h">
+    <section class="section" id="pricing" aria-labelledby="pricing-h"><div class="wrap">
       <h2 id="pricing-h">Pricing</h2>
       <div class="price">
         <div>
@@ -135,9 +147,9 @@ INDEX = '''
         </div>
         <a class="btn" href="{{FASTSPRING_URL}}">Buy now</a>
       </div>
-    </section>
+    </div></section>
 
-    <section id="install" aria-labelledby="install-h">
+    <section class="section" id="install" aria-labelledby="install-h"><div class="wrap">
       <h2 id="install-h">Install</h2>
       <div class="cols">
         <div>
@@ -149,10 +161,11 @@ INDEX = '''
           <p>Run the installer. It is not yet code-signed, so Windows SmartScreen may say &ldquo;unknown publisher&rdquo;. Click <span class="kbd">More info</span>, then <span class="kbd">Run anyway</span>.</p>
         </div>
       </div>
-    </section>
+    </div></section>
 
-    <section id="help" aria-labelledby="help-h">
+    <section class="section" id="help" aria-labelledby="help-h"><div class="wrap">
       <h2 id="help-h">After you buy</h2>
+      <div class="prose">
       <p>Your license key appears on the confirmation page and arrives by email.</p>
       <ol class="steps">
         <li>In Backer, open <span class="kbd">Settings</span>, then <span class="kbd">License</span>.</li>
@@ -160,11 +173,12 @@ INDEX = '''
         <li>Click <span class="kbd">Activate</span>.</li>
       </ol>
       <p>Keys are tied to the email address you bought with. If something does not work, <a href="/backer/report.html">report an issue</a> or write to <a class="support-mail" href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>.</p>
-    </section>
+      </div>
+    </div></section>
   </main>'''
 
 THANKS = '''
-  <main id="main" class="simple">
+  <main id="main" class="bk-simple wrap">
     <h1>Thanks for buying Backer.</h1>
     <p class="lede">Your license key is on your order confirmation page and in the email we sent you. Here is how to turn it on.</p>
     <ol class="steps">
@@ -191,7 +205,7 @@ THANKS = '''
   </main>'''
 
 REPORT = '''
-  <main id="main" class="simple">
+  <main id="main" class="bk-simple wrap">
     <h1>Report an issue</h1>
     <p class="lede">Tell us what went wrong with Backer. The more detail you give, the easier it is to fix.</p>
     <p class="notice" id="problem" role="alert" hidden>That did not go through. Check the form and try again, or write to <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>.</p>
@@ -225,7 +239,7 @@ REPORT = '''
         </div>
         <div class="field">
           <label for="version">Backer version <span class="opt">(optional)</span></label>
-          <input id="version" name="version" type="text" class="mono-in" maxlength="40" autocomplete="off" placeholder="1.0.0" aria-describedby="version-err">
+          <input id="version" name="version" type="text" maxlength="40" autocomplete="off" placeholder="1.0.0" aria-describedby="version-err">
           <p class="err" id="version-err" role="alert"></p>
         </div>
       </div>
@@ -243,7 +257,7 @@ REPORT = '''
       <p class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="website" tabindex="-1" autocomplete="off"></label></p>
       <p class="notice">Please do not include passwords or license keys. Reports go to our private issue tracker.</p>
       <div><button class="btn" type="submit" id="send">Send report</button></div>
-      <p class="status" id="status" role="status"></p>
+      <p class="form-msg" id="status" role="status"></p>
     </form>
 
     <div class="done" id="done" hidden>
@@ -271,8 +285,8 @@ REPORT = '''
     if (out) out.textContent = msg || '';
     if (el) { if (msg) el.setAttribute('aria-invalid', 'true'); else el.removeAttribute('aria-invalid'); }
   }
-  function clearAll() { fields.forEach(function (n) { setErr(n, ''); }); status.textContent = ''; status.className = 'status'; }
-  function fail(msg) { status.className = 'status bad'; status.textContent = msg; }
+  function clearAll() { fields.forEach(function (n) { setErr(n, ''); }); status.textContent = ''; status.className = 'form-msg'; }
+  function fail(msg) { status.className = 'form-msg bad'; status.textContent = msg; }
 
   form.addEventListener('submit', function (e) {
     if (!window.fetch) return;            // without scripting, the form posts normally
@@ -311,7 +325,7 @@ REPORT = '''
 </script>'''
 
 SENT = '''
-  <main id="main" class="simple">
+  <main id="main" class="bk-simple wrap">
     <h1>Thanks, we have your report.</h1>
     <p class="lede">It went to our issue tracker.</p>
     <a class="btn" href="/backer/">Back to Backer</a>
@@ -334,20 +348,20 @@ def render(cfg, artifact):
         head_common = (f'<title>{title}</title>\n{meta}'
                        '<link rel="icon" href="/favicon.svg" type="image/svg+xml">\n')
         if artifact:
-            style = f'<style>\n{CSS}\n</style>'
+            tb = re.sub(r"@font-face[^}]*}\n?", "", TB_CSS)
+            style = f'<style>\n{tb}\n{CSS}\n</style>'
             fonts = GFONTS
         else:
-            style = f'<link rel="stylesheet" href="/assets/backer.css?v={V}">'
-            fonts = ('<link rel="preload" href="/assets/fonts/InstrumentSans-Variable.woff2" as="font" type="font/woff2" crossorigin>\n'
-                     '<link rel="preload" href="/assets/fonts/JetBrainsMono-Variable.woff2" as="font" type="font/woff2" crossorigin>')
-        inner = (f'{DETECT}\n' if True else "") + f'<div class="bk-page">'
+            style = (f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">\n'
+                     f'<link rel="stylesheet" href="/assets/backer.css?v={V}">')
+            fonts = '<link rel="preload" href="/assets/fonts/Inter-Light.woff2" as="font" type="font/woff2" crossorigin>'
         page = f'''<!doctype html>
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="#F5F3EC">
+<meta name="theme-color" content="#F5F0E7">
 {head_common}{fonts}
 {DETECT}
 {style}
@@ -355,11 +369,9 @@ def render(cfg, artifact):
 <body>
 {SPRITES}
 <a class="skip" href="#main">Skip to content</a>
-<div class="wrap">
-  {HEADER}
+{HEADER}
 {body}
-  {footer()}
-</div>
+{footer()}
 {extra}
 </body>
 </html>
@@ -369,7 +381,7 @@ def render(cfg, artifact):
 
 def fill(s, cfg):
     """Fill placeholders. Anything not configured yet is shown honestly as "Coming soon" instead of a dead link."""
-    soon = '<span class="btn" aria-disabled="true" style="opacity:.6;cursor:default">Coming soon</span>'
+    soon = '<span class="btn" aria-disabled="true">Coming soon</span>'
     if not cfg["base_url"].strip():
         s = re.sub(r'<a class="btn" href="\{\{BASE_URL\}\}/download/[^"]*">.*?</a>', soon, s)
     if not cfg["fastspring_url"].strip():
@@ -408,10 +420,7 @@ def main():
     os.makedirs(os.path.join(OUT, "backer"), exist_ok=True)
     for f, p in pages.items():
         open(os.path.join(OUT, "backer", f), "w").write(fill(p, cfg))
-    open(os.path.join(OUT, "assets", "backer.css"), "w").write(FONTFACE + CSS)
-    fonts = os.path.join(OUT, "assets", "fonts"); os.makedirs(fonts, exist_ok=True)
-    for f in os.listdir(os.path.join(HERE, "fonts")):
-        shutil.copy(os.path.join(HERE, "fonts", f), fonts)
+    open(os.path.join(OUT, "assets", "backer.css"), "w").write(CSS)
     print("Backer pages built into turtlebox/backer/")
 
 main()
