@@ -1,0 +1,40 @@
+name: AWS check (read-only)
+
+# Confirms the stored AWS keys still work and reports what exists, before the license service is set up.
+# Makes no changes to AWS and publishes nothing. Run it by hand from the Actions tab.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Who am I
+        run: |
+          aws sts get-caller-identity --query '{Arn:Arn}' --output text
+          echo "::notice title=identity::$(aws sts get-caller-identity --query Arn --output text | sed -E 's#arn:aws:iam::[0-9]+:#arn:aws:iam::<account>:#')"
+      - name: SES account status
+        run: |
+          s=$(aws sesv2 get-account --query '{prod:ProductionAccessEnabled,review:Details.ReviewDetails.Status,sending:SendingEnabled,quota:SendQuota.Max24HourSend}' --output json | tr -d '\n ')
+          echo "::notice title=ses::$s"
+      - name: Existing license resources (should all be missing before setup)
+        run: |
+          aws dynamodb describe-table --table-name highturtle-license --query Table.TableStatus --output text 2>/dev/null || echo "::notice title=dynamodb::highturtle-license table not found"
+          aws lambda get-function --function-name highturtle-license --query Configuration.State --output text 2>/dev/null || echo "::notice title=lambda::highturtle-license function not found"
+          aws secretsmanager list-secrets --filters Key=name,Values=highturtle-license --query 'SecretList[].Name' --output text || echo "::notice title=secrets::could not list secrets (permission)"
+      - name: Permissions the setup would need
+        run: |
+          aws iam get-user --query 'User.UserName' --output text 2>&1 | head -1 || true
+          aws iam list-attached-user-policies --user-name "$(aws iam get-user --query User.UserName --output text)" --query 'AttachedPolicies[].PolicyName' --output text 2>&1 | head -3 || true
