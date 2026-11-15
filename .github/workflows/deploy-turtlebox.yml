@@ -5,7 +5,7 @@ name: Deploy turtlebox.studio
 on:
   push:
     branches: [main]
-    paths: ["turtlebox/**", "backer/**", "lambda/downloads.py", "lambda/report.py", ".github/workflows/deploy-turtlebox.yml"]
+    paths: ["turtlebox/**", "backer/**", "legal/**", "lambda/downloads.py", "lambda/report.py", ".github/workflows/deploy-turtlebox.yml"]
   workflow_dispatch:
 
 permissions:

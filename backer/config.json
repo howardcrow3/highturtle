@@ -1,6 +1,6 @@
 {
   "base_url": "",
-  "fastspring_url": "",
-  "support_email": "info@turtlebox.studio",
-  "company": ""
+  "checkout_url": "",
+  "price": "$4.99",
+  "support_email": "info@turtlebox.studio"
 }
