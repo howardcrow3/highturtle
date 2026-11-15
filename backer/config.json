@@ -1,6 +1,14 @@
 {
   "base_url": "",
-  "fastspring_url": "",
   "support_email": "info@turtlebox.studio",
-  "company": ""
+  "company": "",
+  "paddle_client_token": "",
+  "paddle_price_id": "",
+  "paddle_environment": "sandbox",
+  "company_legal_name": "",
+  "company_address": "",
+  "governing_law": "",
+  "price_display": "",
+  "devices_per_key": "",
+  "refund_days": ""
 }

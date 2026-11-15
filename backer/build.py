@@ -6,7 +6,8 @@
 
 Config values:
   base_url        update hosting address, ending in /backer, for example https://dxxxx.cloudfront.net/backer
-  fastspring_url  FastSpring checkout URL for "Buy now"
+  paddle_client_token / paddle_price_id / paddle_environment  Paddle.js checkout (environment is sandbox or production)
+  price_display, company_legal_name, company_address, governing_law, devices_per_key, refund_days  used by the legal and pricing pages (legal/content.py)
   support_email   support address shown on the pages
   company         company name for the footer
 Pages are light only. Nothing is written to turtlebox/ until all four values are filled in.
@@ -55,6 +56,7 @@ HEADER = '''<header class="site-header">
     <nav aria-label="Main">
       <a href="/apps/">Apps</a>
       <a href="/backer/" aria-current="page">Backer</a>
+      <a href="/pricing/">Pricing</a>
       <a href="https://highturtle.com">High Turtle</a>
     </nav>
   </div>
@@ -63,9 +65,9 @@ HEADER = '''<header class="site-header">
 def footer(extra=""):
     return f'''<footer class="site-footer">
   <div class="wrap">
-    <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
+    <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and license activation. There is no telemetry. This website sets no cookies of its own; the Paddle checkout may set its own when you open it. <a href="/privacy/">Privacy policy</a>.</p>
     <div class="foot" style="margin-top:var(--space-sm)">
-      <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
+      <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/pricing/">Pricing</a> &middot; <a href="/terms/">Terms</a> &middot; <a href="/privacy/">Privacy</a> &middot; <a href="/refunds/">Refunds</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
       <p>&copy; 2026 {{{{COMPANY}}}}</p>
     </div>{extra}
   </div>
@@ -145,7 +147,7 @@ INDEX = '''
             <li>After the trial, backups stop. Your history, Verify and restore keep working.</li>
           </ul>
         </div>
-        <a class="btn" href="{{FASTSPRING_URL}}">Buy now</a>
+        <a class="btn" href="/pricing/" data-paddle-buy>Buy now</a>
       </div>
     </div></section>
 
@@ -331,8 +333,10 @@ SENT = '''
     <a class="btn" href="/backer/">Back to Backer</a>
   </main>'''
 
+PADDLE_JS = '<script>window.PADDLE_CONFIG={{PADDLE_CONFIG}};</script>\n<script src="/assets/paddle.js?v=pd1" defer></script>'
+
 PAGES = [  # file, title, description, body, extra script, noindex
-    ("index.html", "Backer photo and video backup", "Backer backs up your photos and videos from a Mac or PC to a NAS on a schedule or on demand. It never deletes anything on the NAS without asking. No cloud, no subscription.", INDEX, VERSION_JS, False),
+    ("index.html", "Backer photo and video backup", "Backer backs up your photos and videos from a Mac or PC to a NAS on a schedule or on demand. It never deletes anything on the NAS without asking. No cloud, no subscription.", INDEX, VERSION_JS + PADDLE_JS, False),
     ("thanks.html", "Thanks for buying Backer", "", THANKS, "", True),
     ("report.html", "Report an issue with Backer", "Tell us what went wrong with Backer.", REPORT, "", False),
     ("report-sent.html", "Report received", "", SENT, "", True),
@@ -384,13 +388,15 @@ def fill(s, cfg):
     soon = '<span class="btn" aria-disabled="true">Coming soon</span>'
     if not cfg["base_url"].strip():
         s = re.sub(r'<a class="btn" href="\{\{BASE_URL\}\}/download/[^"]*">.*?</a>', soon, s)
-    if not cfg["fastspring_url"].strip():
-        s = re.sub(r'<a class="btn" href="\{\{FASTSPRING_URL\}\}">.*?</a>', soon, s)
     if not cfg["company"].strip():
         cfg = dict(cfg, company="Turtlebox")
     if not cfg["support_email"].strip():
         s = re.sub(r'<a class="support-mail" href="mailto:\{\{SUPPORT_EMAIL\}\}">.*?</a>', "the form above", s)
-    return (s.replace("{{BASE_URL}}", cfg["base_url"].rstrip("/")).replace("{{FASTSPRING_URL}}", cfg["fastspring_url"])
+    paddle = json.dumps({"clientToken": cfg.get("paddle_client_token", "").strip(), "priceId": cfg.get("paddle_price_id", "").strip(),
+                         "environment": cfg.get("paddle_environment", "sandbox").strip() or "sandbox",
+                         "successUrl": "https://turtlebox.studio/backer/thanks.html"})
+    s = s.replace("{{PADDLE_CONFIG}}", paddle)
+    return (s.replace("{{BASE_URL}}", cfg["base_url"].rstrip("/"))
              .replace("{{SUPPORT_EMAIL}}", cfg["support_email"]).replace("{{COMPANY}}", cfg["company"]))
 
 def strip_wrapper(page):
@@ -421,6 +427,7 @@ def main():
     for f, p in pages.items():
         open(os.path.join(OUT, "backer", f), "w").write(fill(p, cfg))
     open(os.path.join(OUT, "assets", "backer.css"), "w").write(CSS)
+    shutil.copyfile(os.path.join(ROOT, "legal", "paddle.js"), os.path.join(OUT, "assets", "paddle.js"))
     print("Backer pages built into turtlebox/backer/")
 
 main()

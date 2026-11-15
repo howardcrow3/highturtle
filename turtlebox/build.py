@@ -3,7 +3,9 @@
 Add an app by adding an entry to apps.json. Set "download": true on an app whose file is uploaded to the downloads bucket
 (see infra/upload-app.sh) to show the email form on its card. Set "status" to "Live" and add "url" (for example /apps/my-app/)
 to show an Open button."""
-import html, json, os, re
+import html, json, os, re, shutil, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "legal"))
+import content as legal
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
@@ -11,7 +13,7 @@ mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
 V = "tb8"
 
-def page(title, desc, body, path, robots=True, nav_current=""):
+def page(title, desc, body, path, robots=True, nav_current="", extra=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
     return f"""<!doctype html>
 <html lang="en" data-theme="light">
@@ -48,6 +50,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
     <nav aria-label="Main">
       <a href="/apps/"{cur("apps")}>Apps</a>
       <a href="/backer/"{cur("backer")}>Backer</a>
+      <a href="/pricing/"{cur("pricing")}>Pricing</a>
       <a href="https://highturtle.com">High Turtle</a>
     </nav>
   </div>
@@ -58,10 +61,11 @@ def page(title, desc, body, path, robots=True, nav_current=""):
 <footer class="site-footer">
   <div class="wrap foot">
     <p>Turtlebox builds small AI apps.</p>
-    <p>Also from us: <a href="https://highturtle.com">High Turtle</a> &middot; &copy; 2026 Turtlebox</p>
+    <p><a href="/pricing/">Pricing</a> &middot; <a href="/terms/">Terms</a> &middot; <a href="/privacy/">Privacy</a> &middot; <a href="/refunds/">Refunds</a> &middot; Also from us: <a href="https://highturtle.com">High Turtle</a> &middot; &copy; 2026 Turtlebox</p>
   </div>
 </footer>
   <script src="/assets/site.js?v={V}" defer></script>
+{extra}
 </body>
 </html>
 """
@@ -167,13 +171,26 @@ root = os.path.join(HERE)
 def w(rel, content):
     p = os.path.join(root, rel); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, "w").write(content)
 
+cfg = json.load(open(os.path.join(HERE, "..", "backer", "config.json")))
+c = legal.ctx(cfg, "Turtlebox", "turtlebox.studio", cfg.get("support_email") or "info@turtlebox.studio", "/")
+paddle_cfg = json.dumps({"clientToken": cfg.get("paddle_client_token", "").strip(), "priceId": cfg.get("paddle_price_id", "").strip(),
+                         "environment": cfg.get("paddle_environment", "sandbox").strip() or "sandbox",
+                         "successUrl": "https://turtlebox.studio/backer/thanks.html"})
+paddle_scripts = f'<script>window.PADDLE_CONFIG={paddle_cfg};</script>\n  <script src="/assets/paddle.js?v=pd1" defer></script>'
+def simple(inner): return '  <div class="simple wrap">\n    ' + inner + '\n  </div>'
+shutil.copyfile(os.path.join(HERE, "..", "legal", "paddle.js"), os.path.join(HERE, "assets", "paddle.js"))
+w("pricing/index.html", page("Pricing | Turtlebox", "Backer is a one-time purchase with a free 14-day trial. One license key covers all 1.x versions.", legal.pricing_body(c, '<a class="btn" href="/backer/#pricing" data-paddle-buy>Buy Backer</a>'), "/pricing/", nav_current="pricing", extra=paddle_scripts))
+w("terms/index.html", page("Terms of service | Turtlebox", "Terms of service for turtlebox.studio and the Backer app.", simple(legal.terms_body(c)), "/terms/"))
+w("refunds/index.html", page("Refund policy | Turtlebox", "Refund policy for Backer purchases.", simple(legal.refunds_body(c)), "/refunds/"))
+w("privacy/index.html", page("Privacy policy | Turtlebox", "How Turtlebox handles email addresses, purchases and the Backer app.", simple(legal.privacy_body(c)), "/privacy/"))
+
 w("index.html", page("Turtlebox | Small AI apps that each do one job", "Turtlebox builds small AI apps that run in your browser. Each one does one job.", home, "/"))
 w("apps/index.html", page("Apps | Turtlebox", "Small AI apps from Turtlebox. Each one does one job and runs in your browser.", apps_page, "/apps/", nav_current="apps"))
 w("download-sent.html", page("Check your inbox | Turtlebox", "Download link sent.", sent, "/download-sent.html", robots=False))
 w("download-problem.html", page("Download problem | Turtlebox", "Download problem.", prob, "/download-problem.html", robots=False))
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
-w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n</urlset>\n')
+w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n  <url><loc>https://turtlebox.studio/pricing/</loc></url>\n  <url><loc>https://turtlebox.studio/terms/</loc></url>\n  <url><loc>https://turtlebox.studio/privacy/</loc></url>\n  <url><loc>https://turtlebox.studio/refunds/</loc></url>\n</urlset>\n')
 fav = open(os.path.join(HERE, "design-system", "assets", "Icons", "favicon.svg")).read()
 w("favicon.svg", fav)
 print("built")
