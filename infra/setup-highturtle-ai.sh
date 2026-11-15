@@ -31,6 +31,14 @@ clash=$(aws route53 list-resource-record-sets --hosted-zone-id "$NEW_ZONE" --out
      | select((.AliasTarget.DNSName // "" | ascii_downcase) != ($cf | ascii_downcase))] | length')
 if [ "$clash" != "0" ]; then note "stopped" "$PRIMARY apex or www already has address records pointing elsewhere; nothing changed"; exit 1; fi
 echo "$PRIMARY -> zone $NEW_ZONE"
+ZONE_NS=$(aws route53 get-hosted-zone --id "$NEW_ZONE" --query 'DelegationSet.NameServers' --output text | tr '\t' '\n' | sed 's/\.$//' | tr 'A-Z' 'a-z' | sort | tr '\n' ' ')
+PUBLIC_NS=$(dig +short NS "$PRIMARY" @8.8.8.8 | sed 's/\.$//' | tr 'A-Z' 'a-z' | sort | tr '\n' ' ')
+echo "zone name servers:   $ZONE_NS"
+echo "public name servers: $PUBLIC_NS"
+if [ "$ZONE_NS" != "$PUBLIC_NS" ]; then
+  note "stopped: $PRIMARY is not delegated to Route 53" "At the registrar, set the name servers to: $ZONE_NS(currently: ${PUBLIC_NS:-none}). Then run this again. Nothing was changed."
+  exit 1
+fi
 
 ALIASES=("$PRIMARY" "www.$PRIMARY" "$OLD" "www.$OLD")
 
