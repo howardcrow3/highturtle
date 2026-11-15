@@ -40,7 +40,7 @@ def shell(site, title, desc, path, body):
     if site == "highturtle":
         html_open, scheme = '<html lang="en">', '<meta name="color-scheme" content="light dark">'
         css = '<link rel="stylesheet" href="/assets/styles.css?v=tb2">'
-        nav = ('<a href="/#make">What we make</a>\n        <a href="/#pricing">Pricing</a>\n'
+        nav = ('<a href="/#make">What we make</a>\n'
                '        <a href="/skills-map.html">Skills map</a>')
         foot_intro = "<p>High Turtle is an independent studio.</p>"
     else:
