@@ -1,0 +1,36 @@
+name: highturtle.ai primary domain setup (one time)
+
+# Makes highturtle.ai the primary domain: certificate, DNS, and a 301 from highturtle.com (and www) to it.
+# Safe to re-run. Uses the temporary AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Run setup
+        shell: bash
+        run: |
+          set -o pipefail
+          bash infra/setup-highturtle-ai.sh 2>&1 | tee /tmp/log.txt
+      - name: Smoke test
+        if: always()
+        shell: bash
+        run: |
+          sleep 30
+          for u in https://highturtle.ai/ https://www.highturtle.ai/ "https://highturtle.com/terms.html?x=1" https://www.highturtle.com/ "https://highturtle.com/api/confirm?t=bogus"; do
+            r=$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "$u" || echo "fail")
+            echo "::notice title=$u::$r"
+          done
