@@ -59,12 +59,12 @@ NEW=$(echo "$CURRENT" | jq -c --arg a "${PADDLE_API_KEY:-}" --arg w "${PADDLE_WE
   . + {SESSION_SECRET:$s}
     + (if $a != "" then {PADDLE_API_KEY:$a} else {} end)
     + (if $w != "" then {PADDLE_WEBHOOK_SECRET:$w} else {} end)')
+# Take the ARN from the write itself: a describe right after create can miss the new secret.
 if [ "$EXISTS" = no ]; then
-  aws secretsmanager create-secret --name $SECRET_ID --secret-string "$NEW" >/dev/null
+  SECRET_ARN=$(aws secretsmanager create-secret --name $SECRET_ID --secret-string "$NEW" --query ARN --output text)
 else
-  aws secretsmanager put-secret-value --secret-id $SECRET_ID --secret-string "$NEW" >/dev/null
+  SECRET_ARN=$(aws secretsmanager put-secret-value --secret-id $SECRET_ID --secret-string "$NEW" --query ARN --output text)
 fi
-SECRET_ARN=$(aws secretsmanager describe-secret --secret-id $SECRET_ID --query ARN --output text)
 echo "secret keys present: $(echo "$NEW" | jq -r 'to_entries | map(select(.value != "") | .key) | join(", ")')"
 
 echo "== 3. Lambda role =="
