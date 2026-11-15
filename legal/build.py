@@ -39,10 +39,10 @@ def shell(site, title, desc, path, body):
     s = SITES[site]
     if site == "highturtle":
         html_open, scheme = '<html lang="en">', '<meta name="color-scheme" content="light dark">'
-        css = '<link rel="stylesheet" href="/assets/styles.css?v=tb2">'
-        nav = ('<a href="/#make">What we make</a>\n'
-               '        <a href="/skills-map.html">Skills map</a>')
-        foot_intro = "<p>High Turtle is an independent studio.</p>"
+        css = '<link rel="stylesheet" href="/assets/styles.css?v=hc1">'
+        nav = ('<a href="/#companies">Companies</a>\n'
+                              '        <a href="/contact.html">Contact</a>')
+        foot_intro = "<p>High Turtle LLC is a holding company for AI companies.</p>"
     else:
         html_open, scheme = ('<html lang="en" data-theme="light">',
                              '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
@@ -98,9 +98,9 @@ MOR = ("Our order process is conducted by our online reseller Paddle.com. Paddle
 
 def products(site):
     if site == "highturtle":
-        return f"""<h2>3. What you buy</h2>
-<p>High Turtle sells digital products for people who build AI products: Claude skill packs, playbooks and templates. Each product page says what is included and the price. Products are delivered as downloads by email right after purchase. High Turtle does not sell consulting or other services.</p>
-<p>When you buy a product we give you a personal, non-exclusive, non-transferable license to use it in your own work, including work you do for your employer or clients. You may change the files for your own use. You may not resell, sublicense, share publicly or redistribute the files, in original or changed form, or use them to make a competing product."""
+        return f"""<h2>3. Our companies and their products</h2>
+<p>High Turtle LLC is a holding company. It owns and operates AI companies that trade under their own names, such as <a href="https://turtlebox.studio">Turtlebox</a>. Nothing is sold on highturtle.com. Each company sells its products on its own website, and the terms, refund policy and prices on that website apply to those products. High Turtle does not sell consulting or other services.</p>
+<p>If High Turtle itself ever sells a product, its page will say what is included and the price, and you will get a personal, non-exclusive, non-transferable license to use it in your own work. You may not resell, sublicense, share publicly or redistribute it."""
     return f"""<h2>3. What you buy</h2>
 <p>Turtlebox makes software: small AI apps that run in your browser, and <a href="/backer/">Backer</a>, a desktop app that backs up photos and videos from a Mac or PC to a NAS. Each app's page says what it does, what it costs and what is included. Turtlebox does not sell consulting or other services.</p>
 <p><strong>Backer licenses.</strong> Backer is free to try for 14 days. A purchase gives you a license key, sent by email and shown on your order confirmation, that unlocks Backer and covers all 1.x versions. The license is personal, non-exclusive and non-transferable. You may not share your key publicly, resell it, or try to get around the license check.</p>
@@ -108,7 +108,7 @@ def products(site):
 
 
 def ai_section(site):
-    what = "skills and playbooks help you work with AI models such as Claude" if site == "highturtle" else "apps use AI models to produce results"
+    what = "companies' products use AI models to produce results" if site == "highturtle" else "apps use AI models to produce results"
     return f"""<h2>5. AI features and outputs</h2>
 <p>Some of our {what}. If you use them:</p>
 <ul>
@@ -200,7 +200,7 @@ def privacy(site):
 
 <h2>What we collect, why, and for how long</h2>
 <ul>
-<li><strong>Email list.</strong> Your email address and when you confirmed it, so we can send the sample skill and news about High Turtle and Turtlebox releases. Legal basis: your consent. Kept until you unsubscribe. A signup you never confirm is deleted after 48 hours. After you unsubscribe, your address stays on a suppression list only so we never email you again.</li>
+<li><strong>Email list.</strong> Your email address and when you confirmed it, so we can send news about High Turtle and Turtlebox releases. Legal basis: your consent. Kept until you unsubscribe. A signup you never confirm is deleted after 48 hours. After you unsubscribe, your address stays on a suppression list only so we never email you again.</li>
 <li><strong>App downloads.</strong> Your email address and the app you asked for, so we can email you a download link. Asking for a download also adds you to the email list, as the form says. Legal basis: your consent.</li>
 <li><strong>Purchases.</strong> Paddle, our Merchant of Record, collects your name, email, billing address, country and payment details at checkout and shares the order details with us (name, email, country, what you bought and your license key). We use them to deliver your purchase, give support and keep business records. Legal basis: to perform our contract with you, and our legal obligations for tax and accounting. Kept for as long as tax and accounting law requires. We never see your full card details.</li>
 <li><strong>Issue reports.</strong> What you type into the Backer report form: a summary, details, your computer type, Backer version, NAS model, and your email if you add one so we can reply. We use it to fix problems and answer you. Legal basis: our legitimate interest in supporting and improving our products. Kept while the issue is open and for up to 2 years after, so we can spot repeat problems.</li>
@@ -240,7 +240,8 @@ def privacy(site):
 def contact(site):
     s = SITES[site]
     extra = ('<p>Problem with Backer? You can also <a href="/backer/report.html">report an issue</a>.</p>'
-             if site == "turtlebox" else "")
+             if site == "turtlebox" else
+             f'<p>Questions about a Turtlebox app or order: email {email("turtlebox")}.</p>')
     return f"""<h1>Contact</h1>
 <p class="updated">We usually reply within two business days.</p>
 

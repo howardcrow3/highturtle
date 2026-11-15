@@ -6,7 +6,7 @@ Paddle reviews every domain you sell from before it approves checkout there. Thi
 
 | Requirement | highturtle.com | turtlebox.studio |
 |---|---|---|
-| Clear description of what is sold, not services | Home page, "What we make" | Home, Apps, Backer pages |
+| Clear description of what is sold, not services | Home page, "Our companies" (High Turtle sells nothing itself) | Home, Apps, Backer pages |
 | Visible pricing | Nothing is for sale yet, so submit only turtlebox.studio to Paddle for now | Backer page, "Pricing" (`/backer/#pricing`) |
 | What each purchase includes | Add when the first High Turtle product goes on sale | Backer pricing, "What you get" |
 | Terms naming the legal business, with the Paddle Merchant of Record wording | `/terms.html` | `/terms.html` |
