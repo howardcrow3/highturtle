@@ -5,7 +5,7 @@ name: Deploy turtlebox.studio
 on:
   push:
     branches: [main]
-    paths: ["turtlebox/**", "backer/**", "legal/**", "lambda/downloads.py", "lambda/report.py", ".github/workflows/deploy-turtlebox.yml"]
+    paths: ["turtlebox/**", "backer/**", "legal/**", "lambda/downloads.py", "lambda/report.py", "billing/**", ".github/workflows/deploy-turtlebox.yml"]
   workflow_dispatch:
 
 permissions:
@@ -56,6 +56,17 @@ jobs:
           if aws lambda get-function --function-name backer-report >/dev/null 2>&1; then
             (cd lambda && zip -q ../report.zip report.py)
             aws lambda update-function-code --function-name backer-report --zip-file fileb://report.zip >/dev/null
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Update the billing function (if it exists; created by the Billing setup workflow)
+        run: |
+          if aws lambda get-function --function-name turtlebox-billing >/dev/null 2>&1; then
+            (cd billing && npm ci --no-audit --no-fund && npm test && npm run build)
+            (cd billing/dist && zip -q ../../billing.zip index.mjs)
+            aws lambda update-function-code --function-name turtlebox-billing --zip-file fileb://billing.zip >/dev/null
           fi
 
       - name: Clear the CloudFront cache

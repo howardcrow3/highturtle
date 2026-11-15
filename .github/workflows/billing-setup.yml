@@ -1,0 +1,44 @@
+name: Billing setup (Paddle webhooks and customer portal)
+
+# Creates the billing tables, secret, function and the /api/billing/* route on turtlebox.studio. Safe to
+# re-run; never deletes anything. Run it by hand only.
+# Secrets used: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (temporary setup keys), and optionally
+# PADDLE_API_KEY and PADDLE_WEBHOOK_SECRET. When those two are set they are copied into AWS Secrets
+# Manager (highturtle/billing); when empty, the values already stored there are kept. Delete the two
+# Paddle GitHub secrets after a successful run if you prefer them to live only in AWS.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
+      PADDLE_WEBHOOK_SECRET: ${{ secrets.PADDLE_WEBHOOK_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Run setup
+        shell: bash
+        run: |
+          set -o pipefail
+          bash infra/setup-billing.sh 2>&1 | tee /tmp/log.txt
+      - name: Smoke test (no real events are sent)
+        if: always()
+        run: |
+          a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' https://turtlebox.studio/api/billing/webhook || true)
+          b=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Paddle-Signature: ts=1;h1=00' -d '{}' https://turtlebox.studio/api/billing/webhook || true)
+          c=$(curl -s https://turtlebox.studio/api/billing/me || true)
+          echo "::notice title=smoke::no-signature=$a (400 expected) bad-signature=$b (401 expected) me=$c"

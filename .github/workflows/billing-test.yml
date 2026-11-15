@@ -1,0 +1,26 @@
+name: Billing tests
+
+on:
+  pull_request:
+    paths: ["billing/**", ".github/workflows/billing-test.yml"]
+  push:
+    branches: [main]
+    paths: ["billing/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: billing
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
