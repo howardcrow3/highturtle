@@ -32,7 +32,9 @@ clash=$(aws route53 list-resource-record-sets --hosted-zone-id "$NEW_ZONE" --out
 if [ "$clash" != "0" ]; then note "stopped" "$PRIMARY apex or www already has address records pointing elsewhere; nothing changed"; exit 1; fi
 echo "$PRIMARY -> zone $NEW_ZONE"
 ZONE_NS=$(aws route53 get-hosted-zone --id "$NEW_ZONE" --query 'DelegationSet.NameServers' --output text | tr '\t' '\n' | sed 's/\.$//' | tr 'A-Z' 'a-z' | sort | tr '\n' ' ')
-PUBLIC_NS=$(dig +short NS "$PRIMARY" @8.8.8.8 | sed 's/\.$//' | tr 'A-Z' 'a-z' | sort | tr '\n' ' ')
+# Ask the .ai registry's own servers, so a resolver cache of the old delegation does not matter.
+TLD_NS=$(dig +short NS "${PRIMARY#*.}." @8.8.8.8 | head -1)
+PUBLIC_NS=$(dig +norec NS "$PRIMARY" @"$TLD_NS" | awk '$4=="NS"{print $5}' | sed 's/\.$//' | tr 'A-Z' 'a-z' | sort -u | tr '\n' ' ')
 echo "zone name servers:   $ZONE_NS"
 echo "public name servers: $PUBLIC_NS"
 if [ "$ZONE_NS" != "$PUBLIC_NS" ]; then
@@ -66,7 +68,14 @@ for pair in "$PRIMARY:$NEW_ZONE" "$OLD:$OLD_ZONE"; do
     /tmp/dvo.json > /tmp/val-$d.json
   aws route53 change-resource-record-sets --hosted-zone-id "$z" --change-batch file:///tmp/val-$d.json >/dev/null
 done
-aws acm wait certificate-validated --certificate-arn "$CERT_ARN"
+# Resolvers can hold the old delegation for up to an hour after a name server change, so wait up to 45 minutes.
+for i in $(seq 1 90); do
+  st=$(aws acm describe-certificate --certificate-arn "$CERT_ARN" --query Certificate.Status --output text)
+  [ "$st" = "ISSUED" ] && break
+  [ "$st" = "PENDING_VALIDATION" ] || { note "stopped" "certificate status $st"; exit 1; }
+  sleep 30
+done
+[ "$st" = "ISSUED" ] || { note "stopped" "certificate still pending after 45 minutes; run this again later"; exit 1; }
 echo "certificate issued: $CERT_ARN"
 
 echo "== 3. DNS for $PRIMARY (before the redirect goes live) =="
