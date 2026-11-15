@@ -31,16 +31,13 @@ jobs:
           d=$(aws route53domains list-domains --region us-east-1 --query 'Domains[].[DomainName,Expiry]' --output text 2>&1 || true)
           echo "$d"
           echo "::notice title=registered::$(echo "$d" | tr '\n\t' '; ')"
-      - name: Public DNS for candidates
+      - name: Zone name servers vs public delegation
         run: |
-          for d in bornnormal mortaljellyfish; do
-            for t in com ai io co net org app studio; do
-              ns=$(dig +short NS "$d.$t" | tr '\n' ' ')
-              soa=$(dig +short SOA "$d.$t" | head -1)
-              [ -n "$ns$soa" ] && echo "::notice title=$d.$t::NS=$ns SOA=$soa"
-              echo "$d.$t NS=[$ns] SOA=[$soa]"
-            done
-          done
-          for d in $(aws route53domains list-domains --region us-east-1 --query 'Domains[].DomainName' --output text 2>/dev/null); do
-            echo "$d NS=[$(dig +short NS $d | tr '\n' ' ')]"
+          for z in $(aws route53 list-hosted-zones --query 'HostedZones[].[Id,Name]' --output text | tr '\t' ','); do
+            id=${z%%,*}; name=${z#*,}; name=${name%.}
+            zns=$(aws route53 get-hosted-zone --id "$id" --query 'DelegationSet.NameServers' --output text | tr '\t' '\n' | sort | tr '\n' ' ')
+            pns=$(dig +short NS "$name" @1.1.1.1 | sed 's/\.$//' | sort | tr '\n' ' ')
+            recs=$(aws route53 list-resource-record-sets --hosted-zone-id "$id" --query 'ResourceRecordSets[].[Name,Type]' --output text | tr '\t\n' ' ;')
+            if [ "$zns" = "$pns" ]; then m=MATCH; elif [ -z "$pns" ]; then m=NO_PUBLIC_NS; else m=MISMATCH; fi
+            echo "::notice title=$name::$m | zone=[$zns] public=[$pns] | records: $recs"
           done
