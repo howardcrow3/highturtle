@@ -5,10 +5,10 @@
   "paddle_client_token": "",
   "paddle_price_id": "",
   "paddle_environment": "sandbox",
-  "company_legal_name": "",
+  "company_legal_name": "High Turtle LLC",
   "company_address": "",
   "governing_law": "",
-  "price_display": "",
-  "devices_per_key": "",
-  "refund_days": ""
+  "price_display": "$4.99 USD",
+  "devices_per_key": "2 computers",
+  "refund_days": "14"
 }

@@ -96,7 +96,7 @@ def refunds_body(c):
     {h2('Money-back guarantee')}
     <p>If you are not satisfied, ask for a refund within {c['refund_days']} days of your purchase and we will refund the full price. No questions asked.</p>
     {h2('How to ask')}
-    <p>Email <a href="mailto:{c['email']}">{c['email']}</a> from the address you bought with, or include your order number. Because Paddle is our merchant of record, the refund is issued by Paddle to your original payment method. It usually appears within 5 to 10 business days.</p>
+    <p>Email <a href="mailto:{c['email']}">{c['email']}</a> from the address you bought with, or include your order number. You can also request a refund at <a href="https://paddle.net">paddle.net</a>. Because Paddle is our merchant of record, the refund is issued by Paddle to your original payment method. It usually appears within 5 to 10 business days.</p>
     {h2('After the refund window')}
     <p>Outside that window we may still refund where the law requires it, for example if the software does not work as described and we cannot fix it, or if you were charged by mistake.</p>
     {h2('What happens to your license')}
