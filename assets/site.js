@@ -1,34 +1,6 @@
 (function () {
   'use strict';
 
-  // Turtle shell: select a phase to show its activities.
-  var scutes = Array.prototype.slice.call(document.querySelectorAll('.scute'));
-  var phases = Array.prototype.slice.call(document.querySelectorAll('.phase'));
-
-  function select(name) {
-    scutes.forEach(function (s) {
-      var on = s.getAttribute('data-phase') === name;
-      s.classList.toggle('is-active', on);
-      if (on) { s.setAttribute('aria-current', 'true'); } else { s.removeAttribute('aria-current'); }
-    });
-    phases.forEach(function (p) {
-      p.classList.toggle('is-active', p.getAttribute('data-phase') === name);
-    });
-  }
-
-  if (scutes.length && phases.length) {
-    scutes.forEach(function (s) {
-      s.addEventListener('click', function (e) {
-        e.preventDefault();
-        select(s.getAttribute('data-phase'));
-      });
-    });
-
-    var fromHash = (location.hash || '').replace('#phase-', '');
-    var valid = phases.some(function (p) { return p.getAttribute('data-phase') === fromHash; });
-    select(valid ? fromHash : 'discover');
-  }
-
   // Signup form: send without leaving the page, fall back to a normal post.
   var form = document.getElementById('signup-form');
   var status = document.getElementById('form-status');
