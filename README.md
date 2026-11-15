@@ -55,7 +55,7 @@ Signup, confirmation and sending run on AWS in `us-east-2` and cost well under $
 - **Setup:** `infra/setup-email.sh`, run by the `Email setup (one time)` workflow. Safe to re-run. It leaves the apex MX, SPF, DMARC and existing DKIM records alone and adds a `bounce.highturtle.com` MAIL FROM subdomain.
 - **Lambda changes:** edit `lambda/handler.py` and push. The deploy workflow updates the function.
 - **Sending:** write an issue as Markdown in `issues/` (see `issues/example-first-issue.md`), then run the `Send an issue` workflow. Use mode `test` first. Sending to the list needs mode `send` and `SEND` typed in the confirm box.
-- **Before the first real send:** set `postal_address` in `infra/mail-config.json` (marketing email must carry one) and wait for SES production access (the `Request SES production access` workflow files the request).
+- **Before the first real send:** wait for SES production access (the `Request SES production access` workflow files the request).
 
 ## Turtlebox app downloads
 
