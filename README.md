@@ -1,6 +1,6 @@
-# highturtle.ai
+# highturtle.com
 
-The site of High Turtle LLC, a holding company for AI companies. Primary domain highturtle.ai; highturtle.com and both www hosts 301-redirect there (`infra/setup-highturtle-ai.sh`). Email stays on @highturtle.com. Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on AWS (S3 + CloudFront) and deployed from this repo by GitHub Actions.
+The site of High Turtle LLC, a holding company for AI companies. Primary domain highturtle.com; highturtle.ai also serves the site, and www hosts redirect to highturtle.com. Switch the primary with the "High Turtle primary domain" workflow (`infra/setup-highturtle-ai.sh`). Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on AWS (S3 + CloudFront) and deployed from this repo by GitHub Actions.
 
 ## Files
 
