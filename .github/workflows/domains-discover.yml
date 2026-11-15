@@ -1,0 +1,46 @@
+name: Domains discovery (read-only)
+
+# Lists Route 53 hosted zones and Route 53 registered domains, and looks up the public
+# name servers of candidate domains. Makes no changes to AWS.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-cvpin3]
+    paths: [.github/workflows/domains-discover.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+      - name: Hosted zones
+        run: |
+          aws route53 list-hosted-zones --query 'HostedZones[].[Name,Id,ResourceRecordSetCount]' --output text
+          echo "::notice title=zones::$(aws route53 list-hosted-zones --query 'HostedZones[].Name' --output text | tr '\t' ' ')"
+      - name: Registered in Route 53 Domains
+        run: |
+          d=$(aws route53domains list-domains --region us-east-1 --query 'Domains[].[DomainName,Expiry]' --output text 2>&1 || true)
+          echo "$d"
+          echo "::notice title=registered::$(echo "$d" | tr '\n\t' '; ')"
+      - name: Public DNS for candidates
+        run: |
+          for d in bornnormal mortaljellyfish; do
+            for t in com ai io co net org app studio; do
+              ns=$(dig +short NS "$d.$t" | tr '\n' ' ')
+              soa=$(dig +short SOA "$d.$t" | head -1)
+              [ -n "$ns$soa" ] && echo "::notice title=$d.$t::NS=$ns SOA=$soa"
+              echo "$d.$t NS=[$ns] SOA=[$soa]"
+            done
+          done
+          for d in $(aws route53domains list-domains --region us-east-1 --query 'Domains[].DomainName' --output text 2>/dev/null); do
+            echo "$d NS=[$(dig +short NS $d | tr '\n' ' ')]"
+          done
