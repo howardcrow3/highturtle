@@ -68,7 +68,7 @@ def footer(extra=""):
   <div class="wrap">
     <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
     <div class="foot" style="margin-top:var(--space-sm)">
-      <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.ai">High Turtle</a></p>
+      <p><a href="/backer/releases.html">Releases</a> &middot; <a href="/backer/notes.html">Release notes</a> &middot; <a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.ai">High Turtle</a></p>
       {footer_block("turtlebox")}
     </div>{extra}
   </div>
@@ -343,16 +343,95 @@ SENT = '''
     <a class="btn" href="/backer/">Back to Backer</a>
   </main>'''
 
+import html as _html, datetime
+
+def load_releases():
+    f = os.path.join(HERE, "releases.json")
+    return json.load(open(f)) if os.path.exists(f) else []
+
+def _inline(t):
+    t = _html.escape(t)
+    t = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", r'<a href="\2">\1</a>', t)
+    t = re.sub(r'(?<![">])(https://github\.com/[^\s/]+/[^\s/]+/pull/(\d+))', r'<a href="\1">#\2</a>', t)
+    t = re.sub(r'(?<![">])(https://github\.com/[^\s<]+)', r'<a href="\1">\1</a>', t)
+    t = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", t)
+    return re.sub(r"`([^`]+)`", r"<code>\1</code>", t)
+
+def md(body):
+    """Small converter for GitHub release notes: headings, bullets, paragraphs, links, bold, code."""
+    out, in_ul = [], False
+    for line in body.replace("\r", "").split("\n"):
+        li = re.match(r"\s*[*-]\s+(.*)", line)
+        if li:
+            if not in_ul: out.append("<ul>"); in_ul = True
+            out.append(f"<li>{_inline(li.group(1))}</li>"); continue
+        if in_ul: out.append("</ul>"); in_ul = False
+        h = re.match(r"#{1,6}\s+(.*)", line)
+        if h: out.append(f"<h4>{_inline(h.group(1))}</h4>")
+        elif line.strip(): out.append(f"<p>{_inline(line.strip())}</p>")
+    if in_ul: out.append("</ul>")
+    return "\n".join(out)
+
+def _date(d):
+    try: return datetime.date.fromisoformat(d).strftime("%B %-d, %Y")
+    except ValueError: return d
+
+def _size(n):
+    return f"{n / 1048576:.1f} MB"
+
+def asset_links(rel):
+    """One link per installer, labelled by file type so renamed assets keep working."""
+    kinds = {".dmg": "macOS (Apple silicon)", ".msi": "Windows", ".exe": "Windows"}
+    links = []
+    for a in rel["assets"]:
+        ext = os.path.splitext(a["name"])[1].lower()
+        if ext not in kinds: continue
+        links.append(f'<a class="btn btn-small" href="{_html.escape(a["url"])}">{kinds[ext]}</a>'
+                     f'<span class="file">{_html.escape(a["name"])} · {_size(a["size"])}</span>')
+    return links
+
+def releases_body(rels):
+    if not rels:
+        return '<main id="main" class="bk-simple wrap"><h1>Releases</h1><p class="lede">No releases are published yet.</p><a class="btn" href="/backer/">Back to Backer</a></main>'
+    rows = []
+    for i, r in enumerate(rels):
+        links = "".join(f"<li>{l}</li>" for l in asset_links(r)) or "<li>No installers attached.</li>"
+        tag = ' <span class="rec">Latest</span>' if i == 0 and not r["prerelease"] else (' <span class="rec">Pre-release</span>' if r["prerelease"] else "")
+        rows.append(f'<article class="rel" id="{_html.escape(r["tag"])}"><h2>{_html.escape(r["name"])}{tag}</h2>'
+                    f'<p class="req">{_date(r["date"])} · <a href="/backer/notes.html#{_html.escape(r["tag"])}">Release notes</a></p>'
+                    f'<ul class="rel-dl">{links}</ul></article>')
+    return ('<main id="main" class="bk-simple wrap"><h1>Releases</h1>'
+            '<p class="lede">Every version of Backer, newest first. The <a href="/backer/">Backer page</a> always has the current download.</p>'
+            + "".join(rows) + '<a class="btn" href="/backer/">Back to Backer</a></main>')
+
+def notes_body(rels):
+    if not rels:
+        return '<main id="main" class="bk-simple wrap"><h1>Release notes</h1><p class="lede">No releases are published yet.</p><a class="btn" href="/backer/">Back to Backer</a></main>'
+    rows = []
+    for r in rels:
+        body = re.sub(r"\*\*Full Changelog\*\*:.*", "", r["body"]).strip()
+        rows.append(f'<article class="rel" id="{_html.escape(r["tag"])}"><h2>{_html.escape(r["name"])}</h2>'
+                    f'<p class="req">{_date(r["date"])} · <a href="/backer/releases.html#{_html.escape(r["tag"])}">Download</a></p>'
+                    f'<div class="prose">{md(body) or "<p>No notes for this release.</p>"}</div></article>')
+    return ('<main id="main" class="bk-simple wrap"><h1>Release notes</h1>'
+            '<p class="lede">What changed in each version of Backer, newest first.</p>'
+            + "".join(rows) + '<a class="btn" href="/backer/">Back to Backer</a></main>')
+
 PAGES = [  # file, title, description, body, extra script, noindex
     ("index.html", "Backer photo and video backup", "Backer backs up your photos and videos from a Mac or PC to a NAS on a schedule or on demand. It never deletes anything on the NAS without asking. No cloud, no subscription.", INDEX, VERSION_JS, False),
     ("thanks.html", "Thanks for buying Backer", "", THANKS, "", True),
+    ("releases.html", "Backer releases and downloads", "Every Backer release with download links for macOS and Windows.", None, "", False),
+    ("notes.html", "Backer release notes", "What changed in each version of Backer.", None, "", False),
     ("report.html", "Report an issue with Backer", "Tell us what went wrong with Backer.", REPORT, "", False),
     ("report-sent.html", "Report received", "", SENT, "", True),
 ]
 
 def render(cfg, artifact):
     out = {}
+    rels = load_releases()
     for fname, title, desc, body, extra, noindex in PAGES:
+        if fname == "releases.html": body = releases_body(rels)
+        if fname == "notes.html": body = notes_body(rels)
         path = "/backer/" + ("" if fname == "index.html" else fname)
         meta = f'<meta name="description" content="{desc}">\n' if desc else ""
         if noindex: meta += '<meta name="robots" content="noindex">\n'
@@ -434,6 +513,8 @@ def main():
     for f, p in pages.items():
         open(os.path.join(OUT, "backer", f), "w").write(fill(p, cfg))
     open(os.path.join(OUT, "assets", "backer.css"), "w").write(CSS)
+    if os.path.exists(os.path.join(HERE, "releases.json")):  # published copy, so the release watcher can tell when the site is out of date
+        shutil.copy(os.path.join(HERE, "releases.json"), os.path.join(OUT, "backer", "releases.json"))
     print("Backer pages built into turtlebox/backer/")
 
 main()
