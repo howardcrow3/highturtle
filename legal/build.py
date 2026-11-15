@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds the policy pages Paddle asks for on both sites, and the footer that links to them.
 
-  python3 legal/build.py           write terms, refund, privacy and contact pages for highturtle.ai (repo root)
+  python3 legal/build.py           write terms, refund, privacy and contact pages for highturtle.com (repo root)
                                    and turtlebox.studio (turtlebox/), refresh the footers on the static High Turtle
                                    pages, then rebuild the Turtlebox and Backer pages so their footers match
   python3 legal/build.py --check   list every [placeholder] still showing on either site; exits 1 if any remain
@@ -48,7 +48,7 @@ def shell(site, title, desc, path, body):
                              '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
         css = f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">'
         nav = ('<a href="/apps/">Apps</a>\n        <a href="/backer/">Backer</a>\n'
-               '        <a href="https://highturtle.ai">High Turtle</a>')
+               '        <a href="https://highturtle.com">High Turtle</a>')
         foot_intro = "<p>Turtlebox builds small AI apps.</p>"
     return f"""<!doctype html>
 {html_open}
@@ -99,7 +99,7 @@ MOR = ("Our order process is conducted by our online reseller Paddle.com. Paddle
 def products(site):
     if site == "highturtle":
         return f"""<h2>3. Our companies and their products</h2>
-<p>High Turtle LLC is a holding company. It owns and operates AI companies that trade under their own names, such as <a href="https://turtlebox.studio">Turtlebox</a>. Nothing is sold on highturtle.ai. Each company sells its products on its own website, and the terms, refund policy and prices on that website apply to those products. High Turtle does not sell consulting or other services.</p>
+<p>High Turtle LLC is a holding company. It owns and operates AI companies that trade under their own names, such as <a href="https://turtlebox.studio">Turtlebox</a>. Nothing is sold on highturtle.com. Each company sells its products on its own website, and the terms, refund policy and prices on that website apply to those products. High Turtle does not sell consulting or other services.</p>
 <p>If High Turtle itself ever sells a product, its page will say what is included and the price, and you will get a personal, non-exclusive, non-transferable license to use it in your own work. You may not resell, sublicense, share publicly or redistribute it."""
     return f"""<h2>3. What you buy</h2>
 <p>Turtlebox makes software: small AI apps that run in your browser, and <a href="/backer/">Backer</a>, a desktop app that backs up photos and videos from a Mac or PC to a NAS. Each app's page says what it does, what it costs and what is included. Turtlebox does not sell consulting or other services.</p>
@@ -193,7 +193,7 @@ def privacy(site):
     return f"""<h1>Privacy notice</h1>
 <p class="updated">Last updated {CFG["effective_date"]}</p>
 
-<p>This notice covers highturtle.ai (highturtle.com redirects there), turtlebox.studio, and the High Turtle and Turtlebox products, including the Backer app. We collect as little as we can.</p>
+<p>This notice covers highturtle.com, turtlebox.studio, and the High Turtle and Turtlebox products, including the Backer app. We collect as little as we can.</p>
 
 <h2>Who is responsible</h2>
 <p>{v("legal_name")}, trading as High Turtle and Turtlebox, of {v("address")}, is the controller of your personal data. Privacy questions and requests: <a href="mailto:{CFG["highturtle_email"]}">{CFG["highturtle_email"]}</a> or <a href="mailto:{CFG["turtlebox_email"]}">{CFG["turtlebox_email"]}</a>.</p>

@@ -18,7 +18,7 @@ LABELS = {
 }
 
 SITES = {
-    "highturtle": {"brand": "High Turtle", "domain": "highturtle.ai", "email_key": "highturtle_email"},
+    "highturtle": {"brand": "High Turtle", "domain": "highturtle.com", "email_key": "highturtle_email"},
     "turtlebox": {"brand": "Turtlebox", "domain": "turtlebox.studio", "email_key": "turtlebox_email"},
 }
 

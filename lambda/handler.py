@@ -102,7 +102,7 @@ def send_confirmation(email, token):
         "Confirm your email to join the High Turtle list.\n\n"
         f"{link}\n\n"
         "If you did not ask for this, ignore this email and nothing will happen.\n\n"
-        "High Turtle\nhttps://highturtle.ai\n"
+        "High Turtle\nhttps://highturtle.com\n"
     )
     body = f"""<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.6;color:#2e3033;max-width:32rem">
 <p>Confirm your email to join the High Turtle list.</p>

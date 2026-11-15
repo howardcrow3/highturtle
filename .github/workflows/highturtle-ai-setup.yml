@@ -1,10 +1,17 @@
-name: highturtle.ai primary domain setup (one time)
+name: High Turtle primary domain (highturtle.com or highturtle.ai)
 
-# Makes highturtle.ai the primary domain: certificate, DNS, and a 301 from highturtle.com (and www) to it.
+# Sets High Turtle's primary domain. highturtle.com: both domains serve the site, www redirects to highturtle.com.
+# highturtle.ai: every other host 301-redirects to highturtle.ai. Certificate and DNS for highturtle.ai are kept either way.
 # Safe to re-run. Uses the temporary AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY secrets.
 
 on:
   workflow_dispatch:
+    inputs:
+      primary:
+        description: Primary domain
+        type: choice
+        options: [highturtle.com, highturtle.ai]
+        default: highturtle.com
 
 permissions:
   contents: read
@@ -24,7 +31,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          bash infra/setup-highturtle-ai.sh 2>&1 | tee /tmp/log.txt
+          PRIMARY="${{ inputs.primary }}" bash infra/setup-highturtle-ai.sh 2>&1 | tee /tmp/log.txt
       - name: Smoke test
         if: always()
         shell: bash
