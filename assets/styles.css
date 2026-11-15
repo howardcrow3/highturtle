@@ -307,8 +307,9 @@ a:hover { text-decoration-thickness: 2px; }
 .count-note, .pf-label, .pf-go { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.25em; text-transform: uppercase; color: var(--body); }
 .portfolio { list-style: none; margin: var(--space-xl) 0 0; padding: 0; border-top: 1px solid var(--ink); }
 .pf-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 11rem 7rem 11rem; gap: var(--space-md) var(--space-lg); align-items: baseline; padding-block: var(--space-lg); border-bottom: 1px solid var(--line); color: var(--body); text-decoration: none; transition: background-color var(--duration-base) var(--ease-out); }
-.pf-row:hover { background: var(--surface); }
-.pf-row:hover .pf-go { color: var(--ink); }
+a.pf-row:hover { background: var(--surface); }
+.pf-go.pf-quiet { border-bottom-color: transparent; color: var(--body); }
+a.pf-row:hover .pf-go { color: var(--ink); }
 .pf-name { color: var(--ink); font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; }
 .pf-desc { font-size: 1rem; line-height: 1.65; }
 .pf-meta { display: flex; flex-direction: column; gap: 4px; color: var(--ink); font-size: 0.9375rem; }
