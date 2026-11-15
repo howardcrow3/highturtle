@@ -58,7 +58,7 @@ HEADER = '''<header class="site-header">
     <nav aria-label="Main">
       <a href="/apps/">Apps</a>
       <a href="/backer/" aria-current="page">Backer</a>
-      <a href="https://highturtle.com">High Turtle</a>
+      <a href="https://highturtle.ai">High Turtle</a>
     </nav>
   </div>
 </header>''' % MARK_VB
@@ -68,7 +68,7 @@ def footer(extra=""):
   <div class="wrap">
     <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
     <div class="foot" style="margin-top:var(--space-sm)">
-      <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
+      <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.ai">High Turtle</a></p>
       {footer_block("turtlebox")}
     </div>{extra}
   </div>

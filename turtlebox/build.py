@@ -50,7 +50,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
     <nav aria-label="Main">
       <a href="/apps/"{cur("apps")}>Apps</a>
       <a href="/backer/"{cur("backer")}>Backer</a>
-      <a href="https://highturtle.com">High Turtle</a>
+      <a href="https://highturtle.ai">High Turtle</a>
     </nav>
   </div>
 </header>
@@ -59,7 +59,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
 </main>
 <footer class="site-footer">
   <div class="wrap foot">
-    <p>Turtlebox builds small AI apps. Also from us: <a href="https://highturtle.com">High Turtle</a>.</p>
+    <p>Turtlebox builds small AI apps. Also from us: <a href="https://highturtle.ai">High Turtle</a>.</p>
       {footer_block("turtlebox")}
   </div>
 </footer>
@@ -109,7 +109,7 @@ home = f"""  <section class="hero">
         <p class="lede">Turtlebox builds AI apps that run in your browser. Each one is built for a single task, so you can open it, use it and get on with your day.</p>
         <div class="cta-row">
           <a class="btn" href="/apps/">See the apps</a>
-          <a class="link" href="https://highturtle.com">Visit High Turtle</a>
+          <a class="link" href="https://highturtle.ai">Visit High Turtle</a>
         </div>
       </div>
       <aside class="app-card feature-plate" aria-labelledby="backer-h">

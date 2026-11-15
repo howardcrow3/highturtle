@@ -1,6 +1,6 @@
-# highturtle.com
+# highturtle.ai
 
-The site of High Turtle LLC, a holding company for AI companies (Turtlebox, Montoya.ai). Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on AWS (S3 + CloudFront) and deployed from this repo by GitHub Actions.
+The site of High Turtle LLC, a holding company for AI companies. Primary domain highturtle.ai; highturtle.com and both www hosts 301-redirect there (`infra/setup-highturtle-ai.sh`). Email stays on @highturtle.com. Static site. No build step: plain HTML, CSS and a little JavaScript. Hosted on AWS (S3 + CloudFront) and deployed from this repo by GitHub Actions.
 
 ## Files
 
