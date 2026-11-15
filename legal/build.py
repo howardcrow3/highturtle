@@ -39,8 +39,8 @@ def shell(site, title, desc, path, body):
     s = SITES[site]
     if site == "highturtle":
         html_open, scheme = '<html lang="en">', '<meta name="color-scheme" content="light dark">'
-        css = '<link rel="stylesheet" href="/assets/styles.css?v=hc1">'
-        nav = ('<a href="/#companies">Companies</a>\n'
+        css = '<link rel="stylesheet" href="/assets/styles.css?v=hc2">'
+        nav = ('<a href="/#portfolio">Portfolio</a>\n'
                               '        <a href="/contact.html">Contact</a>')
         foot_intro = "<p>High Turtle LLC is a holding company for AI companies.</p>"
     else:
