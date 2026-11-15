@@ -3,9 +3,11 @@
 Add an app by adding an entry to apps.json. Set "download": true on an app whose file is uploaded to the downloads bucket
 (see infra/upload-app.sh) to show the email form on its card. Set "status" to "Live" and add "url" (for example /apps/my-app/)
 to show an Open button."""
-import html, json, os, re
+import html, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, "..", "legal"))
+from site_legal import footer_block  # policy links and legal name (Paddle requirements)
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
@@ -57,8 +59,8 @@ def page(title, desc, body, path, robots=True, nav_current=""):
 </main>
 <footer class="site-footer">
   <div class="wrap foot">
-    <p>Turtlebox builds small AI apps.</p>
-    <p>Also from us: <a href="https://highturtle.com">High Turtle</a> &middot; &copy; 2026 Turtlebox</p>
+    <p>Turtlebox builds small AI apps. Also from us: <a href="https://highturtle.com">High Turtle</a>.</p>
+      {footer_block("turtlebox")}
   </div>
 </footer>
   <script src="/assets/site.js?v={V}" defer></script>
@@ -74,7 +76,7 @@ def dl_form(a):
           <input id="e-{slug}" name="email" type="email" autocomplete="email" required placeholder="you@company.com">
           <p class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></p>
           <button class="btn btn-small" type="submit">Email me the download</button>
-          <p class="fine">We email you a download link. You also join the High Turtle list for release news and can unsubscribe any time. <a href="https://highturtle.com/privacy.html">Privacy</a></p>
+          <p class="fine">We email you a download link. You also join the High Turtle list for release news and can unsubscribe any time. <a href="/privacy.html">Privacy</a></p>
           <p class="form-status" role="status"></p>
         </form>"""
 
@@ -173,7 +175,7 @@ w("download-sent.html", page("Check your inbox | Turtlebox", "Download link sent
 w("download-problem.html", page("Download problem | Turtlebox", "Download problem.", prob, "/download-problem.html", robots=False))
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
-w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n</urlset>\n')
+w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n  <url><loc>https://turtlebox.studio/terms.html</loc></url>\n  <url><loc>https://turtlebox.studio/refund.html</loc></url>\n  <url><loc>https://turtlebox.studio/privacy.html</loc></url>\n  <url><loc>https://turtlebox.studio/contact.html</loc></url>\n</urlset>\n')
 fav = open(os.path.join(HERE, "design-system", "assets", "Icons", "favicon.svg")).read()
 w("favicon.svg", fav)
 print("built")

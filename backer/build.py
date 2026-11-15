@@ -6,10 +6,11 @@
 
 Config values:
   base_url        update hosting address, ending in /backer, for example https://dxxxx.cloudfront.net/backer
-  fastspring_url  FastSpring checkout URL for "Buy now"
+  checkout_url    Paddle checkout link for "Buy now" (the old key fastspring_url is still read)
+  price           Backer's price as shown on the page, for example $29
   support_email   support address shown on the pages
-  company         company name for the footer
-Pages are light only. Nothing is written to turtlebox/ until all four values are filled in.
+The footer's legal name and policy links come from legal/config.json.
+Pages are light only. Unset download and checkout links show as "Coming soon"; an unset price shows a highlighted placeholder.
 """
 import json, os, re, shutil, sys, urllib.parse
 
@@ -17,6 +18,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "turtlebox")
 V = "bk2"
+sys.path.insert(0, os.path.join(ROOT, "legal"))
+from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
 TB_V = re.search(r'V = "(\w+)"', open(os.path.join(OUT, "build.py")).read()).group(1)  # same cache tag as the Turtlebox pages
 
 mark_svg = open(os.path.join(ROOT, "assets", "mark.svg")).read()
@@ -66,7 +69,7 @@ def footer(extra=""):
     <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
     <div class="foot" style="margin-top:var(--space-sm)">
       <p><a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
-      <p>&copy; 2026 {{{{COMPANY}}}}</p>
+      {footer_block("turtlebox")}
     </div>{extra}
   </div>
 </footer>'''
@@ -139,14 +142,23 @@ INDEX = '''
       <div class="price">
         <div>
           <h3>One-time purchase</h3>
+          <p class="amount"><strong>{{PRICE}}</strong> once, in US dollars. Any sales tax or VAT is added at checkout.</p>
           <ul>
             <li><strong>One key covers all 1.x versions.</strong> No subscription.</li>
             <li><strong>14-day free trial</strong> with every feature.</li>
             <li>After the trial, backups stop. Your history, Verify and restore keep working.</li>
           </ul>
+          <h3 style="margin-top:var(--space-md)">What you get</h3>
+          <ul>
+            <li>A license key by email, right after you buy</li>
+            <li>Backer for macOS (Apple silicon) and Windows 64-bit</li>
+            <li>Every 1.x update, delivered in the app</li>
+            <li>Email support at {{SUPPORT_EMAIL}}</li>
+          </ul>
         </div>
-        <a class="btn" href="{{FASTSPRING_URL}}">Buy now</a>
+        <a class="btn" href="{{CHECKOUT_URL}}">Buy now</a>
       </div>
+      <p class="fine" style="margin-top:var(--space-sm)">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
     </div></section>
 
     <section class="section" id="install" aria-labelledby="install-h"><div class="wrap">
@@ -384,14 +396,15 @@ def fill(s, cfg):
     soon = '<span class="btn" aria-disabled="true">Coming soon</span>'
     if not cfg["base_url"].strip():
         s = re.sub(r'<a class="btn" href="\{\{BASE_URL\}\}/download/[^"]*">.*?</a>', soon, s)
-    if not cfg["fastspring_url"].strip():
-        s = re.sub(r'<a class="btn" href="\{\{FASTSPRING_URL\}\}">.*?</a>', soon, s)
-    if not cfg["company"].strip():
-        cfg = dict(cfg, company="Turtlebox")
+    checkout = (cfg.get("checkout_url") or cfg.get("fastspring_url") or "").strip()
+    if not checkout:
+        s = re.sub(r'<a class="btn" href="\{\{CHECKOUT_URL\}\}">.*?</a>', soon, s)
+    price = (cfg.get("price") or "").strip()
+    s = s.replace("{{PRICE}}", price.replace("&", "&amp;").replace("<", "&lt;") if price else todo("Backer price, e.g. $29"))
     if not cfg["support_email"].strip():
         s = re.sub(r'<a class="support-mail" href="mailto:\{\{SUPPORT_EMAIL\}\}">.*?</a>', "the form above", s)
-    return (s.replace("{{BASE_URL}}", cfg["base_url"].rstrip("/")).replace("{{FASTSPRING_URL}}", cfg["fastspring_url"])
-             .replace("{{SUPPORT_EMAIL}}", cfg["support_email"]).replace("{{COMPANY}}", cfg["company"]))
+    return (s.replace("{{BASE_URL}}", cfg["base_url"].rstrip("/")).replace("{{CHECKOUT_URL}}", checkout)
+             .replace("{{SUPPORT_EMAIL}}", cfg["support_email"]))
 
 def strip_wrapper(page):
     """Artifact pages other than the main one stay full documents; the main page is wrapped by the publisher."""
