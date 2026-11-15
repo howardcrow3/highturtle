@@ -1,0 +1,43 @@
+name: Publish Backer releases to the site
+
+# Keeps turtlebox.studio/backer/releases.html and notes.html current. Every 15 minutes it compares the published Backer
+# releases on GitHub with the copy live on the site; if they differ (a new release, or edited notes), it runs the
+# "Deploy turtlebox.studio" workflow, which fetches the releases again and rebuilds the pages.
+# It can also be started by hand, or from another repository with a repository_dispatch event of type backer-release.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  repository_dispatch:
+    types: [backer-release]
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: backer-releases
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compare GitHub releases with the live site
+        id: diff
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 backer/fetch_releases.py
+          if curl -fsS https://turtlebox.studio/backer/releases.json -o live.json && cmp -s live.json backer/releases.json; then
+            echo "Site is up to date"; echo "stale=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Site is out of date (or has no release data yet)"; echo "stale=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Deploy the site
+        if: steps.diff.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run deploy-turtlebox.yml --repo "${{ github.repository }}" --ref main

@@ -175,7 +175,7 @@ w("download-sent.html", page("Check your inbox | Turtlebox", "Download link sent
 w("download-problem.html", page("Download problem | Turtlebox", "Download problem.", prob, "/download-problem.html", robots=False))
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
-w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n  <url><loc>https://turtlebox.studio/terms.html</loc></url>\n  <url><loc>https://turtlebox.studio/refund.html</loc></url>\n  <url><loc>https://turtlebox.studio/privacy.html</loc></url>\n  <url><loc>https://turtlebox.studio/contact.html</loc></url>\n</urlset>\n')
+w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url><loc>https://turtlebox.studio/</loc></url>\n  <url><loc>https://turtlebox.studio/apps/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/</loc></url>\n  <url><loc>https://turtlebox.studio/backer/releases.html</loc></url>\n  <url><loc>https://turtlebox.studio/backer/notes.html</loc></url>\n  <url><loc>https://turtlebox.studio/terms.html</loc></url>\n  <url><loc>https://turtlebox.studio/refund.html</loc></url>\n  <url><loc>https://turtlebox.studio/privacy.html</loc></url>\n  <url><loc>https://turtlebox.studio/contact.html</loc></url>\n</urlset>\n')
 fav = open(os.path.join(HERE, "design-system", "assets", "Icons", "favicon.svg")).read()
 w("favicon.svg", fav)
 print("built")
