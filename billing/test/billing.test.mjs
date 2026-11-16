@@ -25,7 +25,7 @@ function setup(overrides = {}) {
     const body = JSON.stringify(payload);
     return app(webhookEvent(body, opts.signature ?? sign(body), opts));
   };
-  return { app, store, sent, portalCalls, deliver, cfg };
+  return { app, store, sent, portalCalls, deliver, cfg, appPaddle: paddle };
 }
 
 // ---------- Part 1: webhook verification and routing ----------
@@ -210,48 +210,108 @@ test('portal ignores a customer ID supplied by the client', async () => {
   assert.equal(portalCalls.length, 0);
 });
 
-test('full flow: sign-in email, link, session cookie, portal redirect', async () => {
-  const { app, deliver, sent, portalCalls } = setup();
-  await deliver(customerEvent('customer.created'));
-  await deliver(subscriptionEvent('subscription.created'));
-  await deliver(subscriptionEvent('subscription.created', { id: 'sub_old', status: 'canceled' }));
+function idToken(claims) {
+  const b = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+  return `${b({ alg: 'RS256' })}.${b(claims)}.sig`;
+}
 
-  const r1 = await app(req('POST', '/api/billing/signin', {
-    headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'email=buyer%40example.com',
-  }));
-  assert.match(r1.headers.location, /sent=1/);
-  assert.equal(sent.length, 1);
-  const link = sent[0].text.match(/https:\/\/\S+/)[0];
-  const t = new URL(link).searchParams.get('t');
+function googleSetup(claimsFor) {
+  const ctx = setup({ googleClientId: 'cid.apps.googleusercontent.com', googleClientSecret: 'gsecret', backerPriceIds: ['pri_backer'] });
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, body: String(init.body) });
+    return { ok: true, json: async () => ({ id_token: idToken(claimsFor(calls.length)) }) };
+  };
+  const app = makeApp({ cfg: ctx.cfg, store: ctx.store, paddle: ctx.appPaddle, sendEmail: async () => {}, fetchImpl });
+  return { ...ctx, app, calls };
+}
 
-  const r2 = await app(req('GET', '/api/billing/auth', { queryStringParameters: { t } }));
-  assert.equal(r2.statusCode, 303);
-  const cookie = r2.cookies[0].split(';')[0];
-  assert.match(r2.cookies[0], /HttpOnly; Secure; SameSite=Lax/);
+async function googleSignIn(app, claims) {
+  const r1 = await app(req('GET', '/api/billing/google/start'));
+  const loc = new URL(r1.headers.location);
+  assert.equal(loc.origin + loc.pathname, 'https://accounts.google.com/o/oauth2/v2/auth');
+  assert.equal(loc.searchParams.get('redirect_uri'), 'https://turtlebox.studio/api/billing/google/callback');
+  const state = loc.searchParams.get('state');
+  const nonce = loc.searchParams.get('nonce');
+  const oauthCookie = r1.cookies[0].split(';')[0];
+  claims.nonce = claims.nonce ?? nonce;
+  const r2 = await app(req('GET', '/api/billing/google/callback', { queryStringParameters: { state, code: 'abc' }, cookies: [oauthCookie] }));
+  return r2;
+}
 
-  const r3 = await app(req('GET', '/api/billing/me', { cookies: [cookie] }));
-  const me = JSON.parse(r3.body);
+const goodClaims = () => ({ iss: 'https://accounts.google.com', aud: 'cid.apps.googleusercontent.com',
+  exp: Math.floor(Date.now() / 1000) + 300, email: 'Buyer@Example.com', email_verified: true });
+
+test('Google sign-in, then purchases, access and the portal for the matching Paddle customer', async () => {
+  let claims;
+  const g = googleSetup(() => claims);
+  await g.deliver(customerEvent('customer.created'));
+  await g.deliver(subscriptionEvent('subscription.created'));
+  await g.deliver(transactionCompletedEvent());
+  claims = goodClaims();
+  const r = await googleSignIn(g.app, claims);
+  assert.equal(r.headers.location, 'https://turtlebox.studio/account/');
+  assert.match(g.calls[0].body, /client_secret=gsecret/);
+  const cookie = r.cookies.find((c) => c.startsWith('tb_account=') && !c.startsWith('tb_account=;')).split(';')[0];
+
+  const me = JSON.parse((await g.app(req('GET', '/api/billing/me', { cookies: [cookie] }))).body);
   assert.equal(me.signedIn, true);
+  assert.equal(me.customer, true);
   assert.equal(me.access, true);
+  assert.equal(me.purchases.length, 1);
+  assert.equal(me.purchases[0].backer, true);
 
-  const r4 = await app(req('POST', '/api/billing/portal', { cookies: [cookie] }));
-  assert.equal(r4.statusCode, 303);
-  assert.equal(r4.headers.location, 'https://customer-portal.paddle.com/cpl_x?c=ctm_01');
-  assert.deepEqual(portalCalls, [{ customerId: 'ctm_01', subIds: ['sub_01'] }]);
+  const p = await g.app(req('POST', '/api/billing/portal', { cookies: [cookie] }));
+  assert.equal(p.headers.location, 'https://customer-portal.paddle.com/cpl_x?c=ctm_01');
 });
 
-test('sign-in for an unknown email sends nothing but answers the same', async () => {
-  const { app, sent } = setup();
-  const res = await app(req('POST', '/api/billing/signin', {
-    headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'email=nobody%40example.com',
-  }));
-  assert.match(res.headers.location, /sent=1/);
-  assert.equal(sent.length, 0);
+test('Google sign-in with no purchases signs in but shows no customer', async () => {
+  let claims;
+  const g = googleSetup(() => claims);
+  claims = { ...goodClaims(), email: 'new@example.com' };
+  const r = await googleSignIn(g.app, claims);
+  const cookie = r.cookies.find((c) => c.startsWith('tb_account=')).split(';')[0];
+  const me = JSON.parse((await g.app(req('GET', '/api/billing/me', { cookies: [cookie] }))).body);
+  assert.deepEqual([me.signedIn, me.customer, me.purchases.length], [true, false, 0]);
+  const p = await g.app(req('POST', '/api/billing/portal', { cookies: [cookie] }));
+  assert.match(p.headers.location, /error=signin/);
+});
+
+for (const [name, mutate] of [
+  ['unverified email', (c) => { c.email_verified = false; }],
+  ['wrong audience', (c) => { c.aud = 'someone-else'; }],
+  ['wrong issuer', (c) => { c.iss = 'https://evil.example'; }],
+  ['expired token', (c) => { c.exp = 1; }],
+  ['wrong nonce', (c) => { c.nonce = 'replayed'; }],
+]) {
+  test(`Google sign-in is refused: ${name}`, async () => {
+    let claims;
+    const g = googleSetup(() => claims);
+    claims = goodClaims(); mutate(claims);
+    const r = await googleSignIn(g.app, claims);
+    assert.match(r.headers.location, /error=signin/);
+    assert.ok(!r.cookies.some((c) => c.startsWith('tb_account=') && !c.startsWith('tb_account=;')));
+  });
+}
+
+test('Google callback with a state that does not match the cookie is refused', async () => {
+  const g = googleSetup(() => goodClaims());
+  const r1 = await g.app(req('GET', '/api/billing/google/start'));
+  const oauthCookie = r1.cookies[0].split(';')[0];
+  const r2 = await g.app(req('GET', '/api/billing/google/callback', { queryStringParameters: { state: 'forged', code: 'abc' }, cookies: [oauthCookie] }));
+  assert.match(r2.headers.location, /error=signin/);
+  assert.equal(g.calls.length, 0);
+});
+
+test('Google start without a configured client says sign-in is unavailable', async () => {
+  const { app } = setup();
+  const r = await app(req('GET', '/api/billing/google/start'));
+  assert.match(r.headers.location, /error=unavailable/);
 });
 
 test('a forged session cookie is refused', async () => {
   const { app, portalCalls } = setup();
-  const forged = signToken('not-the-secret', 'session', { c: 'ctm_01' }, 3600);
+  const forged = signToken('not-the-secret', 'session', { e: 'buyer@example.com' }, 3600);
   const res = await app(req('POST', '/api/billing/portal', { cookies: [`tb_account=${forged}`] }));
   assert.match(res.headers.location, /error=signin/);
   assert.equal(portalCalls.length, 0);

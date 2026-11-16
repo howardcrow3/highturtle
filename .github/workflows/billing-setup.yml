@@ -4,7 +4,7 @@ name: Billing setup (Paddle webhooks and customer portal)
 # re-run; never deletes anything. Run it by hand only.
 # Secrets used: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (temporary setup keys), and optionally
 # PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET and BACKER_SIGNING_KEY (the hex private key that signs Backer
-# license keys). When set they are copied into AWS Secrets
+# license keys), GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET (Google sign-in). When set they are copied into AWS Secrets
 # Manager (highturtle/billing); when empty, the values already stored there are kept. Delete the two
 # Paddle GitHub secrets after a successful run if you prefer them to live only in AWS.
 
@@ -22,6 +22,8 @@ jobs:
       PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
       PADDLE_WEBHOOK_SECRET: ${{ secrets.PADDLE_WEBHOOK_SECRET }}
       BACKER_SIGNING_KEY: ${{ secrets.BACKER_SIGNING_KEY }}
+      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       # Hex private key that signs CeeVee licenses (matches CEEVEE_LICENSE_PUBKEY in the app). Empty keeps what AWS holds.
       CEEVEE_SIGNING_KEY: ${{ secrets.CEEVEE_SIGNING_KEY }}
       # Comma-separated Paddle price IDs for CeeVee, set as a repository variable (not secret).

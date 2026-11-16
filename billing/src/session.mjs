@@ -1,4 +1,4 @@
-// Signed, expiring tokens for email sign-in links and the session cookie.
+// Signed, expiring tokens for the Google sign-in state and the session cookie.
 // Format: base64url(JSON payload) + "." + base64url(HMAC-SHA256(secret, purpose + "." + payload)).
 // Stateless: nothing is stored, so there is nothing to clean up.
 
@@ -33,7 +33,6 @@ export function verifyToken(secret, purpose, token, now = Date.now()) {
   return data;
 }
 
-export const LOGIN_TTL = 15 * 60;
 export const SESSION_TTL = 7 * 24 * 3600;
 export const COOKIE = 'tb_account';
 

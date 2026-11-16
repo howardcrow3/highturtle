@@ -137,6 +137,16 @@ export class DynamoStore {
     return (out.Items || [])[0] || null;
   }
 
+  async listTransactions(customerId) {
+    const out = await this.db.send(new QueryCommand({
+      TableName: this.tables.transactions,
+      IndexName: 'customer-index',
+      KeyConditionExpression: 'customer_id = :c',
+      ExpressionAttributeValues: { ':c': customerId },
+    }));
+    return out.Items || [];
+  }
+
   async listSubscriptions(customerId) {
     const out = await this.db.send(new QueryCommand({
       TableName: this.tables.subscriptions,
@@ -193,6 +203,9 @@ export class MemoryStore {
   async findCustomerByEmail(email) {
     const e = email.trim().toLowerCase();
     return [...this.customers.values()].find((c) => c.email_lc === e) || null;
+  }
+  async listTransactions(customerId) {
+    return [...this.transactions.values()].filter((t) => t.customer_id === customerId);
   }
   async listSubscriptions(customerId) {
     return [...this.subscriptions.values()].filter((s) => s.customer_id === customerId);

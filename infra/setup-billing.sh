@@ -47,7 +47,14 @@ make_table() { # name key [gsi-name gsi-key]
 }
 make_table $T_CUST customer_id email-index email_lc
 make_table $T_SUBS subscription_id customer-index customer_id
-make_table $T_TXN transaction_id
+make_table $T_TXN transaction_id customer-index customer_id
+# The transactions table was first created without an index; add it in place (no data is touched).
+if [ "$(aws dynamodb describe-table --table-name $T_TXN --query "length(Table.GlobalSecondaryIndexes[?IndexName=='customer-index'] || \`[]\`)" --output text)" = "0" ]; then
+  aws dynamodb update-table --table-name $T_TXN \
+    --attribute-definitions AttributeName=customer_id,AttributeType=S \
+    --global-secondary-index-updates '[{"Create":{"IndexName":"customer-index","KeySchema":[{"AttributeName":"customer_id","KeyType":"HASH"}],"Projection":{"ProjectionType":"ALL"}}}]' >/dev/null
+  echo "added customer-index to $T_TXN"
+fi
 make_table $T_CLIC license_key email-index email_lc
 make_table $T_CTRIAL machine
 
@@ -62,12 +69,15 @@ SESSION=$(echo "$CURRENT" | jq -r '.SESSION_SECRET // empty')
 [ -z "$SESSION" ] && SESSION=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
 NEW=$(echo "$CURRENT" | jq -c --arg a "${PADDLE_API_KEY:-}" --arg w "${PADDLE_WEBHOOK_SECRET:-}" --arg s "$SESSION" \
   --arg b "$(echo "${BACKER_SIGNING_KEY:-}" | tr -d '[:space:]')" \
-  --arg c "$(echo "${CEEVEE_SIGNING_KEY:-}" | tr -d '[:space:]')" '
+  --arg c "$(echo "${CEEVEE_SIGNING_KEY:-}" | tr -d '[:space:]')" \
+  --arg gi "${GOOGLE_CLIENT_ID:-}" --arg gs "${GOOGLE_CLIENT_SECRET:-}" '
   . + {SESSION_SECRET:$s}
     + (if $a != "" then {PADDLE_API_KEY:$a} else {} end)
     + (if $w != "" then {PADDLE_WEBHOOK_SECRET:$w} else {} end)
     + (if $b != "" then {BACKER_SIGNING_KEY:$b} else {} end)
-    + (if $c != "" then {CEEVEE_SIGNING_KEY:$c} else {} end)')
+    + (if $c != "" then {CEEVEE_SIGNING_KEY:$c} else {} end)
+    + (if $gi != "" then {GOOGLE_CLIENT_ID:$gi} else {} end)
+    + (if $gs != "" then {GOOGLE_CLIENT_SECRET:$gs} else {} end)')
 # Take the ARN from the write itself: a describe right after create can miss the new secret.
 if [ "$EXISTS" = no ]; then
   SECRET_ARN=$(aws secretsmanager create-secret --name $SECRET_ID --secret-string "$NEW" --query ARN --output text)
@@ -86,7 +96,7 @@ T="arn:aws:dynamodb:$REGION:$ACCOUNT:table"
 cat > /tmp/lambda-policy.json <<JSON
 {"Version":"2012-10-17","Statement":[
  {"Effect":"Allow","Action":["dynamodb:UpdateItem","dynamodb:PutItem","dynamodb:GetItem","dynamodb:Query"],
-  "Resource":["$T/$T_CUST","$T/$T_CUST/index/*","$T/$T_SUBS","$T/$T_SUBS/index/*","$T/$T_TXN","$T/$T_CLIC","$T/$T_CLIC/index/*","$T/$T_CTRIAL"]},
+  "Resource":["$T/$T_CUST","$T/$T_CUST/index/*","$T/$T_SUBS","$T/$T_SUBS/index/*","$T/$T_TXN","$T/$T_TXN/index/*","$T/$T_CLIC","$T/$T_CLIC/index/*","$T/$T_CTRIAL"]},
  {"Effect":"Allow","Action":["secretsmanager:GetSecretValue"],"Resource":"$SECRET_ARN"},
  {"Effect":"Allow","Action":["ses:SendEmail"],"Resource":["arn:aws:ses:$REGION:$ACCOUNT:identity/*","arn:aws:ses:$REGION:$ACCOUNT:configuration-set/$CONFIG_SET"]}
 ]}

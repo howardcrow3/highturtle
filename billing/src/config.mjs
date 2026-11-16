@@ -6,7 +6,7 @@
 
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-const SECRET_KEYS = ['PADDLE_API_KEY', 'PADDLE_WEBHOOK_SECRET', 'SESSION_SECRET', 'BACKER_SIGNING_KEY', 'CEEVEE_SIGNING_KEY'];
+const SECRET_KEYS = ['PADDLE_API_KEY', 'PADDLE_WEBHOOK_SECRET', 'SESSION_SECRET', 'BACKER_SIGNING_KEY', 'CEEVEE_SIGNING_KEY', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 
 let cached = null;
 
@@ -48,6 +48,8 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
     ceeveeSeats: Number(merged.CEEVEE_SEATS) || 2,
     ceeveeMajor: Number(merged.CEEVEE_MAJOR) || 1,
     opsEmail: merged.OPS_EMAIL || 'info@turtlebox.studio',
+    googleClientId: merged.GOOGLE_CLIENT_ID || '',
+    googleClientSecret: merged.GOOGLE_CLIENT_SECRET || '',
   };
   cached = cfg;
   return cfg;
