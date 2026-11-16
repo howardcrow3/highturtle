@@ -33,6 +33,9 @@
 .app-desc { max-width: 36em; }
 .app-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-lg); margin-top: var(--space-xs); }
 .app-row-meta .status { margin: 0; }
+.app-row-meta .app-kind { margin: 0; font-size: 0.9375rem; color: var(--body); }
+/* "About <app>" keeps its look and gets a 44px hit area */
+.app-row-meta .link { display: inline-block; padding-block: 15px; margin-block: -15px; }
 
 /* Price plate: the film-frame corners from the app cards */
 .buy-plate {
