@@ -78,6 +78,16 @@ NEW=$(echo "$CURRENT" | jq -c --arg a "${PADDLE_API_KEY:-}" --arg w "${PADDLE_WE
     + (if $c != "" then {CEEVEE_SIGNING_KEY:$c} else {} end)
     + (if $gi != "" then {GOOGLE_CLIENT_ID:$gi} else {} end)
     + (if $gs != "" then {GOOGLE_CLIENT_SECRET:$gs} else {} end)')
+# CeeVee license signing key: if none is stored or supplied, make a fresh Ed25519 key here so the private half
+# only ever exists in Secrets Manager. The public half is printed (it is not secret) for the app's release build.
+if [ -z "$(echo "$NEW" | jq -r '.CEEVEE_SIGNING_KEY // empty')" ]; then
+  SEED=$(openssl rand -hex 32)
+  NEW=$(echo "$NEW" | jq -c --arg k "$SEED" '. + {CEEVEE_SIGNING_KEY:$k}')
+  echo "::notice title=CeeVee::No CeeVee signing key existed, so a new one was generated and stored in Secrets Manager."
+fi
+CV_SEED=$(echo "$NEW" | jq -r .CEEVEE_SIGNING_KEY)
+CV_PUB=$(CV_SEED="$CV_SEED" node -e "const c=require('node:crypto');const k=c.createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b657004220420','hex'),Buffer.from(process.env.CV_SEED,'hex')]),format:'der',type:'pkcs8'});console.log(c.createPublicKey(k).export({format:'der',type:'spki'}).subarray(-32).toString('hex'))")
+echo "::notice title=CeeVee public key::CEEVEE_LICENSE_PUBKEY for the app build = $CV_PUB"
 # Take the ARN from the write itself: a describe right after create can miss the new secret.
 if [ "$EXISTS" = no ]; then
   SECRET_ARN=$(aws secretsmanager create-secret --name $SECRET_ID --secret-string "$NEW" --query ARN --output text)
