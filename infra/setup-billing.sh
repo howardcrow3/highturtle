@@ -7,7 +7,7 @@
 #   - Secrets Manager secret highturtle/billing holding PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, SESSION_SECRET
 #   - Lambda role, the turtlebox-billing function (Node 22) + function URL
 #   - CloudFront route /api/billing/* on turtlebox.studio, placed BEFORE /api/*
-# Secret values come from the PADDLE_API_KEY and PADDLE_WEBHOOK_SECRET environment variables (GitHub
+# Secret values come from the PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET and BACKER_SIGNING_KEY environment variables (GitHub
 # secrets in the workflow). An empty value keeps whatever the secret already holds. SESSION_SECRET is
 # generated once and kept. This script never deletes anything.
 set -euo pipefail
@@ -55,10 +55,12 @@ if aws secretsmanager describe-secret --secret-id $SECRET_ID >/dev/null 2>&1; th
 fi
 SESSION=$(echo "$CURRENT" | jq -r '.SESSION_SECRET // empty')
 [ -z "$SESSION" ] && SESSION=$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')
-NEW=$(echo "$CURRENT" | jq -c --arg a "${PADDLE_API_KEY:-}" --arg w "${PADDLE_WEBHOOK_SECRET:-}" --arg s "$SESSION" '
+NEW=$(echo "$CURRENT" | jq -c --arg a "${PADDLE_API_KEY:-}" --arg w "${PADDLE_WEBHOOK_SECRET:-}" --arg s "$SESSION" \
+  --arg b "$(echo "${BACKER_SIGNING_KEY:-}" | tr -d '[:space:]')" '
   . + {SESSION_SECRET:$s}
     + (if $a != "" then {PADDLE_API_KEY:$a} else {} end)
-    + (if $w != "" then {PADDLE_WEBHOOK_SECRET:$w} else {} end)')
+    + (if $w != "" then {PADDLE_WEBHOOK_SECRET:$w} else {} end)
+    + (if $b != "" then {BACKER_SIGNING_KEY:$b} else {} end)')
 # Take the ARN from the write itself: a describe right after create can miss the new secret.
 if [ "$EXISTS" = no ]; then
   SECRET_ARN=$(aws secretsmanager create-secret --name $SECRET_ID --secret-string "$NEW" --query ARN --output text)
@@ -91,7 +93,8 @@ rm -f /tmp/billing.zip; (cd billing/dist && zip -q /tmp/billing.zip index.mjs)
 ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN '{Variables:{
   BILLING_SECRET_ID:$s, PADDLE_ENVIRONMENT:"production", SITE:"https://turtlebox.studio",
   FROM_ADDR:"Turtlebox <account@turtlebox.studio>", REPLY_TO:"info@turtlebox.studio", CONFIG_SET:$c,
-  CUSTOMERS_TABLE:$a, SUBSCRIPTIONS_TABLE:$b, TRANSACTIONS_TABLE:$t, ACCESS_PAST_DUE:"grant"}}')
+  CUSTOMERS_TABLE:$a, SUBSCRIPTIONS_TABLE:$b, TRANSACTIONS_TABLE:$t, ACCESS_PAST_DUE:"grant",
+  BACKER_PRICE_IDS:"pri_01m7esmmmhtvqh0518kmb0xqdq", OPS_EMAIL:"info@turtlebox.studio"}}')
 if aws lambda get-function --function-name $FN >/dev/null 2>&1; then
   aws lambda update-function-code --function-name $FN --zip-file fileb:///tmp/billing.zip >/dev/null
   aws lambda wait function-updated --function-name $FN

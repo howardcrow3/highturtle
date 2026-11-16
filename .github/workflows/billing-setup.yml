@@ -3,7 +3,8 @@ name: Billing setup (Paddle webhooks and customer portal)
 # Creates the billing tables, secret, function and the /api/billing/* route on turtlebox.studio. Safe to
 # re-run; never deletes anything. Run it by hand only.
 # Secrets used: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (temporary setup keys), and optionally
-# PADDLE_API_KEY and PADDLE_WEBHOOK_SECRET. When those two are set they are copied into AWS Secrets
+# PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET and BACKER_SIGNING_KEY (the hex private key that signs Backer
+# license keys). When set they are copied into AWS Secrets
 # Manager (highturtle/billing); when empty, the values already stored there are kept. Delete the two
 # Paddle GitHub secrets after a successful run if you prefer them to live only in AWS.
 
@@ -20,6 +21,7 @@ jobs:
     env:
       PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
       PADDLE_WEBHOOK_SECRET: ${{ secrets.PADDLE_WEBHOOK_SECRET }}
+      BACKER_SIGNING_KEY: ${{ secrets.BACKER_SIGNING_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

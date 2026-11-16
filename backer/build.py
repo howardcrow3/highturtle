@@ -96,6 +96,25 @@ VERSION_JS = '''<script>
 })();
 </script>'''
 
+PADDLE_JS = '''<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+/* Paddle checkout (overlay). The client-side token and price ID are public by design. If Paddle.js does not
+   load, the Buy buttons fall back to the pricing section. */
+(function () {
+  if (!window.Paddle) return;
+  Paddle.Initialize({ token: '{{TOKEN}}' });
+  document.querySelectorAll('[data-paddle-buy]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      Paddle.Checkout.open({
+        items: [{ priceId: '{{PRICE_ID}}', quantity: 1 }],
+        settings: { displayMode: 'overlay', theme: 'light', successUrl: 'https://turtlebox.studio/backer/thanks.html' }
+      });
+    });
+  });
+})();
+</script>'''
+
 INDEX = '''
   <main id="main">
     <section class="bk-hero" id="download"><div class="wrap">
@@ -103,7 +122,13 @@ INDEX = '''
       <h1>Back up your photos and videos.</h1>
       <p class="lede">Backer copies your photo and video folders from a Mac or PC to a Synology or other NAS you own, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>
 
-      <div class="downloads">
+      <div class="buy">
+        <a class="btn btn-buy" href="{{CHECKOUT_URL}}" data-paddle-buy>Buy Backer &middot; {{PRICE}}</a>
+        <p class="buy-note">One-time purchase. One license key covers every 1.x version, on macOS and Windows. <a href="#pricing">What you get</a></p>
+      </div>
+
+      <h2 class="try-h">Not sure yet? Try it free for 14 days.</h2>
+      <div class="downloads downloads-trial">
         <div class="dl dl-mac">
           <h2>macOS <span class="rec">For this computer</span></h2>
           <p class="req">macOS 13 or newer · Apple silicon</p>
@@ -121,7 +146,7 @@ INDEX = '''
       </div>
       <div class="meta">
         <span id="version-wrap" hidden>Version <span id="version"></span></span>
-        <span>Free for 14 days with every feature. <a href="#pricing">Pricing</a></span>
+        <span>The trial has every feature. Enter your key any time to keep backing up.</span>
       </div>
     </div></section>
 
@@ -156,7 +181,7 @@ INDEX = '''
             <li>Email support at {{SUPPORT_EMAIL}}</li>
           </ul>
         </div>
-        <a class="btn" href="{{CHECKOUT_URL}}">Buy now</a>
+        <a class="btn btn-buy" href="{{CHECKOUT_URL}}" data-paddle-buy>Buy now</a>
       </div>
       <p class="fine" style="margin-top:var(--space-sm)">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
     </div></section>
@@ -192,7 +217,7 @@ INDEX = '''
 THANKS = '''
   <main id="main" class="bk-simple wrap">
     <h1>Thanks for buying Backer.</h1>
-    <p class="lede">Your license key is on your order confirmation page and in the email we sent you. Here is how to turn it on.</p>
+    <p class="lede">Your license key is on its way by email from Turtlebox, usually within a few minutes. Paddle, our Merchant of Record, sends the receipt separately. Here is how to turn the key on.</p>
     <ol class="steps">
       <li>Open Backer, then go to <span class="kbd">Settings</span> and <span class="kbd">License</span>.</li>
       <li>Paste the key.</li>
@@ -474,10 +499,27 @@ def fill(s, cfg):
     """Fill placeholders. Anything not configured yet is shown honestly as "Coming soon" instead of a dead link."""
     soon = '<span class="btn" aria-disabled="true">Coming soon</span>'
     if not cfg["base_url"].strip():
-        s = re.sub(r'<a class="btn" href="\{\{BASE_URL\}\}/download/[^"]*">.*?</a>', soon, s)
+        # No update host yet: link the installers from the newest published GitHub release instead.
+        latest = {}
+        for rel in load_releases()[:1]:
+            for a in rel.get("assets", []):
+                ext = os.path.splitext(a["name"])[1].lower()
+                if ext == ".dmg": latest.setdefault("mac", a["url"])
+                if ext in (".exe", ".msi"): latest.setdefault("win", a["url"])
+        def dl(m):
+            url = latest.get("mac" if "macOS" in m.group(1) else "win")
+            return m.group(0).replace(m.group(1), _html.escape(url)) if url else soon
+        s = re.sub(r'<a class="btn" href="(\{\{BASE_URL\}\}/download/[^"]*)">.*?</a>', dl, s)
+        s = re.sub(r'<p class="file">Backer-[^<]*</p>', "", s)
+    paddle = bool(cfg.get("paddle_client_token", "").strip() and cfg.get("paddle_price_id", "").strip())
     checkout = (cfg.get("checkout_url") or cfg.get("fastspring_url") or "").strip()
+    if paddle and not checkout:
+        checkout = "#pricing"
     if not checkout:
-        s = re.sub(r'<a class="btn" href="\{\{CHECKOUT_URL\}\}">.*?</a>', soon, s)
+        s = re.sub(r'<a class="btn[^"]*" href="\{\{CHECKOUT_URL\}\}"[^>]*>.*?</a>', soon, s)
+    if paddle:
+        s = s.replace("</body>", PADDLE_JS.replace("{{TOKEN}}", cfg["paddle_client_token"].strip())
+                      .replace("{{PRICE_ID}}", cfg["paddle_price_id"].strip()) + "\n</body>", 1) if "data-paddle-buy" in s else s
     price = (cfg.get("price") or "").strip()
     s = s.replace("{{PRICE}}", price.replace("&", "&amp;").replace("<", "&lt;") if price else todo("Backer price, e.g. $29"))
     if not cfg["support_email"].strip():

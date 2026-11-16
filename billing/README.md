@@ -18,11 +18,19 @@ The account page is `turtlebox/account/index.html` (`https://turtlebox.studio/ac
 
 `customer.created`, `customer.updated` → `highturtle-billing-customers`
 `subscription.created`, `subscription.updated`, `subscription.canceled` → `highturtle-billing-subscriptions`
-`transaction.completed` → `highturtle-billing-transactions` (plus an `onPurchase` hook for one-time fulfillment)
+`transaction.completed` → `highturtle-billing-transactions`, then Backer fulfillment (`src/fulfillment.mjs`)
 Everything else is acknowledged with 200 and ignored.
 
 Writes are upserts keyed on the Paddle ID, guarded by the entity's `updated_at`, so redeliveries are
 harmless and an older event that arrives late is skipped. Nothing here deletes rows.
+
+## Backer license keys
+
+When a completed transaction includes a price in `BACKER_PRICE_IDS`, the buyer gets an email with a signed
+Backer license key (`src/license.mjs`, same format as the Backer app's key issuer). It runs at most once per
+transaction: claim, send, mark done; a failure releases the claim and returns 500 so Paddle retries.
+The signing key is `BACKER_SIGNING_KEY` in the Secrets Manager secret. Until it is set, each order is emailed
+to `OPS_EMAIL` (info@turtlebox.studio) so a key can be issued by hand with `backer-keygen`.
 
 ## Access rule (`src/access.mjs`)
 

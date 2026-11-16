@@ -13,6 +13,7 @@ import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 import { loadConfig } from './config.mjs';
 import { DynamoStore } from './store.mjs';
 import { routeEvent } from './events.mjs';
+import { makeBackerFulfillment } from './fulfillment.mjs';
 import { anySubscriptionGrantsAccess, subscriptionGrantsAccess } from './access.mjs';
 import { signToken, verifyToken, sessionCookie, readCookie, LOGIN_TTL, SESSION_TTL, COOKIE } from './session.mjs';
 
@@ -184,7 +185,8 @@ async function buildApp() {
     ConfigurationSetName: cfg.configSet || undefined,
     Content: { Simple: { Subject: { Data: subject }, Body: { Text: { Data: text } } } },
   }));
-  return makeApp({ cfg, store, paddle, sendEmail });
+  const onPurchase = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log });
+  return makeApp({ cfg, store, paddle, sendEmail, onPurchase });
 }
 
 export async function handler(event) {
