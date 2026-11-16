@@ -14,6 +14,7 @@ The Turtlebox logo is a smiling turtle with the word Turtlebox set in Inter Medi
 - On `paper` or `surface`, use the ink version, filled with `ink`.
 - On `ink`, use the reversed version, filled with `on-ink`.
 - Never any other color, gradient or outline. In code, inline the SVG and set its `fill` from the role token, so both themes follow.
+- One exception, by brand: High Turtle sets its mark in `accent` (gold) and its name in `ink`. Gold is 1.9:1 on ivory, so the High Turtle mark is always at least 22px tall and always sits beside the name. Turtlebox stays single ink.
 
 ## Clear space and size
 

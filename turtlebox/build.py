@@ -19,7 +19,7 @@ from nav import nav_links
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb10"
+V = "tb11"
 e = html.escape
 
 
@@ -112,11 +112,10 @@ def store_row(a, level="h2"):
     more = f'<a class="link" href="{e(a["url"])}">About {e(a["name"])}</a>'
     return f"""      <li class="app-row" id="{e(a["slug"])}">
         <div class="app-row-text">
-          <p class="eyebrow">{e(a["kind"])}</p>
           <{level} class="app-name"><a href="{e(a["url"])}">{e(a["name"])}</a></{level}>
           <p class="app-tagline">{e(a["tagline"])}</p>
           <p class="app-desc">{e(a["description"])}</p>
-          <div class="app-row-meta">{status_chip(a)}{more}</div>
+          <div class="app-row-meta">{status_chip(a)}<p class="app-kind">{e(a["kind"])}</p>{more}</div>
         </div>
         {buy_plate(a, a["slug"] + "-row", compact=True)}
       </li>"""
@@ -218,10 +217,9 @@ def app_page(slug):
     return f"""  <section class="app-hero" id="buy">
     <div class="wrap app-hero-grid">
       <div>
-        <p class="eyebrow">{e(a["name"])}, a Turtlebox app &middot; {e(a["kind"])}</p>
         <h1>{e(p["h1"])}</h1>
         <p class="lede">{e(p["lede"])}</p>
-        <div class="app-row-meta">{status_chip(a)}</div>
+        <div class="app-row-meta">{status_chip(a)}<p class="app-kind">{e(a["name"])}, a Turtlebox app &middot; {e(a["kind"])}</p></div>
       </div>
       {buy_plate(a, slug + "-hero")}
     </div>
