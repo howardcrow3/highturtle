@@ -256,3 +256,76 @@ test('a forged session cookie is refused', async () => {
   assert.match(res.headers.location, /error=signin/);
   assert.equal(portalCalls.length, 0);
 });
+
+// ---------- Backer license fulfillment ----------
+
+import { issueKey } from '../src/license.mjs';
+import { makeBackerFulfillment } from '../src/fulfillment.mjs';
+
+const SEED = '9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60';
+
+test('license key matches the Backer issuer byte for byte', async () => {
+  // Expected value produced by howardcrow3/Backer tools/key-issuer/issuer.mjs with the same inputs.
+  assert.equal(await issueKey(SEED, 'Buyer@Example.com', 20400),
+    'BACKER-AEAQC-AAAJ6-YBCYT-VPFSX-EQDFP-BQW24-DMMUX-GG33N-TQRKL-H6VFD-ZADH5-S7AZ3-YTCFE-OFTDY-2L7FV-NK75X-3ZDEJ-5NAZE-CLQZR-S5YQT-KC3DP-2FULK-SDXVP-GJGNH-F7I5O-JKFE5-UNKXW-C6R2I-4AY');
+});
+
+function backerSetup({ signingKey = SEED, failSend = false } = {}) {
+  const store = new MemoryStore();
+  const sent = [];
+  const paddle = new Paddle('k', { environment: Environment.sandbox });
+  paddle.customers.get = async (id) => ({ id, email: 'late@example.com' });
+  const cfg = { paddleWebhookSecret: SECRET, sessionSecret: 's', site: 'https://turtlebox.studio',
+    backerPriceIds: ['pri_backer'], backerSigningKey: signingKey, opsEmail: 'info@turtlebox.studio' };
+  let fail = failSend;
+  const sendEmail = async (m) => { if (fail) { fail = false; throw new Error('ses down'); } sent.push(m); };
+  const onPurchase = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log: () => {} });
+  const app = makeApp({ cfg, store, paddle, sendEmail, onPurchase });
+  const deliver = (payload) => { const body = JSON.stringify(payload); return app(webhookEvent(body, sign(body))); };
+  return { store, sent, deliver };
+}
+
+test('a Backer purchase emails one valid key, once, even when delivered twice', async () => {
+  const { deliver, sent, store } = backerSetup();
+  await deliver(customerEvent('customer.created'));
+  const ev = transactionCompletedEvent();
+  assert.equal((await deliver(ev)).statusCode, 200);
+  assert.equal((await deliver(ev)).statusCode, 200);
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].to, 'Buyer@Example.com');
+  assert.match(sent[0].text, /BACKER-[A-Z2-7-]+/);
+  assert.equal(store.transactions.get('txn_01').fulfillment_status, 'emailed');
+});
+
+test('buyer email comes from Paddle when customer.created has not arrived yet', async () => {
+  const { deliver, sent } = backerSetup();
+  await deliver(transactionCompletedEvent());
+  assert.equal(sent[0].to, 'late@example.com');
+});
+
+test('a failed email releases the claim and returns 500 so Paddle retries', async () => {
+  const { deliver, sent, store } = backerSetup({ failSend: true });
+  await deliver(customerEvent('customer.created'));
+  assert.equal((await deliver(transactionCompletedEvent())).statusCode, 500);
+  assert.equal(store.transactions.get('txn_01').fulfillment_status, undefined);
+  assert.equal((await deliver(transactionCompletedEvent())).statusCode, 200);
+  assert.equal(sent.length, 1);
+});
+
+test('without a signing key the order goes to the support inbox instead', async () => {
+  const { deliver, sent, store } = backerSetup({ signingKey: '' });
+  await deliver(customerEvent('customer.created'));
+  await deliver(transactionCompletedEvent());
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].to, 'info@turtlebox.studio');
+  assert.match(sent[0].subject, /issue a license key by hand/);
+  assert.equal(store.transactions.get('txn_01').fulfillment_status, 'manual');
+});
+
+test('purchases of other prices send nothing', async () => {
+  const { deliver, sent } = backerSetup();
+  const ev = transactionCompletedEvent();
+  ev.data.items[0].price.id = 'pri_other';
+  await deliver(ev);
+  assert.equal(sent.length, 0);
+});

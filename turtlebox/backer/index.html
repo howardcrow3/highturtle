@@ -51,25 +51,31 @@
       <h1>Back up your photos and videos.</h1>
       <p class="lede">Backer copies your photo and video folders from a Mac or PC to a Synology or other NAS you own, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>
 
-      <div class="downloads">
+      <div class="buy">
+        <a class="btn btn-buy" href="#pricing" data-paddle-buy>Buy Backer &middot; $4.99</a>
+        <p class="buy-note">One-time purchase. One license key covers every 1.x version, on macOS and Windows. <a href="#pricing">What you get</a></p>
+      </div>
+
+      <h2 class="try-h">Not sure yet? Try it free for 14 days.</h2>
+      <div class="downloads downloads-trial">
         <div class="dl dl-mac">
           <h2>macOS <span class="rec">For this computer</span></h2>
           <p class="req">macOS 13 or newer · Apple silicon</p>
           <p class="note">Signed and notarized by Apple. Not available for Intel Macs.</p>
           <span class="btn" aria-disabled="true">Coming soon</span>
-          <p class="file">Backer-macOS-arm64.dmg</p>
+          
         </div>
         <div class="dl dl-win">
           <h2>Windows <span class="rec">For this computer</span></h2>
           <p class="req">Windows 64-bit</p>
           <p class="note">The installer is not code-signed yet, so Windows may warn you. <a href="#install">What to expect</a>.</p>
           <span class="btn" aria-disabled="true">Coming soon</span>
-          <p class="file">Backer-Windows-x64-setup.exe</p>
+          
         </div>
       </div>
       <div class="meta">
         <span id="version-wrap" hidden>Version <span id="version"></span></span>
-        <span>Free for 14 days with every feature. <a href="#pricing">Pricing</a></span>
+        <span>The trial has every feature. Enter your key any time to keep backing up.</span>
       </div>
     </div></section>
 
@@ -104,7 +110,7 @@
             <li>Email support at info@turtlebox.studio</li>
           </ul>
         </div>
-        <span class="btn" aria-disabled="true">Coming soon</span>
+        <a class="btn btn-buy" href="#pricing" data-paddle-buy>Buy now</a>
       </div>
       <p class="fine" style="margin-top:var(--space-sm)">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
     </div></section>
@@ -165,6 +171,24 @@
     })
     .catch(function () {})
     .then(function () { if (timer) clearTimeout(timer); });
+})();
+</script>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+/* Paddle checkout (overlay). The client-side token and price ID are public by design. If Paddle.js does not
+   load, the Buy buttons fall back to the pricing section. */
+(function () {
+  if (!window.Paddle) return;
+  Paddle.Initialize({ token: 'live_07ce70479acc6466ead095e609c' });
+  document.querySelectorAll('[data-paddle-buy]').forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      e.preventDefault();
+      Paddle.Checkout.open({
+        items: [{ priceId: 'pri_01m7esmmmhtvqh0518kmb0xqdq', quantity: 1 }],
+        settings: { displayMode: 'overlay', theme: 'light', successUrl: 'https://turtlebox.studio/backer/thanks.html' }
+      });
+    });
+  });
 })();
 </script>
 </body>

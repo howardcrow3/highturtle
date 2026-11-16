@@ -2,11 +2,11 @@
 //
 // Locally (and in tests) everything comes from environment variables; see .env.example.
 // On Lambda, BILLING_SECRET_ID names an AWS Secrets Manager secret holding a JSON object with
-// PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET and SESSION_SECRET. Values in that secret win over env vars.
+// PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, SESSION_SECRET and (optionally) BACKER_SIGNING_KEY. Values in that secret win over env vars.
 
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-const SECRET_KEYS = ['PADDLE_API_KEY', 'PADDLE_WEBHOOK_SECRET', 'SESSION_SECRET'];
+const SECRET_KEYS = ['PADDLE_API_KEY', 'PADDLE_WEBHOOK_SECRET', 'SESSION_SECRET', 'BACKER_SIGNING_KEY'];
 
 let cached = null;
 
@@ -35,6 +35,11 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
     // What a past_due subscription means for access: "grant" (default, Paddle is still retrying
     // the payment) or "deny".
     pastDuePolicy: merged.ACCESS_PAST_DUE === 'deny' ? 'deny' : 'grant',
+    // Backer one-time purchases: which Paddle price IDs mean "send a Backer license key".
+    backerPriceIds: (merged.BACKER_PRICE_IDS || '').split(',').map((x) => x.trim()).filter(Boolean),
+    // Hex Ed25519 seed that signs Backer keys. When missing, orders are forwarded to opsEmail to issue by hand.
+    backerSigningKey: merged.BACKER_SIGNING_KEY || '',
+    opsEmail: merged.OPS_EMAIL || 'info@turtlebox.studio',
   };
   cached = cfg;
   return cfg;

@@ -2,5 +2,7 @@
   "base_url": "",
   "checkout_url": "",
   "price": "$4.99",
-  "support_email": "info@turtlebox.studio"
+  "support_email": "info@turtlebox.studio",
+  "paddle_client_token": "live_07ce70479acc6466ead095e609c",
+  "paddle_price_id": "pri_01m7esmmmhtvqh0518kmb0xqdq"
 }

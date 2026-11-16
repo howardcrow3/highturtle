@@ -78,6 +78,49 @@ export class DynamoStore {
     return this.#upsert(this.tables.transactions, 'transaction_id', row.transaction_id, row, version);
   }
 
+  // One-time fulfillment (for example a Backer license email) runs at most once per transaction.
+  // claim -> do the work -> mark done; on failure, release so Paddle's retry can try again.
+  // A claim older than 5 minutes is treated as abandoned (the Lambda died mid-way) and can be taken over.
+  async claimFulfillment(transactionId, now = new Date()) {
+    const stale = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
+    try {
+      await this.db.send(new UpdateCommand({
+        TableName: this.tables.transactions,
+        Key: { transaction_id: transactionId },
+        UpdateExpression: 'SET fulfillment_status = :c, fulfillment_at = :now',
+        ConditionExpression: 'attribute_not_exists(fulfillment_status) OR (fulfillment_status = :c AND fulfillment_at < :stale)',
+        ExpressionAttributeValues: { ':c': 'claimed', ':now': now.toISOString(), ':stale': stale },
+      }));
+      return true;
+    } catch (err) {
+      if (err && err.name === 'ConditionalCheckFailedException') return false;
+      throw err;
+    }
+  }
+
+  async finishFulfillment(transactionId, status) {
+    await this.db.send(new UpdateCommand({
+      TableName: this.tables.transactions,
+      Key: { transaction_id: transactionId },
+      UpdateExpression: 'SET fulfillment_status = :s, fulfillment_at = :now',
+      ExpressionAttributeValues: { ':s': status, ':now': new Date().toISOString() },
+    }));
+  }
+
+  async releaseFulfillment(transactionId) {
+    try {
+      await this.db.send(new UpdateCommand({
+        TableName: this.tables.transactions,
+        Key: { transaction_id: transactionId },
+        UpdateExpression: 'REMOVE fulfillment_status, fulfillment_at',
+        ConditionExpression: 'fulfillment_status = :c',
+        ExpressionAttributeValues: { ':c': 'claimed' },
+      }));
+    } catch (err) {
+      if (!(err && err.name === 'ConditionalCheckFailedException')) throw err;
+    }
+  }
+
   async getCustomer(customerId) {
     const out = await this.db.send(new GetCommand({ TableName: this.tables.customers, Key: { customer_id: customerId } }));
     return out.Item || null;
@@ -132,6 +175,21 @@ export class MemoryStore {
   async upsertSubscription(row, version) { return this.#upsert(this.subscriptions, row.subscription_id, row, version); }
   async upsertTransaction(row, version) { return this.#upsert(this.transactions, row.transaction_id, row, version); }
   async getCustomer(id) { return this.customers.get(id) || null; }
+  async claimFulfillment(id, now = new Date()) {
+    const t = this.transactions.get(id) || { transaction_id: id };
+    const stale = now.getTime() - 5 * 60 * 1000;
+    if (t.fulfillment_status && !(t.fulfillment_status === 'claimed' && Date.parse(t.fulfillment_at) < stale)) return false;
+    this.transactions.set(id, { ...t, fulfillment_status: 'claimed', fulfillment_at: now.toISOString() });
+    return true;
+  }
+  async finishFulfillment(id, status) {
+    const t = this.transactions.get(id);
+    this.transactions.set(id, { ...t, fulfillment_status: status, fulfillment_at: new Date().toISOString() });
+  }
+  async releaseFulfillment(id) {
+    const t = this.transactions.get(id);
+    if (t?.fulfillment_status === 'claimed') { delete t.fulfillment_status; delete t.fulfillment_at; }
+  }
   async findCustomerByEmail(email) {
     const e = email.trim().toLowerCase();
     return [...this.customers.values()].find((c) => c.email_lc === e) || null;
