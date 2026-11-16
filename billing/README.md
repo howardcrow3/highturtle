@@ -32,6 +32,23 @@ transaction: claim, send, mark done; a failure releases the claim and returns 50
 The signing key is `BACKER_SIGNING_KEY` in the Secrets Manager secret. Until it is set, each order is emailed
 to `OPS_EMAIL` (info@turtlebox.studio) so a key can be issued by hand with `backer-keygen`.
 
+## CeeVee licensing
+
+A completed transaction with a price in `CEEVEE_PRICE_IDS` creates one license per unit (`src/ceevee-fulfillment.mjs`) and emails
+the key and a `ceevee://activate?key=` link. Keys are `CEEV-` plus 20 characters, derived by HMAC from the transaction ID and the
+signing seed, so a Paddle retry re-sends the same key. Tables: `highturtle-ceevee-licenses` (key, email, seats, machines) and
+`highturtle-ceevee-trials` (first start per machine). The app calls (`src/ceevee-api.mjs`, contract in the CeeVee repo's `docs/LICENSE_API.md`):
+
+| Route | What it does |
+|---|---|
+| `POST /api/ceevee/v1/trial` | `{machine}` → signed trial token; the first start the server saw wins |
+| `POST /api/ceevee/v1/activate` | `{key, machine, app_version, platform}` → signed license for that machine; 404 `unknown_key`; 409 `seats_full` after 2 computers |
+| `POST /api/ceevee/v1/deactivate` | `{key, machine}` → 204, frees the seat |
+
+Tokens are Ed25519 over the JSON bytes, signed with `CEEVEE_SIGNING_KEY` (64-hex seed in Secrets Manager); the app holds only the
+public half (`CEEVEE_LICENSE_PUBKEY`). Until the key is set the endpoints answer 503 and orders are forwarded to `OPS_EMAIL`
+(the event stays retryable; redeliver it from Paddle once the key is in).
+
 ## Access rule (`src/access.mjs`)
 
 `active` and `trialing` grant access. `past_due` grants access while Paddle retries (set

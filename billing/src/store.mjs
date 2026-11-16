@@ -81,14 +81,14 @@ export class DynamoStore {
   // One-time fulfillment (for example a Backer license email) runs at most once per transaction.
   // claim -> do the work -> mark done; on failure, release so Paddle's retry can try again.
   // A claim older than 5 minutes is treated as abandoned (the Lambda died mid-way) and can be taken over.
-  async claimFulfillment(transactionId, now = new Date()) {
+  async claimFulfillment(transactionId, now = new Date(), field = 'fulfillment') {
     const stale = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
     try {
       await this.db.send(new UpdateCommand({
         TableName: this.tables.transactions,
         Key: { transaction_id: transactionId },
-        UpdateExpression: 'SET fulfillment_status = :c, fulfillment_at = :now',
-        ConditionExpression: 'attribute_not_exists(fulfillment_status) OR (fulfillment_status = :c AND fulfillment_at < :stale)',
+        UpdateExpression: `SET ${field}_status = :c, ${field}_at = :now`,
+        ConditionExpression: `attribute_not_exists(${field}_status) OR (${field}_status = :c AND ${field}_at < :stale)`,
         ExpressionAttributeValues: { ':c': 'claimed', ':now': now.toISOString(), ':stale': stale },
       }));
       return true;
@@ -98,22 +98,22 @@ export class DynamoStore {
     }
   }
 
-  async finishFulfillment(transactionId, status) {
+  async finishFulfillment(transactionId, status, field = 'fulfillment') {
     await this.db.send(new UpdateCommand({
       TableName: this.tables.transactions,
       Key: { transaction_id: transactionId },
-      UpdateExpression: 'SET fulfillment_status = :s, fulfillment_at = :now',
+      UpdateExpression: `SET ${field}_status = :s, ${field}_at = :now`,
       ExpressionAttributeValues: { ':s': status, ':now': new Date().toISOString() },
     }));
   }
 
-  async releaseFulfillment(transactionId) {
+  async releaseFulfillment(transactionId, field = 'fulfillment') {
     try {
       await this.db.send(new UpdateCommand({
         TableName: this.tables.transactions,
         Key: { transaction_id: transactionId },
-        UpdateExpression: 'REMOVE fulfillment_status, fulfillment_at',
-        ConditionExpression: 'fulfillment_status = :c',
+        UpdateExpression: `REMOVE ${field}_status, ${field}_at`,
+        ConditionExpression: `${field}_status = :c`,
         ExpressionAttributeValues: { ':c': 'claimed' },
       }));
     } catch (err) {
@@ -185,20 +185,20 @@ export class MemoryStore {
   async upsertSubscription(row, version) { return this.#upsert(this.subscriptions, row.subscription_id, row, version); }
   async upsertTransaction(row, version) { return this.#upsert(this.transactions, row.transaction_id, row, version); }
   async getCustomer(id) { return this.customers.get(id) || null; }
-  async claimFulfillment(id, now = new Date()) {
+  async claimFulfillment(id, now = new Date(), field = 'fulfillment') {
     const t = this.transactions.get(id) || { transaction_id: id };
     const stale = now.getTime() - 5 * 60 * 1000;
-    if (t.fulfillment_status && !(t.fulfillment_status === 'claimed' && Date.parse(t.fulfillment_at) < stale)) return false;
-    this.transactions.set(id, { ...t, fulfillment_status: 'claimed', fulfillment_at: now.toISOString() });
+    if (t[`${field}_status`] && !(t[`${field}_status`] === 'claimed' && Date.parse(t[`${field}_at`]) < stale)) return false;
+    this.transactions.set(id, { ...t, [`${field}_status`]: 'claimed', [`${field}_at`]: now.toISOString() });
     return true;
   }
-  async finishFulfillment(id, status) {
+  async finishFulfillment(id, status, field = 'fulfillment') {
     const t = this.transactions.get(id);
-    this.transactions.set(id, { ...t, fulfillment_status: status, fulfillment_at: new Date().toISOString() });
+    this.transactions.set(id, { ...t, [`${field}_status`]: status, [`${field}_at`]: new Date().toISOString() });
   }
-  async releaseFulfillment(id) {
+  async releaseFulfillment(id, field = 'fulfillment') {
     const t = this.transactions.get(id);
-    if (t?.fulfillment_status === 'claimed') { delete t.fulfillment_status; delete t.fulfillment_at; }
+    if (t?.[`${field}_status`] === 'claimed') { delete t[`${field}_status`]; delete t[`${field}_at`]; }
   }
   async findCustomerByEmail(email) {
     const e = email.trim().toLowerCase();

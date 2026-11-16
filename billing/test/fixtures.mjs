@@ -62,16 +62,16 @@ export function subscriptionEvent(type, {
   });
 }
 
-export function transactionCompletedEvent({ id = 'txn_01', customer = 'ctm_01', subscription = null } = {}) {
+export function transactionCompletedEvent({ id = 'txn_01', customer = 'ctm_01', subscription = null, priceId = 'pri_backer', quantity = 1 } = {}) {
   return envelope('transaction.completed', {
     id, status: 'completed', customer_id: customer, address_id: 'add_01', business_id: null, custom_data: null,
     currency_code: 'USD', origin: 'web', subscription_id: subscription, invoice_id: 'inv_01',
     invoice_number: '325-10566', collection_mode: 'automatic', discount_id: null, billing_details: null,
     billing_period: null,
-    items: [{ price: { id: 'pri_backer', product_id: 'pro_backer', description: 'Backer', type: 'standard', name: 'Backer',
+    items: [{ price: { id: priceId, product_id: 'pro_backer', description: 'Backer', type: 'standard', name: 'Backer',
       billing_cycle: null, trial_period: null, tax_mode: 'account_setting', unit_price: { amount: '499', currency_code: 'USD' },
       unit_price_overrides: [], quantity: { minimum: 1, maximum: 1 }, status: 'active', custom_data: null, import_meta: null,
-      created_at: '2026-11-01T00:00:00Z', updated_at: '2026-11-01T00:00:00Z' }, quantity: 1, proration: null }],
+      created_at: '2026-11-01T00:00:00Z', updated_at: '2026-11-01T00:00:00Z' }, quantity, proration: null }],
     details: null, payments: [], checkout: null,
     created_at: '2026-11-15T09:59:00.000000Z', updated_at: '2026-11-15T10:00:00.000000Z', billed_at: '2026-11-15T10:00:00.000000Z',
     revised_at: null,

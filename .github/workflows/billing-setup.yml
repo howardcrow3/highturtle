@@ -24,6 +24,10 @@ jobs:
       BACKER_SIGNING_KEY: ${{ secrets.BACKER_SIGNING_KEY }}
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      # Hex private key that signs CeeVee licenses (matches CEEVEE_LICENSE_PUBKEY in the app). Empty keeps what AWS holds.
+      CEEVEE_SIGNING_KEY: ${{ secrets.CEEVEE_SIGNING_KEY }}
+      # Comma-separated Paddle price IDs for CeeVee, set as a repository variable (not secret).
+      CEEVEE_PRICE_IDS: ${{ vars.CEEVEE_PRICE_IDS }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -45,4 +49,6 @@ jobs:
           a=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{}' https://turtlebox.studio/api/billing/webhook || true)
           b=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Paddle-Signature: ts=1;h1=00' -d '{}' https://turtlebox.studio/api/billing/webhook || true)
           c=$(curl -s https://turtlebox.studio/api/billing/me || true)
+          d=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'Content-Type: application/json' -d '{"machine":"smoke-test-machine"}' https://turtlebox.studio/api/ceevee/v1/activate || true)
+          echo "::notice title=smoke-ceevee::activate with no key=$d (404 expected once the signing key is set, 503 before)"
           echo "::notice title=smoke::no-signature=$a (400 expected) bad-signature=$b (401 expected) me=$c"
