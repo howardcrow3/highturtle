@@ -25,8 +25,8 @@
   document.documentElement.setAttribute('data-os', os);
 })();
 </script>
-<link rel="stylesheet" href="/assets/styles.css?v=tb10">
-<link rel="stylesheet" href="/assets/store.css?v=tb10">
+<link rel="stylesheet" href="/assets/styles.css?v=tb12">
+<link rel="stylesheet" href="/assets/store.css?v=tb12">
 <link rel="stylesheet" href="/assets/backer.css?v=bk2">
 </head>
 <body>
@@ -44,7 +44,7 @@
       <a class="nav-app" href="/ceevee/">CeeVee</a>
       <a class="nav-app" href="/golden/">Golden</a>
       <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>
-      <script src="/assets/account.js?v=tb10" defer></script>
+      <script src="/assets/account.js?v=tb12" defer></script>
     </nav>
   </div>
 </header>
@@ -83,16 +83,25 @@
       </div>
     </div></section>
 
+  <section class="section shots-section" aria-labelledby="screens-h">
+    <div class="wrap">
+      <h2 id="screens-h">See Backer</h2>
+      
+      <div class="shots-rest shots-rest-2">
+        <figure class="shot"><a class="shot-link" href="/assets/screens/backer-jobs.webp"><img src="/assets/screens/backer-jobs.webp" width="1200" height="760" alt="Backer&#x27;s Jobs screen listing four backup jobs with their status, schedule and next run." loading="lazy" decoding="async"></a><figcaption>Every backup job on one screen: what it copies, when it runs next, and whether it needs you.</figcaption></figure>
+        <figure class="shot"><a class="shot-link" href="/assets/screens/backer-run.webp"><img src="/assets/screens/backer-run.webp" width="1200" height="760" alt="A Backer run summary with counts of copied, unchanged, skipped and excluded files and two items that need attention." loading="lazy" decoding="async"></a><figcaption>After each run, a plain summary of what was copied and anything Backer couldn&#x27;t copy, with the reason.</figcaption></figure>
+      </div>
+      <p class="fine shots-note">Screens shown with sample data.</p>
+    </div>
+  </section>
+
     <section class="section" id="features" aria-labelledby="features-h"><div class="wrap">
       <h2 id="features-h">What Backer does</h2>
-      <ul class="features">
-        <li><h3>Scheduled or on demand</h3><p>Set a schedule and forget it, or back up new photos and videos yourself when you want to.</p></li>
-        <li><h3>Big libraries</h3><p>Handles <span class="num">100,000+</span> files, so years of photos and video footage are fine.</p></li>
-        <li><h3>Verify</h3><p>Compares what is on the NAS with your originals, so you know every photo and video was copied intact.</p></li>
-        <li><h3>Asks before deleting</h3><p>Backer never removes a photo or video from the NAS without asking you first.</p></li>
-        <li><h3>Optional AI assistant integration</h3><p>A local MCP server lets an AI assistant work with Backer. It is off by default.</p></li>
-        <li><h3>Stays out of the way</h3><p>Lives in the menu bar on a Mac and in the system tray on Windows.</p></li>
-      </ul>
+      <div class="fgroups">
+        <div class="fgroup"><h3>Backing up</h3><ul><li><h4>To a NAS you own</h4><p>Copies to a shared folder on a Synology or any other NAS over SMB or NFS. No cloud and no account.</p></li><li><h4>On a schedule or on demand</h4><p>Daily, weekly or every few hours. If your computer was asleep, Backer catches up when it wakes.</p></li><li><h4>Big libraries</h4><p>Handles 100,000+ files and copies only what is new or changed, so later runs are quick.</p></li><li><h4>Only what you want</h4><p>Leave out files over a size limit, and skip system junk such as thumbnails and temporary files.</p></li></ul></div>
+        <div class="fgroup"><h3>Keeping copies safe</h3><ul><li><h4>Checked as it copies</h4><p>Each file is written to a temporary name, checked against your original, and only then given its real name.</p></li><li><h4>Never deletes without asking</h4><p>When you delete something on your computer, Backer lists it under Deleted files and waits for you to decide.</p></li><li><h4>The right place every time</h4><p>Backer marks the backup folder on the NAS, so it won&#x27;t write into the wrong share if a drive changes.</p></li><li><h4>Verify</h4><p>Compares what is on the NAS with your originals, so you know every photo and video arrived intact.</p></li></ul></div>
+        <div class="fgroup"><h3>Day to day</h3><ul><li><h4>Clear run summaries</h4><p>See what was copied, what was skipped and why, for each folder. Export the log as a CSV file.</p></li><li><h4>Browse and restore</h4><p>Find a file in your backup and copy it back. Restore keeps working even after the trial ends.</p></li><li><h4>Stays out of the way</h4><p>Lives in the menu bar on a Mac and in the system tray on Windows.</p></li><li><h4>Optional AI assistant integration</h4><p>A local MCP server lets an AI assistant you approve check on Backer. It is off by default.</p></li></ul></div>
+      </div>
     </div></section>
 
     <section class="section" id="pricing" aria-labelledby="pricing-h"><div class="wrap">

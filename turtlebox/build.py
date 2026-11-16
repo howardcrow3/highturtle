@@ -16,10 +16,11 @@ sys.path.insert(0, os.path.join(HERE, "..", "legal"))
 sys.path.insert(0, HERE)
 from site_legal import footer_block  # policy links and legal name (Paddle requirements)
 from nav import nav_links
+from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb11"
+V = "tb12"
 e = html.escape
 
 
@@ -191,12 +192,23 @@ APP_PAGES = {
         "h1": "Run your job search from your own computer.",
         "lede": "CeeVee keeps your resume, the jobs you are tracking and your applications in one place on your computer. Its AI model runs on your computer too, so there is no AI account or key to set up.",
         "features": [
-            ("Your profile, once", "Drop in your resume or your LinkedIn profile PDF. CeeVee builds your profile from it and shows what it found before saving anything."),
-            ("A tailored resume for each job", "Paste a job posting. CeeVee lists what the job asks for, shows where you match and where you don't, and drafts a resume and cover letter. It never invents experience."),
-            ("Applications filled in for you", "CeeVee opens the application page in a separate browser window, fills in the fields from your profile and attaches your files. It stops before Submit so you can check."),
-            ("Replies matched to applications", "Connect Gmail, Outlook, Yahoo, iCloud or any mailbox. CeeVee reads replies from employers, links each one to its application, updates the status and drafts an answer for you to edit."),
-            ("Searches while you work", "CeeVee keeps running in the menu bar or system tray, searches for new jobs in the categories you pick, and tells you when something new turns up."),
-            ("Everything in one folder", "Resumes and cover letters are saved as PDF and Word files in a normal folder. Export everything, or delete everything, any time."),
+            ("Getting ready", [
+                ("Your profile, once", "Drop in your resume, your LinkedIn profile PDF or your LinkedIn data export. CeeVee builds your profile from it and shows what it found before saving anything."),
+                ("Jobs that fit", "CeeVee searches for new jobs in the categories you pick while it runs in the menu bar or system tray, scores each one against your profile and tells you when something new turns up."),
+                ("People you know", "Import your LinkedIn connections and CeeVee shows who you know at each company on your list."),
+            ]),
+            ("Applying", [
+                ("A tailored resume for each job", "CeeVee lists what the job asks for, shows where you match and where you don't, and drafts a resume and cover letter. It never invents experience."),
+                ("Edit in plain words", "Change a document yourself, or ask for a change such as “make the opening shorter”. Every version is kept, with undo and redo."),
+                ("PDF and Word files", "Resumes and cover letters are saved as PDF and Word files in a normal folder on your computer."),
+                ("Applications filled in for you", "CeeVee opens the application page in its own browser window, fills in the fields from your profile and attaches your files. It stops before Submit."),
+            ]),
+            ("Following up", [
+                ("Nothing sent without you", "Anything that would go out in your name waits on one list for you to approve or skip."),
+                ("Replies matched to applications", "Connect Gmail, Outlook, Yahoo, iCloud or any mailbox. CeeVee links each reply from an employer to its application and updates the status."),
+                ("Answers drafted for you", "For each reply, CeeVee drafts an answer for you to edit and send."),
+                ("Yours to keep", "Export everything, or delete everything, any time. The AI model runs on your computer, so there is no AI account or key."),
+            ]),
         ],
         "facts": [
             ("Price", "$19.99 once. One license works on 2 computers."),
@@ -212,12 +224,24 @@ APP_PAGES = {
         "h1": "See when your household can retire.",
         "lede": "Golden turns the statement files your bank and card companies already give you into household books and a retirement plan. It shows the month each of you can retire and what would move that date. Your statements and plan stay on your computer.",
         "features": [
-            ("Statements in, books out", "Import the CSV or OFX files from your bank and card accounts. Golden files each statement, sorts the transactions into categories and remembers how you corrected them."),
-            ("Cash flow at any scale", "See what came in and went out by week, month, quarter or year, for each person or the whole household."),
-            ("A retirement plan you can test", "Golden projects your money forward with federal and state tax, and runs thousands of possible market outcomes to show how likely the plan is to last."),
-            ("Ask “what if”", "Type a question such as “what if we both retire at 62” and see the effect on the plan before anything changes."),
-            ("Two people, one plan", "Every account and income belongs to one of you or to both, with its own retirement age and Social Security age."),
-            ("Locked on your computer", "The database is encrypted, and its key is kept in your computer's keychain. Golden never moves money or places trades."),
+            ("Your books", [
+                ("Statements in, books out", "Import the CSV or OFX files from your bank and card accounts. Golden files each statement in a library so you can find it again."),
+                ("Categories that learn", "Transactions are sorted into categories. Fix one and Golden remembers that merchant next time."),
+                ("Budgets and cash flow", "Set a spending budget, and see what came in and went out by week, month, quarter or year."),
+                ("Net worth", "Everything you own and owe on one balance sheet, with a 12-month forecast of where you're headed."),
+            ]),
+            ("Your retirement", [
+                ("The month you can retire", "Golden projects your money forward with federal and state income tax, Social Security and pensions."),
+                ("The chance it lasts", "Thousands of possible market outcomes show how likely your money is to last, and a good and a rough decade."),
+                ("Ask “what if”", "Type a question such as “what if we both retire at 62” and see the plan with and without the change. Keep it or dismiss it."),
+                ("Two people, one plan", "Every account and income belongs to one of you or to both, each with their own retirement and Social Security age."),
+            ]),
+            ("Your data", [
+                ("Tax estimate", "Estimate this year's federal and state income tax, plus Social Security and Medicare tax on wages."),
+                ("Encrypted on your computer", "The database is encrypted, and its key is kept in your computer's keychain. In Private mode nothing leaves your computer except license and update checks."),
+                ("Export and back up", "Export transactions as CSV, and back up or restore everything in one file."),
+                ("Read only, by design", "Golden never moves money or places trades."),
+            ]),
         ],
         "facts": [
             ("Price", "$39.99 once."),
@@ -233,7 +257,6 @@ APP_PAGES = {
 
 def app_page(slug):
     a, p = by_slug[slug], APP_PAGES[slug]
-    feats = "\n".join(f'        <li><h3>{e(t)}</h3><p>{e(d)}</p></li>' for t, d in p["features"])
     facts = "\n".join(f'        <div><dt>{e(k)}</dt><dd>{e(v)}</dd></div>' for k, v in p["facts"])
     help_link = f' &middot; <a href="{p["help"]}">Help</a>' if p["help"] else ""
     return f"""  <section class="app-hero" id="buy">
@@ -246,12 +269,11 @@ def app_page(slug):
       {buy_plate(a, slug + "-hero")}
     </div>
   </section>
+{gallery(slug, a["name"])}
   <section class="section" aria-labelledby="what-h">
     <div class="wrap">
       <h2 id="what-h">What {e(a["name"])} does</h2>
-      <ul class="points points-6">
-{feats}
-      </ul>
+      {feature_groups(p["features"])}
     </div>
   </section>
   <section class="section" aria-labelledby="facts-h">

@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(ROOT, "legal"))
 from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
 sys.path.insert(0, OUT)
 from nav import nav_links  # same menu as the other Turtlebox pages
+from showcase import gallery, feature_groups, BACKER_FEATURES  # screenshots and feature list, shared with the other app pages
 TB_V = re.search(r'V = "(\w+)"', open(os.path.join(OUT, "build.py")).read()).group(1)  # same cache tag as the Turtlebox pages
 
 mark_svg = open(os.path.join(ROOT, "assets", "mark.svg")).read()
@@ -150,16 +151,11 @@ INDEX = '''
       </div>
     </div></section>
 
+'''+ gallery("backer", "Backer") + '''
+
     <section class="section" id="features" aria-labelledby="features-h"><div class="wrap">
       <h2 id="features-h">What Backer does</h2>
-      <ul class="features">
-        <li><h3>Scheduled or on demand</h3><p>Set a schedule and forget it, or back up new photos and videos yourself when you want to.</p></li>
-        <li><h3>Big libraries</h3><p>Handles <span class="num">100,000+</span> files, so years of photos and video footage are fine.</p></li>
-        <li><h3>Verify</h3><p>Compares what is on the NAS with your originals, so you know every photo and video was copied intact.</p></li>
-        <li><h3>Asks before deleting</h3><p>Backer never removes a photo or video from the NAS without asking you first.</p></li>
-        <li><h3>Optional AI assistant integration</h3><p>A local MCP server lets an AI assistant work with Backer. It is off by default.</p></li>
-        <li><h3>Stays out of the way</h3><p>Lives in the menu bar on a Mac and in the system tray on Windows.</p></li>
-      </ul>
+      '''+ feature_groups(BACKER_FEATURES) + '''
     </div></section>
 
     <section class="section" id="pricing" aria-labelledby="pricing-h"><div class="wrap">
