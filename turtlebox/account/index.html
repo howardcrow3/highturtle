@@ -6,23 +6,35 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#F5F0E7">
   <title>Your account | Turtlebox</title>
-  <meta name="description" content="Your Turtlebox purchases, invoices and billing.">
+  <meta name="description" content="Your Turtlebox orders, license keys and billing.">
   <meta name="robots" content="noindex">
   <link rel="canonical" href="https://turtlebox.studio/account/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/assets/fonts/Inter-Light.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/assets/styles.css?v=tb8">
+  <link rel="stylesheet" href="/assets/styles.css?v=tb9">
   <style>
-  .account { padding-block: 4rem; max-width: 40rem; }
+  .account { padding-block: 4rem; max-width: 46rem; }
   .account h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; }
+  .account h2 { font-size: 1.375rem; font-weight: 400; letter-spacing: -0.01em; margin-top: 3rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
   .account p { margin-top: 0.75rem; line-height: 1.65; }
   .account .note { margin-top: 1.5rem; padding: 1rem 1.25rem; border: 1px solid var(--line); }
-  .account form { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
-  .account input[type="email"] { font: 400 0.9375rem/1.4 var(--font-sans); padding: 16px; border: 1px solid var(--border-control); border-radius: 0; background: var(--paper); color: var(--ink); }
-  .account .btn { align-self: flex-start; cursor: pointer; }
-  .account ul.subs { margin-top: 1rem; padding-left: 1.25rem; list-style: disc; }
-  .account ul.subs li { margin-top: 0.5rem; }
-  .account .link { background: none; border: 0; padding: 0; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; }
+  .account .btn { cursor: pointer; }
+  .account .link { background: none; border: 0; padding: 0; color: var(--body); text-decoration: underline; cursor: pointer; font: 400 0.9375rem/1.4 var(--font-sans); letter-spacing: 0; text-transform: none; }
+  .who { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+  .who img, .who .acct-initial { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; flex: none; font-size: 1.25rem; }
+  .who-name { font-size: 1.25rem; color: var(--ink); }
+  .who-mail { font-size: 0.9375rem; overflow-wrap: anywhere; }
+  .rows { list-style: none; padding: 0; margin: 0; }
+  .rows li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+  .rows .what { color: var(--ink); }
+  .rows .meta { font-size: 0.875rem; }
+  .key { flex-basis: 100%; display: flex; gap: 0.5rem; align-items: stretch; margin-top: 0.5rem; }
+  .key code { flex: 1; min-width: 0; font: 400 0.8125rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 0.6rem 0.75rem; background: color-mix(in srgb, var(--ink) 5%, var(--paper)); border: 1px solid var(--line); overflow-wrap: anywhere; color: var(--ink); }
+  .key button { font: 500 0.6875rem/1 var(--font-sans); letter-spacing: 0.2em; text-transform: uppercase; padding: 0 0.9rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
+  .key button:hover { background: var(--ink); color: var(--paper); }
+  .empty { color: var(--body); }
+  .actions { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
+  .actions form { display: inline; }
 </style>
 </head>
 <body>
@@ -37,39 +49,48 @@
     <nav aria-label="Main">
         <a href="/apps/">Apps</a>
         <a href="/backer/">Backer</a>
-        <a href="https://highturtle.ai">High Turtle</a>
+        <a href="https://highturtle.com">High Turtle</a>
+        <a class="acct" href="/account/" aria-current="page" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>
     </nav>
+    <script src="/assets/account.js?v=tb9" defer></script>
   </div>
 </header>
 <main id="main" class="account wrap">
-<h1>Your account</h1>
+<h1 id="title">Your account</h1>
 <p id="msg" class="note" role="status" hidden></p>
 
 <section id="signed-out">
-  <p>Sign in with the Google account that uses the email you bought with to see your purchases and manage billing.</p>
+  <p>Sign in with the Google account that uses the email you bought with to see your orders and license keys and manage billing.</p>
   <p style="margin-top:1.5rem"><a class="btn" href="/api/billing/google/start">Sign in with Google</a></p>
 </section>
 
 <section id="signed-in" hidden>
-  <p>Signed in as <strong id="who"></strong>.</p>
-  <div id="none" hidden>
-    <p>We could not find any purchases for this email. If you bought with a different address, sign out and sign in with that Google account, or email <a href="mailto:info@turtlebox.studio">info@turtlebox.studio</a>.</p>
+  <div class="who">
+    <span id="face"></span>
+    <div><div class="who-name" id="who-name"></div><div class="who-mail" id="who-mail"></div></div>
   </div>
-  <div id="has">
-    <h2 style="font-size:1.375rem;margin-top:2rem">Purchases</h2>
-    <ul class="subs" id="purchases"></ul>
-    <ul class="subs" id="subs"></ul>
-    <p>Download invoices, update your payment method and manage any subscription in the billing portal, run by Paddle, our Merchant of Record.</p>
-    <form method="post" action="/api/billing/portal">
-      <button class="btn" type="submit">Manage billing</button>
-    </form>
-  </div>
-  <form method="post" action="/api/billing/signout">
-    <button class="link" type="submit">Sign out</button>
-  </form>
-</section>
 
-<p class="fine" style="margin-top:2rem">You can also find any order and receipt at <a href="https://paddle.net">paddle.net</a>.</p>
+  <h2>License keys</h2>
+  <ul class="rows" id="keys"></ul>
+  <p class="empty" id="keys-none" hidden>No license keys yet.</p>
+  <p class="fine" id="keys-help" hidden>To activate Backer: open Backer, go to Settings, then License, paste your key and click Activate.</p>
+
+  <h2>Orders</h2>
+  <ul class="rows" id="orders"></ul>
+  <p class="empty" id="orders-none" hidden>We could not find any orders for this email. If you bought with a different address, sign out and sign in with that Google account, or email <a href="mailto:info@turtlebox.studio">info@turtlebox.studio</a>.</p>
+
+  <div id="subs-wrap" hidden>
+    <h2>Subscriptions</h2>
+    <ul class="rows" id="subs"></ul>
+  </div>
+
+  <h2>Billing</h2>
+  <p id="billing-text">Download invoices, update your payment method and manage any subscription in the billing portal, run by Paddle, our Merchant of Record. You can also look up any order at <a href="https://paddle.net">paddle.net</a>.</p>
+  <div class="actions">
+    <form method="post" action="/api/billing/portal" id="portal"><button class="btn" type="submit">Manage billing</button></form>
+    <form method="post" action="/api/billing/signout"><button class="link" type="submit">Sign out</button></form>
+  </div>
+</section>
 </main>
 <script>
 (function () {
@@ -81,31 +102,69 @@
   };
   var key = q.get('error');
   if (key && notes[key]) { msg.textContent = notes[key]; msg.hidden = false; }
-  function day(d) { return d ? new Date(d).toLocaleDateString() : ''; }
-  function li(ul, text) { var x = document.createElement('li'); x.textContent = text; ul.appendChild(x); }
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) { var x = document.createElement(tag); if (cls) x.className = cls; if (text != null) x.textContent = text; return x; }
+  function day(d) { return d ? new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : ''; }
+  function money(minor, cur) {
+    if (minor == null || !cur) return '';
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }).format(Number(minor) / 100); } catch (e) { return ''; }
+  }
+  function row(what, meta) {
+    var li = el('li'); li.appendChild(el('span', 'what', what)); li.appendChild(el('span', 'meta', meta)); return li;
+  }
   fetch('/api/billing/me', { credentials: 'same-origin', headers: { accept: 'application/json' } })
     .then(function (r) { return r.json(); })
     .then(function (me) {
       if (!me.signedIn) return;
-      document.getElementById('signed-out').hidden = true;
-      document.getElementById('signed-in').hidden = false;
-      document.getElementById('who').textContent = me.email;
-      if (!me.customer) { document.getElementById('none').hidden = false; document.getElementById('has').hidden = true; return; }
-      var pl = document.getElementById('purchases');
-      (me.purchases || []).forEach(function (p) {
-        var t = (p.backer ? 'Backer license' : 'Purchase') + ', ' + day(p.date);
-        if (p.invoice_number) t += ' (invoice ' + p.invoice_number + ')';
-        if (p.backer && p.license_status === 'emailed') t += '. Key sent by email.';
-        if (p.backer && p.license_status === 'manual') t += '. Key on its way by email.';
-        li(pl, t);
+      $('signed-out').hidden = true;
+      $('signed-in').hidden = false;
+      var first = (me.name || '').split(' ')[0];
+      $('title').textContent = first ? 'Hi, ' + first : 'Your account';
+      $('who-name').textContent = me.name || me.email;
+      $('who-mail').textContent = me.name ? me.email : 'Signed in with Google';
+      var face;
+      if (me.picture) { face = el('img'); face.src = me.picture; face.alt = ''; face.referrerPolicy = 'no-referrer'; }
+      else { face = el('span', 'acct-face acct-initial', ((me.name || me.email || '?')[0]).toUpperCase()); }
+      $('face').replaceWith(face);
+
+      var keys = me.licenses || [];
+      keys.forEach(function (k) {
+        var meta = [k.version ? 'Version ' + k.version : '', k.seats ? (k.seats_used || 0) + ' of ' + k.seats + ' computers in use' : '', day(k.date)].filter(Boolean).join(' · ');
+        var li = row(k.product + (k.status && k.status !== 'active' ? ' (' + k.status + ')' : ''), meta);
+        var box = el('div', 'key'), code = el('code', null, k.key), btn = el('button', null, 'Copy');
+        btn.type = 'button';
+        btn.setAttribute('aria-label', 'Copy ' + k.product + ' license key');
+        btn.onclick = function () {
+          (navigator.clipboard ? navigator.clipboard.writeText(k.key) : Promise.reject()).then(function () {
+            btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = 'Copy'; }, 1600);
+          }, function () { var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+        };
+        box.appendChild(code); box.appendChild(btn); li.appendChild(box);
+        $('keys').appendChild(li);
       });
-      var ul = document.getElementById('subs');
-      (me.subscriptions || []).forEach(function (s) {
-        var text = 'Subscription: ' + s.status.replace('_', ' ');
-        if (s.scheduled_change_action && s.scheduled_change_at) text += ' (' + s.scheduled_change_action + ' scheduled for ' + day(s.scheduled_change_at) + ')';
-        else if (s.next_billed_at && s.status !== 'canceled') text += ', renews ' + day(s.next_billed_at);
-        li(ul, text);
+      var pendingBacker = (me.purchases || []).some(function (p) { return p.backer && !keys.some(function (k) { return k.product === 'Backer'; }); });
+      if (!keys.length) {
+        $('keys-none').hidden = false;
+        if (pendingBacker) $('keys-none').textContent = 'Your Backer key comes by email. Keys for new orders also show here. Can’t find yours? Email info@turtlebox.studio.';
+      }
+      if (keys.some(function (k) { return k.product === 'Backer'; })) $('keys-help').hidden = false;
+
+      var orders = me.purchases || [];
+      orders.forEach(function (p) {
+        var meta = [day(p.date), money(p.total, p.currency), p.invoice_number ? 'Invoice ' + p.invoice_number : ''].filter(Boolean).join(' · ');
+        $('orders').appendChild(row(p.product || 'Order', meta));
       });
+      if (!orders.length) $('orders-none').hidden = false;
+
+      var subs = me.subscriptions || [];
+      subs.forEach(function (s) {
+        var meta = s.status.replace('_', ' ');
+        if (s.scheduled_change_action && s.scheduled_change_at) meta += ', ' + s.scheduled_change_action + ' scheduled for ' + day(s.scheduled_change_at);
+        else if (s.next_billed_at && s.status !== 'canceled') meta += ', renews ' + day(s.next_billed_at);
+        $('subs').appendChild(row('Subscription', meta));
+      });
+      if (subs.length) $('subs-wrap').hidden = false;
+      if (!me.customer) { $('portal').hidden = true; $('billing-text').textContent = 'Nothing to manage yet. Once you buy something, invoices and payment details live in the billing portal here.'; }
     })
     .catch(function () {});
 })();

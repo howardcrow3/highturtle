@@ -98,12 +98,18 @@ export class DynamoStore {
     }
   }
 
-  async finishFulfillment(transactionId, status, field = 'fulfillment') {
+  // extra: more attributes to save with the result, e.g. { license_keys: [...] } so the account page can show them.
+  async finishFulfillment(transactionId, status, field = 'fulfillment', extra = {}) {
+    const names = {};
+    const values = { ':s': status, ':now': new Date().toISOString() };
+    const sets = [`${field}_status = :s`, `${field}_at = :now`];
+    Object.entries(extra).forEach(([k, v], i) => { names[`#x${i}`] = k; values[`:x${i}`] = v; sets.push(`#x${i} = :x${i}`); });
     await this.db.send(new UpdateCommand({
       TableName: this.tables.transactions,
       Key: { transaction_id: transactionId },
-      UpdateExpression: `SET ${field}_status = :s, ${field}_at = :now`,
-      ExpressionAttributeValues: { ':s': status, ':now': new Date().toISOString() },
+      UpdateExpression: `SET ${sets.join(', ')}`,
+      ...(Object.keys(names).length ? { ExpressionAttributeNames: names } : {}),
+      ExpressionAttributeValues: values,
     }));
   }
 
@@ -192,9 +198,9 @@ export class MemoryStore {
     this.transactions.set(id, { ...t, [`${field}_status`]: 'claimed', [`${field}_at`]: now.toISOString() });
     return true;
   }
-  async finishFulfillment(id, status, field = 'fulfillment') {
+  async finishFulfillment(id, status, field = 'fulfillment', extra = {}) {
     const t = this.transactions.get(id);
-    this.transactions.set(id, { ...t, [`${field}_status`]: status, [`${field}_at`]: new Date().toISOString() });
+    this.transactions.set(id, { ...t, ...extra, [`${field}_status`]: status, [`${field}_at`]: new Date().toISOString() });
   }
   async releaseFulfillment(id, field = 'fulfillment') {
     const t = this.transactions.get(id);

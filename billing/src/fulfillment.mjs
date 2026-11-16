@@ -43,7 +43,7 @@ export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
         subject: plural ? 'Your Backer license keys' : 'Your Backer license key',
         text: `Thanks for buying Backer.\n\nYour license key${plural ? 's' : ''}:\n\n${keys.join('\n\n')}\n\nTo turn it on: open Backer, go to Settings, then License, paste the key and click Activate.\nThe key is tied to ${email} and covers all 1.x versions.\n\nDownload Backer: ${cfg.site}/backer/\nOrder: ${txn.invoiceNumber || txn.id} (receipt from Paddle, our Merchant of Record)\nQuestions: reply to this email.\n\nTurtlebox`,
       });
-      await store.finishFulfillment(txn.id, 'emailed');
+      await store.finishFulfillment(txn.id, 'emailed', 'fulfillment', { license_keys: keys });
       log({ fulfillment: 'emailed', transaction: txn.id, keys: keys.length });
     } catch (err) {
       await store.releaseFulfillment(txn.id);

@@ -46,6 +46,7 @@ export function transactionRow(t) {
     status: t.status,
     origin: t.origin,
     currency_code: t.currencyCode,
+    total: t.details?.totals?.grandTotal ?? null, // minor units, as a string
     invoice_number: t.invoiceNumber ?? null,
     items: (t.items || []).map((i) => ({
       price_id: i.price?.id ?? null,

@@ -48,7 +48,9 @@ def shell(site, title, desc, path, body):
                              '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
         css = f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">'
         nav = ('<a href="/apps/">Apps</a>\n        <a href="/backer/">Backer</a>\n'
-               '        <a href="https://highturtle.com">High Turtle</a>')
+               '        <a href="https://highturtle.com">High Turtle</a>'
+               '\n        <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>'
+               f'\n        <script src="/assets/account.js?v={TB_V}" defer></script>')
         foot_intro = "<p>Turtlebox builds small AI apps.</p>"
     return f"""<!doctype html>
 {html_open}
@@ -206,13 +208,15 @@ def privacy(site):
 <li><strong>Issue reports.</strong> What you type into the Backer report form: a summary, details, your computer type, Backer version, NAS model, and your email if you add one so we can reply. We use it to fix problems and answer you. Legal basis: our legitimate interest in supporting and improving our products. Kept while the issue is open and for up to 2 years after, so we can spot repeat problems.</li>
 <li><strong>Emails you send us.</strong> Your message and address, to answer you. Legal basis: our legitimate interest in replying. Kept for up to 2 years after the conversation ends.</li>
 <li><strong>The Backer app.</strong> Backer checks our server for updates. Like any web request, this sends your IP address and the app's version. Backer sends no telemetry, and your files and backups never leave your computer and NAS.</li>
-<li><strong>Website visits.</strong> Our sites set no cookies and use no analytics or tracking scripts. Our hosting provider handles your IP address to deliver pages and may keep short-lived logs for security.</li>
+<li><strong>Your account.</strong> If you sign in on turtlebox.studio with Google, Google tells us your email address, name and profile picture. We use them to show your orders and license keys and let you manage billing. Legal basis: to perform our contract with you. They are kept only in a sign-in cookie on your device, which expires after 7 days or when you sign out.</li>
+<li><strong>Website visits.</strong> Our sites use no analytics or tracking scripts, and set no cookies unless you sign in to your account. Our hosting provider handles your IP address to deliver pages and may keep short-lived logs for security.</li>
 </ul>
 
 <h2>Who we share it with</h2>
 <p>We do not sell or rent your personal data. We share it only with:</p>
 <ul>
 <li><strong>Paddle.com</strong>, our online reseller and Merchant of Record, which processes orders, payments, taxes and refunds. Paddle uses your data as described in <a href="{PADDLE_PRIVACY}">its privacy notice</a>.</li>
+<li><strong>Google</strong>, only if you choose to sign in with Google, which confirms who you are under <a href="https://policies.google.com/privacy">its privacy policy</a>.</li>
 <li><strong>Service providers</strong> that run things for us: Amazon Web Services (hosting, email sending and storage, in the United States), GitHub (our private issue tracker, for issue reports) and MXroute (our email inbox).</li>
 <li><strong>Professional advisers</strong>, such as accountants and lawyers, when needed.</li>
 <li><strong>Authorities</strong>, when the law requires it.</li>
@@ -228,7 +232,7 @@ def privacy(site):
 <p>We protect your data with encryption in transit, access controls and providers with strong security practices, and we keep only what we need.</p>
 
 <h2>Cookies</h2>
-<p>Our own pages set no cookies. Paddle's checkout may use cookies it needs to process your payment safely; those are covered by Paddle's privacy notice.</p>
+<p>Our own pages set no cookies unless you sign in to your Turtlebox account. Signing in sets one strictly necessary cookie that keeps you signed in for up to 7 days; signing out removes it. Paddle's checkout may use cookies it needs to process your payment safely; those are covered by Paddle's privacy notice.</p>
 
 <h2>Children</h2>
 <p>Our products are not meant for children under 16, and we do not knowingly collect their data.</p>
