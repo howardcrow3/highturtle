@@ -18,6 +18,8 @@ from site_legal import CFG, SITES, v, email, footer_block, replace_footer_block 
 mark_svg = open(os.path.join(ROOT, "assets", "mark.svg")).read()
 MARK_PATH = re.search(r"<path[^>]*/>", mark_svg).group(0)
 MARK_VB = re.search(r'viewBox="([^"]+)"', mark_svg).group(1)
+sys.path.insert(0, os.path.join(ROOT, "turtlebox"))
+from nav import nav_links  # same menu as the other Turtlebox pages
 TB_V = re.search(r'V = "(\w+)"', open(os.path.join(ROOT, "turtlebox", "build.py")).read()).group(1)
 
 PADDLE_BUYER_TERMS = "https://www.paddle.com/legal/checkout-buyer-terms"
@@ -47,11 +49,9 @@ def shell(site, title, desc, path, body):
         html_open, scheme = ('<html lang="en" data-theme="light">',
                              '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
         css = f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">'
-        nav = ('<a href="/apps/">Apps</a>\n        <a href="/backer/">Backer</a>\n'
-               '        <a href="https://highturtle.com">High Turtle</a>'
-               '\n        <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>'
-               f'\n        <script src="/assets/account.js?v={TB_V}" defer></script>')
-        foot_intro = "<p>Turtlebox builds small AI apps.</p>"
+        nav = nav_links("", TB_V, indent="        ")
+        css += f'\n  <link rel="stylesheet" href="/assets/store.css?v={TB_V}">'
+        foot_intro = "<p>Turtlebox makes Backer, CeeVee and Golden.</p>"
     return f"""<!doctype html>
 {html_open}
 <head>
@@ -104,7 +104,7 @@ def products(site):
 <p>High Turtle LLC is a holding company. It owns and operates AI companies that trade under their own names, such as <a href="https://turtlebox.studio">Turtlebox</a>. Nothing is sold on highturtle.com. Each company sells its products on its own website, and the terms, refund policy and prices on that website apply to those products. High Turtle does not sell consulting or other services.</p>
 <p>If High Turtle itself ever sells a product, its page will say what is included and the price, and you will get a personal, non-exclusive, non-transferable license to use it in your own work. You may not resell, sublicense, share publicly or redistribute it."""
     return f"""<h2>3. What you buy</h2>
-<p>Turtlebox makes software: small AI apps that run in your browser, and <a href="/backer/">Backer</a>, a desktop app that backs up photos and videos from a Mac or PC to a NAS. Each app's page says what it does, what it costs and what is included. Turtlebox does not sell consulting or other services.</p>
+<p>Turtlebox makes desktop apps for Mac and Windows: <a href="/backer/">Backer</a>, which backs up photos and videos from a Mac or PC to a NAS; <a href="/ceevee/">CeeVee</a>, for managing a job search; and <a href="/golden/">Golden</a>, for household finance and retirement planning. Each app's page says what it does, what it costs and what is included. Turtlebox does not sell consulting or other services.</p>
 <p><strong>Backer licenses.</strong> Backer is free to try for 14 days. A purchase gives you a license key, sent by email and shown on your order confirmation, that unlocks Backer and covers all 1.x versions. The license is personal, non-exclusive and non-transferable. You may not share your key publicly, resell it, or try to get around the license check.</p>
 <p><strong>Your data and backups.</strong> Backer copies files you choose to storage you own. It never deletes files on your NAS without asking, but no backup tool can rule out every failure, so keep more than one copy of anything you cannot replace and use Verify to check your backups."""
 

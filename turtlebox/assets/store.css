@@ -1,0 +1,101 @@
+/* Turtlebox store: home, /apps/ and the CeeVee and Golden pages. Loaded after styles.css (generated from the design
+   system, so not edited by hand). Every value is a Turtlebox role token. Square corners, 1px rules, gold for dots and underlines. */
+
+[hidden] { display: none !important; }
+.num { font-variant-numeric: tabular-nums; }
+.eyebrow { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--body); }
+.fine { font: 400 0.8125rem/1.6 var(--font-sans); letter-spacing: 0.01em; color: var(--body); }
+
+/* Header: the app links give way to "Apps" on small screens */
+@media (max-width: 760px) { .bar nav a.nav-app { display: none; } }
+
+/* Old catalog grid: no overflow on 320px phones */
+.apps { grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr)); }
+
+/* Store hero */
+.store-hero { padding-bottom: var(--space-2xl); }
+.store-hero h1 { max-width: 13em; }
+
+/* Store: one row per app, text on the left, the price plate on the right */
+.store-section { padding-top: 0; border-top: 0; }
+.store .app-row:last-child { border-bottom: 0; }
+.store { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.app-row {
+  display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 1fr);
+  gap: var(--space-xl) var(--space-2xl); align-items: start;
+  padding-block: var(--space-2xl); border-bottom: 1px solid var(--line);
+}
+.app-row-text { display: flex; flex-direction: column; gap: var(--space-sm); min-width: 0; }
+.app-name { font-size: clamp(2.25rem, 4.5vw, 3.25rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
+.app-name a { color: inherit; text-decoration: none; }
+.app-name a:hover { text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+.app-tagline { font-size: 1.25rem; line-height: 1.5; color: var(--ink); max-width: 28em; }
+.app-desc { max-width: 36em; }
+.app-row-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-lg); margin-top: var(--space-xs); }
+.app-row-meta .status { margin: 0; }
+
+/* Price plate: the film-frame corners from the app cards */
+.buy-plate {
+  --c: var(--frame);
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c)),
+    linear-gradient(var(--c), var(--c)), linear-gradient(var(--c), var(--c));
+  background-repeat: no-repeat;
+  background-size: 20px 1.5px, 1.5px 20px, 20px 1.5px, 1.5px 20px, 20px 1.5px, 1.5px 20px, 20px 1.5px, 1.5px 20px;
+  background-position:
+    top 12px left 12px, top 12px left 12px, top 12px right 12px, top 12px right 12px,
+    bottom 12px left 12px, bottom 12px left 12px, bottom 12px right 12px, bottom 12px right 12px;
+  border: 1px solid var(--line);
+  padding: var(--space-xl) 40px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-sm);
+  min-width: 0;
+}
+.price-big { font-size: 2.75rem; font-weight: 300; letter-spacing: -0.03em; line-height: 1; color: var(--ink); }
+.price-note { font-size: 1rem; letter-spacing: 0; color: var(--body); }
+.plats { font-size: 0.9375rem; color: var(--body); }
+.btn-buy { font-size: 0.8125rem; padding: 22px var(--space-xl); margin-top: var(--space-xs); }
+.btn-quiet { background: transparent; color: var(--ink); }
+.soon { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); display: flex; align-items: center; gap: 12px; margin-top: var(--space-xs); }
+.soon::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border-control); }
+
+/* Release news signup (posts to highturtle.com, no script needed) */
+.notify-form { display: flex; flex-direction: column; gap: 12px; width: 100%; }
+.notify-form label { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }
+.notify-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.notify-form input[type="email"] { flex: 1 1 12rem; min-width: 0; font: 400 0.9375rem/1.4 var(--font-sans); padding: 15px 16px; border: 1px solid var(--border-control); border-radius: 0; background: var(--paper); color: var(--ink); }
+.notify-form input::placeholder { color: color-mix(in srgb, var(--body) 70%, var(--paper)); }
+.simple .simple-form { margin-top: var(--space-xl); max-width: 32rem; }
+.simple .simple-form p { font-size: 0.8125rem; margin-top: 0; }
+
+/* App page */
+.app-hero { padding-block: var(--space-3xl) var(--space-2xl); }
+.app-hero-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(18rem, 1fr); gap: var(--space-2xl); align-items: end; }
+.app-hero h1 { margin-top: var(--space-md); font-size: clamp(2.75rem, 6vw, 4.5rem); font-weight: 300; letter-spacing: -0.04em; line-height: 1.02; max-width: 12em; text-wrap: balance; }
+.app-hero .app-row-meta { margin-top: var(--space-lg); }
+.points-6 { row-gap: var(--space-2xl); }
+.points-6 h3 { font-size: 1.375rem; line-height: 1.25; letter-spacing: -0.01em; }
+.facts { margin: var(--space-xl) 0 0; display: grid; border-top: 1px solid var(--line); }
+.facts > div { display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(0, 3fr); gap: var(--space-xs) var(--space-xl); padding-block: var(--space-md); border-bottom: 1px solid var(--line); }
+.facts dt { font: 400 0.6875rem/1.9 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }
+.facts dd { margin: 0; max-width: 40em; }
+.facts-fine { margin-top: var(--space-md); }
+
+/* Help page */
+.prose-help { max-width: 44rem; }
+.prose-help h2 { font-size: 1.5rem; margin-top: var(--space-xl); }
+.prose-help h2:first-child { margin-top: 0; }
+.prose-help p, .prose-help ul, .prose-help ol { margin-top: var(--space-sm); }
+.prose-help li + li { margin-top: var(--space-xs); }
+.prose-help strong { color: var(--ink); font-weight: 400; }
+.prose-help code { font: 400 0.875em/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+
+@media (max-width: 860px) {
+  .app-row, .app-hero-grid { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); }
+  .app-row { padding-block: var(--space-xl); }
+  .app-hero { padding-block: var(--space-2xl) var(--space-xl); }
+  .buy-plate { padding: var(--space-lg); }
+  .facts > div { grid-template-columns: minmax(0, 1fr); }
+}
