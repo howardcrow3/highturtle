@@ -306,3 +306,32 @@ a:hover { text-decoration-thickness: 2px; }
   .brand-mark { height: 26px; }
   .brand-name { font-size: 1.25rem; }
 }
+
+/* Header account control (top right). Signed out: icon + "Sign in". Signed in: avatar + first name. */
+.bar nav a.acct {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 36px; box-sizing: border-box;
+  padding: 0 12px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+}
+.bar nav a.acct:hover { border-color: var(--ink); }
+.bar nav a.acct[aria-current="page"] { border-color: var(--ink); }
+.acct-icon { width: 16px; height: 16px; display: block; }
+.bar nav a.acct.is-in { padding: 0 12px 0 3px; }
+.acct-face { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; display: block; flex: none; }
+.acct-initial {
+  display: grid; place-items: center;
+  background: var(--ink); color: var(--paper);
+  font: 500 0.75rem/1 var(--font-sans); letter-spacing: 0;
+}
+.acct-label { max-width: 10ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 600px) {
+  .acct-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .bar nav a.acct, .bar nav a.acct.is-in { width: 36px; padding: 0; justify-content: center; }
+}
+/* Phones: the High Turtle link (also in the footer) makes way for the account control */
+@media (max-width: 520px) {
+  .bar nav a[href^="https://highturtle"] { display: none; }
+}

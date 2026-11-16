@@ -5,6 +5,7 @@ import { makeApp } from '../src/handler.mjs';
 import { MemoryStore, buildUpsert } from '../src/store.mjs';
 import { subscriptionGrantsAccess, anySubscriptionGrantsAccess } from '../src/access.mjs';
 import { signToken, verifyToken } from '../src/session.mjs';
+import { CeeveeMemoryStore } from '../src/ceevee-store.mjs';
 import { SECRET, sign, webhookEvent, customerEvent, subscriptionEvent, transactionCompletedEvent } from './fixtures.mjs';
 
 function setup(overrides = {}) {
@@ -240,7 +241,8 @@ async function googleSignIn(app, claims) {
 }
 
 const goodClaims = () => ({ iss: 'https://accounts.google.com', aud: 'cid.apps.googleusercontent.com',
-  exp: Math.floor(Date.now() / 1000) + 300, email: 'Buyer@Example.com', email_verified: true });
+  exp: Math.floor(Date.now() / 1000) + 300, email: 'Buyer@Example.com', email_verified: true,
+  name: 'Bea Buyer', picture: 'https://lh3.googleusercontent.com/a/x' });
 
 test('Google sign-in, then purchases, access and the portal for the matching Paddle customer', async () => {
   let claims;
@@ -260,6 +262,8 @@ test('Google sign-in, then purchases, access and the portal for the matching Pad
   assert.equal(me.access, true);
   assert.equal(me.purchases.length, 1);
   assert.equal(me.purchases[0].backer, true);
+  assert.equal(me.name, 'Bea Buyer');
+  assert.equal(me.picture, 'https://lh3.googleusercontent.com/a/x');
 
   const p = await g.app(req('POST', '/api/billing/portal', { cookies: [cookie] }));
   assert.equal(p.headers.location, 'https://customer-portal.paddle.com/cpl_x?c=ctm_01');
@@ -342,7 +346,7 @@ function backerSetup({ signingKey = SEED, failSend = false } = {}) {
   const onPurchase = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log: () => {} });
   const app = makeApp({ cfg, store, paddle, sendEmail, onPurchase });
   const deliver = (payload) => { const body = JSON.stringify(payload); return app(webhookEvent(body, sign(body))); };
-  return { store, sent, deliver };
+  return { store, sent, deliver, app, cfg };
 }
 
 test('a Backer purchase emails one valid key, once, even when delivered twice', async () => {
@@ -355,6 +359,36 @@ test('a Backer purchase emails one valid key, once, even when delivered twice', 
   assert.equal(sent[0].to, 'Buyer@Example.com');
   assert.match(sent[0].text, /BACKER-[A-Z2-7-]+/);
   assert.equal(store.transactions.get('txn_01').fulfillment_status, 'emailed');
+  assert.deepEqual(store.transactions.get('txn_01').license_keys, [sent[0].text.match(/BACKER-[A-Z2-7-]+/)[0]]);
+});
+
+test('the profile shows Google name and avatar, orders, the stored Backer key and CeeVee licenses', async () => {
+  const { deliver, sent, store, cfg } = backerSetup();
+  await deliver(customerEvent('customer.created'));
+  await deliver(transactionCompletedEvent());
+  const ceevee = new CeeveeMemoryStore();
+  await ceevee.createLicense({ license_key: 'CEEVEE-AAAAA', email: 'Buyer@example.com', transaction_id: 'txn_x', seats: 3, major: 1 });
+  const app = makeApp({ cfg, store, paddle: null, sendEmail: async () => {}, ceevee });
+  const tok = signToken(cfg.sessionSecret, 'session', { e: 'buyer@example.com', n: 'Bea Buyer', p: 'https://lh3.googleusercontent.com/a/x' }, 3600);
+  const me = JSON.parse((await app(req('GET', '/api/billing/me', { cookies: [`tb_account=${tok}`] }))).body);
+  assert.equal(me.name, 'Bea Buyer');
+  assert.equal(me.picture, 'https://lh3.googleusercontent.com/a/x');
+  assert.equal(me.purchases.length, 1);
+  assert.equal(me.purchases[0].product, 'Backer');
+  const key = sent[0].text.match(/BACKER-[A-Z2-7-]+/)[0];
+  assert.deepEqual(me.licenses.map((l) => [l.product, l.key]), [['Backer', key], ['CeeVee', 'CEEVEE-AAAAA']]);
+  assert.equal(me.licenses[1].seats, 3);
+});
+
+test('a signed-in visitor with no Paddle customer still sees their CeeVee licenses', async () => {
+  const { store, cfg } = backerSetup();
+  const ceevee = new CeeveeMemoryStore();
+  await ceevee.createLicense({ license_key: 'CEEVEE-BBBBB', email: 'solo@example.com', transaction_id: 'txn_y', seats: 1, major: 1 });
+  const app = makeApp({ cfg, store, paddle: null, sendEmail: async () => {}, ceevee });
+  const tok = signToken(cfg.sessionSecret, 'session', { e: 'solo@example.com' }, 3600);
+  const me = JSON.parse((await app(req('GET', '/api/billing/me', { cookies: [`tb_account=${tok}`] }))).body);
+  assert.equal(me.customer, false);
+  assert.deepEqual(me.licenses.map((l) => l.key), ['CEEVEE-BBBBB']);
 });
 
 test('buyer email comes from Paddle when customer.created has not arrived yet', async () => {

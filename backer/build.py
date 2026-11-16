@@ -59,14 +59,16 @@ HEADER = '''<header class="site-header">
       <a href="/apps/">Apps</a>
       <a href="/backer/" aria-current="page">Backer</a>
       <a href="https://highturtle.com">High Turtle</a>
+      <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>
     </nav>
+    <script src="/assets/account.js?v=%s" defer></script>
   </div>
-</header>''' % MARK_VB
+</header>''' % (MARK_VB, TB_V)
 
 def footer(extra=""):
     return f'''<footer class="site-footer">
   <div class="wrap">
-    <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website sets no cookies and has no tracking scripts.</p>
+    <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website has no tracking scripts and sets no cookies unless you sign in to your account.</p>
     <div class="foot" style="margin-top:var(--space-sm)">
       <p><a href="/backer/releases.html">Releases</a> &middot; <a href="/backer/notes.html">Release notes</a> &middot; <a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
       {footer_block("turtlebox")}

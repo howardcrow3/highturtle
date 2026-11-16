@@ -11,7 +11,7 @@ from site_legal import footer_block  # policy links and legal name (Paddle requi
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb8"
+V = "tb9"
 
 def page(title, desc, body, path, robots=True, nav_current=""):
     def cur(p): return ' aria-current="page"' if nav_current == p else ""
@@ -51,7 +51,9 @@ def page(title, desc, body, path, robots=True, nav_current=""):
       <a href="/apps/"{cur("apps")}>Apps</a>
       <a href="/backer/"{cur("backer")}>Backer</a>
       <a href="https://highturtle.com">High Turtle</a>
+      <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>
     </nav>
+    <script src="/assets/account.js?v={V}" defer></script>
   </div>
 </header>
 <main id="main">

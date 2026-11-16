@@ -88,22 +88,38 @@ export function makeApp(deps) {
     const clear = stateCookie('', 0);
     const saved = verifyToken(cfg.sessionSecret, 'oauth', readCookie(event, 'tb_oauth'));
     if (!saved || !q.state || q.state !== saved.s || !q.code) return redirect(`${cfg.site}/account/?error=signin`, [clear]);
-    let email;
+    let profile;
     try {
-      email = await exchangeCode({ code: q.code, clientId: cfg.googleClientId, clientSecret: cfg.googleClientSecret,
+      profile = await exchangeCode({ code: q.code, clientId: cfg.googleClientId, clientSecret: cfg.googleClientSecret,
         redirectUri, nonce: saved.n, fetchImpl: deps.fetchImpl });
     } catch (err) {
       log({ warn: 'google sign-in failed', message: String(err?.message || err) });
       return redirect(`${cfg.site}/account/?error=signin`, [clear]);
     }
-    // The session holds only the Google-verified email. The Paddle customer is looked up from it,
-    // server-side, on every request, so purchases made after signing in show up too.
-    const session = signToken(cfg.sessionSecret, 'session', { e: email }, SESSION_TTL);
+    // The session holds the Google-verified email (plus name and avatar for the header). The Paddle customer
+    // is looked up from the email, server-side, on every request, so purchases made after signing in show up too.
+    const session = signToken(cfg.sessionSecret, 'session', { e: profile.email, n: profile.name, p: profile.picture }, SESSION_TTL);
     return redirect(`${cfg.site}/account/`, [clear, sessionCookie(session, SESSION_TTL)]);
   }
 
-  function sessionEmail(event) {
-    return verifyToken(cfg.sessionSecret, 'session', readCookie(event, COOKIE))?.e || null;
+  function sessionData(event) {
+    const s = verifyToken(cfg.sessionSecret, 'session', readCookie(event, COOKIE));
+    return s?.e ? s : null;
+  }
+  const sessionEmail = (event) => sessionData(event)?.e || null;
+
+  // CeeVee licenses are keyed by email, so they show even before a Paddle customer row exists.
+  async function ceeveeLicenses(email) {
+    if (!deps.ceevee?.findLicensesByEmail) return [];
+    const rows = await deps.ceevee.findLicensesByEmail(email).catch((err) => {
+      log({ warn: 'ceevee licenses unavailable', message: String(err?.message || err) });
+      return [];
+    });
+    return rows.map((l) => ({
+      product: 'CeeVee', key: l.license_key, status: l.status ?? 'active', seats: l.seats ?? null,
+      seats_used: Object.keys(l.machines || {}).length, version: l.major ? `${l.major}.x` : null,
+      date: l.created_at ?? l.issued_at ?? null,
+    }));
   }
 
   async function currentCustomer(event) {
@@ -112,28 +128,40 @@ export function makeApp(deps) {
   }
 
   async function me(event) {
-    const email = sessionEmail(event);
-    if (!email) return json(200, { signedIn: false });
-    const customer = await store.findCustomerByEmail(email);
-    if (!customer) return json(200, { signedIn: true, email, customer: false, access: false, subscriptions: [], purchases: [] });
+    const sess = sessionData(event);
+    if (!sess) return json(200, { signedIn: false });
+    const email = sess.e;
+    const profile = { signedIn: true, email, name: sess.n || null, picture: sess.p || null };
+    const [customer, ceeveeKeys] = await Promise.all([store.findCustomerByEmail(email), ceeveeLicenses(email)]);
+    if (!customer) return json(200, { ...profile, customer: false, access: false, subscriptions: [], purchases: [], licenses: ceeveeKeys });
     const subs = await store.listSubscriptions(customer.customer_id);
     const txns = await store.listTransactions(customer.customer_id).catch((err) => {
       log({ warn: 'purchases unavailable', message: String(err?.message || err) });
       return [];
     });
+    const backerPrices = cfg.backerPriceIds || [];
+    const paid = txns
+      .filter((t) => t.status === 'completed' || t.status === 'paid')
+      .sort((a, b) => String(b.billed_at || b.paddle_created_at).localeCompare(String(a.billed_at || a.paddle_created_at)));
+    const isBacker = (t) => (t.items || []).some((i) => backerPrices.includes(i.price_id));
+    const isCeevee = (t) => !!t.ceevee_fulfillment_status;
+    const backerKeys = paid.filter(isBacker).flatMap((t) => (t.license_keys || []).map((key) => ({
+      product: 'Backer', key, status: 'active', version: '1.x', date: t.billed_at || t.paddle_created_at,
+      invoice_number: t.invoice_number ?? null,
+    })));
     return json(200, {
-      signedIn: true,
+      ...profile,
       customer: true,
-      email: customer.email,
-      purchases: txns
-        .filter((t) => t.status === 'completed' || t.status === 'paid')
-        .sort((a, b) => String(b.billed_at || b.paddle_created_at).localeCompare(String(a.billed_at || a.paddle_created_at)))
-        .map((t) => ({
-          date: t.billed_at || t.paddle_created_at,
-          invoice_number: t.invoice_number ?? null,
-          backer: (t.items || []).some((i) => (cfg.backerPriceIds || []).includes(i.price_id)),
-          license_status: t.fulfillment_status ?? null,
-        })),
+      licenses: [...backerKeys, ...ceeveeKeys],
+      purchases: paid.map((t) => ({
+        date: t.billed_at || t.paddle_created_at,
+        invoice_number: t.invoice_number ?? null,
+        product: isBacker(t) ? 'Backer' : isCeevee(t) ? 'CeeVee' : null,
+        backer: isBacker(t),
+        license_status: t.fulfillment_status ?? t.ceevee_fulfillment_status ?? null,
+        total: t.total ?? null,
+        currency: t.currency_code ?? null,
+      })),
       access: anySubscriptionGrantsAccess(subs, { pastDuePolicy: cfg.pastDuePolicy }),
       subscriptions: subs.map((s) => ({
         status: s.status,

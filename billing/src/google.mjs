@@ -14,7 +14,7 @@ export const newNonce = () => randomBytes(16).toString('base64url');
 export function authUrl({ clientId, redirectUri, state, nonce }) {
   const q = new URLSearchParams({
     client_id: clientId, redirect_uri: redirectUri, response_type: 'code',
-    scope: 'openid email', state, nonce, prompt: 'select_account',
+    scope: 'openid email profile', state, nonce, prompt: 'select_account',
   });
   return `${AUTH_URL}?${q}`;
 }
@@ -25,7 +25,7 @@ function decodeJwtPayload(jwt) {
   return JSON.parse(Buffer.from(part, 'base64url').toString('utf8'));
 }
 
-// Returns the verified, lower-cased email, or throws.
+// Returns { email (verified, lower-cased), name, picture }, or throws.
 export async function exchangeCode({ code, clientId, clientSecret, redirectUri, nonce, fetchImpl = fetch, now = Date.now() }) {
   const res = await fetchImpl(TOKEN_URL, {
     method: 'POST',
@@ -41,5 +41,7 @@ export async function exchangeCode({ code, clientId, clientSecret, redirectUri, 
   if (!nonce || c.nonce !== nonce) throw new Error('bad nonce');
   if (c.email_verified !== true && c.email_verified !== 'true') throw new Error('email not verified');
   if (!c.email) throw new Error('no email');
-  return String(c.email).trim().toLowerCase();
+  const picture = typeof c.picture === 'string' && c.picture.startsWith('https://') ? c.picture : null;
+  const name = typeof c.name === 'string' ? c.name.slice(0, 80) : null;
+  return { email: String(c.email).trim().toLowerCase(), name, picture };
 }
