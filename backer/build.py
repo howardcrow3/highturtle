@@ -20,6 +20,8 @@ OUT = os.path.join(ROOT, "turtlebox")
 V = "bk2"
 sys.path.insert(0, os.path.join(ROOT, "legal"))
 from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
+sys.path.insert(0, OUT)
+from nav import nav_links  # same menu as the other Turtlebox pages
 TB_V = re.search(r'V = "(\w+)"', open(os.path.join(OUT, "build.py")).read()).group(1)  # same cache tag as the Turtlebox pages
 
 mark_svg = open(os.path.join(ROOT, "assets", "mark.svg")).read()
@@ -49,21 +51,17 @@ DETECT = '''<script>
 })();
 </script>'''
 
-HEADER = '''<header class="site-header">
+HEADER = f'''<header class="site-header">
   <div class="wrap bar">
     <a class="brand" href="/" aria-label="Turtlebox home">
-      <svg class="brand-mark" viewBox="%s" aria-hidden="true"><use href="#mark"/></svg>
+      <svg class="brand-mark" viewBox="{MARK_VB}" aria-hidden="true"><use href="#mark"/></svg>
       <span class="brand-name">Turtlebox</span>
     </a>
     <nav aria-label="Main">
-      <a href="/apps/">Apps</a>
-      <a href="/backer/" aria-current="page">Backer</a>
-      <a href="https://highturtle.com">High Turtle</a>
-      <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>
+      {nav_links("backer", TB_V)}
     </nav>
-    <script src="/assets/account.js?v=%s" defer></script>
   </div>
-</header>''' % (MARK_VB, TB_V)
+</header>'''
 
 def footer(extra=""):
     return f'''<footer class="site-footer">
@@ -472,6 +470,7 @@ def render(cfg, artifact):
             fonts = GFONTS
         else:
             style = (f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">\n'
+                     f'<link rel="stylesheet" href="/assets/store.css?v={TB_V}">\n'
                      f'<link rel="stylesheet" href="/assets/backer.css?v={V}">')
             fonts = '<link rel="preload" href="/assets/fonts/Inter-Light.woff2" as="font" type="font/woff2" crossorigin>'
         page = f'''<!doctype html>
