@@ -1,0 +1,43 @@
+name: Paddle Backer catalog (find or create)
+
+# Finds the Backer product, its $4.99 one-time price and a Paddle.js client-side token in the live Paddle
+# account, creating only what is missing. Never deletes or edits anything. Also reports whether the Backer
+# license signing key is stored in AWS. Run by hand.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only look, create nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Paddle catalog
+        env:
+          PADDLE_API_KEY: ${{ secrets.PADDLE_API_KEY }}
+        run: node billing/scripts/backer-catalog.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Is the Backer license signing key in AWS? (names only, never values)
+        run: |
+          for r in us-east-2 us-east-1 us-west-2; do
+            n=$(aws ssm describe-parameters --region $r --parameter-filters Key=Name,Option=BeginsWith,Values=/backer/license/ --query 'Parameters[].Name' --output text 2>&1 || true)
+            echo "::notice title=ssm $r::${n:-none}"
+          done
+          n=$(aws lambda list-functions --region us-east-2 --query "Functions[?contains(FunctionName,'issuer') || contains(FunctionName,'license')].FunctionName" --output text 2>&1 || true)
+          echo "::notice title=license lambdas::${n:-none}"
