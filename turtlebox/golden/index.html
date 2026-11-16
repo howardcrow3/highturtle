@@ -46,17 +46,9 @@
       <div>
         <h1>See when your household can retire.</h1>
         <p class="lede">Golden turns the statement files your bank and card companies already give you into household books and a retirement plan. It shows the month each of you can retire and what would move that date. Your statements and plan stay on your computer.</p>
-        <div class="app-row-meta"><p class="status status-testing">In testing</p><p class="app-kind">Golden, a Turtlebox app &middot; Household finance and retirement</p></div>
+        <div class="app-row-meta"><p class="status status-live">On sale</p><p class="app-kind">Golden, a Turtlebox app &middot; Household finance and retirement</p></div>
       </div>
-      <div class="buy-plate"><p class="price-big"><span class="num">$39.99</span> <span class="price-note">once</span></p><p class="plats">Mac (Apple silicon) and Windows</p><p class="soon">Not on sale yet</p><form class="notify-form" action="https://highturtle.com/api/subscribe" method="POST">
-          <label for="n-golden-hero">Email me when Golden is on sale</label>
-          <div class="notify-row">
-            <input id="n-golden-hero" name="email" type="email" autocomplete="email" required placeholder="you@company.com">
-            <button class="btn btn-small" type="submit">Email me</button>
-          </div>
-          <p class="hp" aria-hidden="true"><label>Leave this empty <input type="text" name="_gotcha" tabindex="-1" autocomplete="off"></label></p>
-          <p class="fine">You join the High Turtle list for release news, including when Golden goes on sale. We confirm your address first, and you can unsubscribe any time. <a href="/privacy.html">Privacy</a></p>
-        </form></div>
+      <div class="buy-plate"><p class="price-big"><span class="num">$39.99</span> <span class="price-note">once</span></p><p class="plats">Mac (Apple silicon) and Windows</p><a class="btn btn-buy" href="/golden/#buy" data-paddle-price="pri_01m7h6qqb0y4f9r6mftw05y772" data-success="https://turtlebox.studio/checkout/?done=golden">Buy Golden</a><p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p></div>
     </div>
   </section>
   <section class="section" aria-labelledby="what-h">
@@ -96,5 +88,21 @@
   </div>
 </footer>
   <script src="/assets/site.js?v=tb11" defer></script>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+(function () {
+  if (!window.Paddle) return;
+  Paddle.Initialize({ token: 'live_07ce70479acc6466ead095e609c' });
+  document.querySelectorAll('[data-paddle-price]').forEach(function (b) {
+    b.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      Paddle.Checkout.open({
+        items: [{ priceId: b.getAttribute('data-paddle-price'), quantity: 1 }],
+        settings: { displayMode: 'overlay', theme: 'light', successUrl: b.getAttribute('data-success') }
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>

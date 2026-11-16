@@ -23,6 +23,27 @@ V = "tb11"
 e = html.escape
 
 
+PADDLE_TOKEN = json.load(open(os.path.join(HERE, "..", "backer", "config.json")))["paddle_client_token"]
+# Buy buttons: open Paddle's overlay checkout for the button's price ID. The token and price IDs are public by design.
+# Without Paddle.js the button falls back to the app page.
+PADDLE_BUY = """<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+(function () {
+  if (!window.Paddle) return;
+  Paddle.Initialize({ token: '%s' });
+  document.querySelectorAll('[data-paddle-price]').forEach(function (b) {
+    b.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      Paddle.Checkout.open({
+        items: [{ priceId: b.getAttribute('data-paddle-price'), quantity: 1 }],
+        settings: { displayMode: 'overlay', theme: 'light', successUrl: b.getAttribute('data-success') }
+      });
+    });
+  });
+})();
+</script>""" % PADDLE_TOKEN
+
+
 def page(title, desc, body, path, robots=True, nav_current=""):
     return f"""<!doctype html>
 <html lang="en" data-theme="light">
@@ -71,6 +92,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
   </div>
 </footer>
   <script src="/assets/site.js?v={V}" defer></script>
+{PADDLE_BUY if 'data-paddle-price' in body else ''}
 </body>
 </html>
 """
@@ -95,7 +117,7 @@ def buy_plate(a, hid, compact=False):
     price = f'<p class="price-big"><span class="num">{e(a["price"])}</span> <span class="price-note">{e(a["price_note"])}</span></p>'
     plats = f'<p class="plats">{e(a["platforms"])}</p>'
     if a.get("on_sale"):
-        action = (f'<a class="btn btn-buy" href="{e(a["buy_url"])}">Buy {e(a["name"])}</a>'
+        action = (f'<a class="btn btn-buy" href="{e(a["url"])}#buy" data-paddle-price="{e(a["price_id"])}" data-success="{e(a["success_url"])}">Buy {e(a["name"])}</a>'
                   f'<p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p>')
     else:
         action = f'<p class="soon">Not on sale yet</p>' + (
@@ -251,9 +273,13 @@ def ceevee_simple(h1, body_html):
 
 
 ceevee = by_slug["ceevee"]
-ceevee_buy = ceevee_simple("CeeVee is not on sale yet.", f"""    <p>We will open sales when the first release is out. Until then, every copy of CeeVee is a free trial with every feature.</p>
-    <div class="simple-form">{notify_form(ceevee, "buy")}</div>
-    <a class="btn" href="/ceevee/">About CeeVee</a>""")
+ceevee_buy = ceevee_simple("Buy CeeVee", f"""    <p>{e(ceevee["price"])} once. One license works on 2 computers and covers every 1.x version. Your license key arrives by email a few minutes after checkout, with a link that activates it in CeeVee.</p>
+    <a class="btn btn-buy" href="/ceevee/" data-paddle-price="{e(ceevee["price_id"])}" data-success="{e(ceevee["success_url"])}">Buy CeeVee</a>
+    <p class="fine">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
+    <script>
+    /* Opened from the app (?from=app): start the checkout straight away. */
+    if (/[?&]from=app/.test(location.search)) window.addEventListener('load', function () {{ var b = document.querySelector('[data-paddle-price]'); if (b && window.Paddle) b.click(); }});
+    </script>""")
 ceevee_license = ceevee_simple("Your CeeVee license", """    <p>Sign in with Google using the email address you bought with. Your account page shows your license key and your orders.</p>
     <p>To move CeeVee to another computer, open Settings, then License, and choose &ldquo;Remove from this computer&rdquo;. Then activate on the new one with the same key. One license works on 2 computers.</p>
     <a class="btn" href="/account/">Go to your account</a>""")
@@ -277,7 +303,7 @@ ceevee_help = f"""  <div class="wrap page-head">
       </ol>
       <h2>Buying and your license</h2>
       <ul>
-        <li>CeeVee costs {e(ceevee["price"])} once, and one license works on 2 computers. It is not on sale yet.</li>
+        <li>CeeVee costs {e(ceevee["price"])} once, and one license works on 2 computers. Buy it from Settings, License, or on this site.</li>
         <li>Your key arrives by email. Click the activation link in the email, or paste the key into Settings, License.</li>
         <li>To move to a new computer, open Settings, License and choose Remove from this computer, then activate on the new one.</li>
         <li>After the trial without a license, CeeVee turns read-only. You can still look at and export everything.</li>
@@ -298,7 +324,6 @@ ceevee_help = f"""  <div class="wrap page-head">
 
 # Shared checkout page: Paddle's default payment link for every app (Paddle > Checkout > Checkout settings).
 # Paddle sends buyers here with ?_ptxn=txn_...; Paddle.js opens the checkout for that transaction by itself.
-PADDLE_TOKEN = json.load(open(os.path.join(HERE, "..", "backer", "config.json")))["paddle_client_token"]
 checkout_body = """  <div class="simple wrap">
     <div id="co-wait">
       <h1>Opening checkout.</h1>
@@ -321,6 +346,7 @@ checkout_body = """  <div class="simple wrap">
 (function () {
   var has = /[?&]_ptxn=txn_/.test(location.search);
   function show(id) { ['co-wait', 'co-none', 'co-done'].forEach(function (x) { document.getElementById(x).hidden = x !== id; }); }
+  if (/[?&]done=/.test(location.search)) { show('co-done'); return; }
   if (!has) { show('co-none'); return; }
   if (!window.Paddle) return;
   Paddle.Initialize({
@@ -356,7 +382,7 @@ w("index.html", page("Turtlebox | Backer, CeeVee and Golden", desc_home, home, "
 w("apps/index.html", page("Apps | Turtlebox", "Backer, CeeVee and Golden: desktop apps for Mac and Windows from Turtlebox.", apps_page, "/apps/", nav_current="apps"))
 w("ceevee/index.html", page("CeeVee job search app | Turtlebox", by_slug["ceevee"]["tagline"] + " " + by_slug["ceevee"]["description"], app_page("ceevee"), "/ceevee/", nav_current="ceevee"))
 w("golden/index.html", page("Golden retirement planning app | Turtlebox", by_slug["golden"]["tagline"] + " " + by_slug["golden"]["description"], app_page("golden"), "/golden/", nav_current="golden"))
-w("ceevee/buy/index.html", page("Buy CeeVee | Turtlebox", "CeeVee is not on sale yet.", ceevee_buy, "/ceevee/buy/", robots=False, nav_current="ceevee"))
+w("ceevee/buy/index.html", page("Buy CeeVee | Turtlebox", "Buy CeeVee: $19.99 once for 2 computers.", ceevee_buy, "/ceevee/buy/", robots=False, nav_current="ceevee"))
 w("ceevee/license/index.html", page("Your CeeVee license | Turtlebox", "Find your CeeVee license key and move it to another computer.", ceevee_license, "/ceevee/license/", robots=False, nav_current="ceevee"))
 w("ceevee/help/index.html", page("CeeVee help | Turtlebox", "Install CeeVee, get started, manage your license and fix common problems.", ceevee_help, "/ceevee/help/", nav_current="ceevee"))
 w("checkout/index.html", page("Checkout | Turtlebox", "Paddle checkout for Turtlebox apps.", checkout_body, "/checkout/", robots=False))

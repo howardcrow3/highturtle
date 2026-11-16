@@ -57,25 +57,25 @@
           <p class="app-desc">Backer copies your photo and video folders from a Mac or PC to a network drive at home (a NAS, such as a Synology), on a schedule or when you ask. It never deletes anything on the drive without asking.</p>
           <div class="app-row-meta"><p class="status status-live">On sale</p><p class="app-kind">Photo and video backup</p><a class="link" href="/backer/">About Backer</a></div>
         </div>
-        <div class="buy-plate"><p class="price-big"><span class="num">$4.99</span> <span class="price-note">once</span></p><p class="plats">Mac (Apple silicon) and Windows</p><a class="btn btn-buy" href="/backer/#download">Buy Backer</a><p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p></div>
+        <div class="buy-plate"><p class="price-big"><span class="num">$4.99</span> <span class="price-note">once</span></p><p class="plats">Mac (Apple silicon) and Windows</p><a class="btn btn-buy" href="/backer/#buy" data-paddle-price="pri_01m7esmmmhtvqh0518kmb0xqdq" data-success="https://turtlebox.studio/backer/thanks.html">Buy Backer</a><p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p></div>
       </li>
       <li class="app-row" id="ceevee">
         <div class="app-row-text">
           <h2 class="app-name"><a href="/ceevee/">CeeVee</a></h2>
           <p class="app-tagline">Run your whole job search from your own computer.</p>
           <p class="app-desc">CeeVee keeps your resume, the jobs you are tracking and your applications on your computer. Its built-in AI model drafts a tailored resume and cover letter for each job, fills in application forms and stops for you to check them, and links replies from employers to the right application.</p>
-          <div class="app-row-meta"><p class="status status-testing">In testing</p><p class="app-kind">Job search</p><a class="link" href="/ceevee/">About CeeVee</a></div>
+          <div class="app-row-meta"><p class="status status-live">On sale</p><p class="app-kind">Job search</p><a class="link" href="/ceevee/">About CeeVee</a></div>
         </div>
-        <div class="buy-plate"><p class="price-big"><span class="num">$19.99</span> <span class="price-note">once, for 2 computers</span></p><p class="plats">Mac (Apple silicon) and Windows 11</p><p class="soon">Not on sale yet</p><a class="btn btn-small btn-quiet" href="/ceevee/#buy">Get notified</a></div>
+        <div class="buy-plate"><p class="price-big"><span class="num">$19.99</span> <span class="price-note">once, for 2 computers</span></p><p class="plats">Mac (Apple silicon) and Windows 11</p><a class="btn btn-buy" href="/ceevee/#buy" data-paddle-price="pri_01m7h6mzqfxxp3y3b2vdr9zhfj" data-success="https://turtlebox.studio/checkout/?done=ceevee">Buy CeeVee</a><p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p></div>
       </li>
       <li class="app-row" id="golden">
         <div class="app-row-text">
           <h2 class="app-name"><a href="/golden/">Golden</a></h2>
           <p class="app-tagline">See when your household can retire, from your own statements.</p>
           <p class="app-desc">Golden imports the statement files your bank and card companies provide, keeps your household&#x27;s books, and runs a retirement plan that shows when you can retire and what would move the date. Your statements and plan stay on your computer, in an encrypted database.</p>
-          <div class="app-row-meta"><p class="status status-testing">In testing</p><p class="app-kind">Household finance and retirement</p><a class="link" href="/golden/">About Golden</a></div>
+          <div class="app-row-meta"><p class="status status-live">On sale</p><p class="app-kind">Household finance and retirement</p><a class="link" href="/golden/">About Golden</a></div>
         </div>
-        <div class="buy-plate"><p class="price-big"><span class="num">$39.99</span> <span class="price-note">once</span></p><p class="plats">Mac (Apple silicon) and Windows</p><p class="soon">Not on sale yet</p><a class="btn btn-small btn-quiet" href="/golden/#buy">Get notified</a></div>
+        <div class="buy-plate"><p class="price-big"><span class="num">$39.99</span> <span class="price-note">once</span></p><p class="plats">Mac (Apple silicon) and Windows</p><a class="btn btn-buy" href="/golden/#buy" data-paddle-price="pri_01m7h6qqb0y4f9r6mftw05y772" data-success="https://turtlebox.studio/checkout/?done=golden">Buy Golden</a><p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p></div>
       </li>
     </ul>
     </div>
@@ -101,5 +101,21 @@
   </div>
 </footer>
   <script src="/assets/site.js?v=tb11" defer></script>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+(function () {
+  if (!window.Paddle) return;
+  Paddle.Initialize({ token: 'live_07ce70479acc6466ead095e609c' });
+  document.querySelectorAll('[data-paddle-price]').forEach(function (b) {
+    b.addEventListener('click', function (ev) {
+      ev.preventDefault();
+      Paddle.Checkout.open({
+        items: [{ priceId: b.getAttribute('data-paddle-price'), quantity: 1 }],
+        settings: { displayMode: 'overlay', theme: 'light', successUrl: b.getAttribute('data-success') }
+      });
+    });
+  });
+})();
+</script>
 </body>
 </html>
