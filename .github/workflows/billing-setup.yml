@@ -10,6 +10,11 @@ name: Billing setup (Paddle webhooks and customer portal)
 
 on:
   workflow_dispatch:
+    inputs:
+      ceevee_price_ids:
+        description: CeeVee Paddle price ID(s), comma separated (starts pri_). Leave empty to use the repository variable CEEVEE_PRICE_IDS.
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -27,7 +32,7 @@ jobs:
       # Hex private key that signs CeeVee licenses (matches CEEVEE_LICENSE_PUBKEY in the app). Empty keeps what AWS holds.
       CEEVEE_SIGNING_KEY: ${{ secrets.CEEVEE_SIGNING_KEY }}
       # Comma-separated Paddle price IDs for CeeVee. A repository variable is preferred; a secret of the same name also works.
-      CEEVEE_PRICE_IDS: ${{ vars.CEEVEE_PRICE_IDS || secrets.CEEVEE_PRICE_IDS }}
+      CEEVEE_PRICE_IDS: ${{ inputs.ceevee_price_ids || vars.CEEVEE_PRICE_IDS || secrets.CEEVEE_PRICE_IDS }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
