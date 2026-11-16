@@ -59,3 +59,23 @@ export function makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, l
     }
   };
 }
+
+// A full refund cancels the license made for that transaction: it can no longer be activated (activate answers
+// unknown_key) and its seats can't be re-taken. Computers already activated keep working offline until
+// they next check; the app never phones home for a running license. Partial refunds change nothing.
+// Keys are derived from the transaction, so no lookup table is needed.
+export function makeCeeveeRefund({ cfg, ceevee, log }) {
+  return async function onRefund(adj) {
+    if (!cfg.ceeveeSigningKey || !adj?.transactionId) return 0;
+    if (adj.action !== 'refund' || adj.type !== 'full' || adj.status !== 'approved') return 0;
+    let revoked = 0;
+    for (let i = 0; i < 10; i++) {
+      const key = deriveKey(cfg.ceeveeSigningKey, adj.transactionId, i);
+      const lic = await ceevee.getLicense(key);
+      if (!lic) break;
+      if (lic.status !== 'revoked') { await ceevee.revokeLicense(key); revoked++; }
+    }
+    if (revoked) log({ ceevee: 'revoked after refund', transaction: adj.transactionId, keys: revoked });
+    return revoked;
+  };
+}

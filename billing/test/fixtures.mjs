@@ -77,3 +77,12 @@ export function transactionCompletedEvent({ id = 'txn_01', customer = 'ctm_01', 
     revised_at: null,
   });
 }
+
+export function adjustmentEvent(type, { id = 'adj_01', transaction = 'txn_01', action = 'refund', adjType = 'full', status = 'approved' } = {}) {
+  return envelope(type, {
+    id, transaction_id: transaction, subscription_id: null, customer_id: 'ctm_01', action, type: adjType, status,
+    reason: 'requested', currency_code: 'USD', items: [], totals: { subtotal: '1999', tax: '0', total: '1999', fee: '0', earnings: '0', currency_code: 'USD' },
+    payout_totals: null, tax_rates_used: [], credit_applied_to_balance: null, custom_data: null,
+    created_at: '2026-11-16T09:00:00.000000Z', updated_at: '2026-11-16T09:00:00.000000Z',
+  });
+}
