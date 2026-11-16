@@ -10,13 +10,14 @@
     "price_note": "once",
     "platforms": "Mac (Apple silicon) and Windows",
     "url": "/backer/",
-    "buy_url": "/backer/#download",
-    "on_sale": true
+    "on_sale": true,
+    "price_id": "pri_01m7esmmmhtvqh0518kmb0xqdq",
+    "success_url": "https://turtlebox.studio/backer/thanks.html"
   },
   {
     "slug": "ceevee",
     "name": "CeeVee",
-    "status": "In testing",
+    "status": "On sale",
     "kind": "Job search",
     "tagline": "Run your whole job search from your own computer.",
     "description": "CeeVee keeps your resume, the jobs you are tracking and your applications on your computer. Its built-in AI model drafts a tailored resume and cover letter for each job, fills in application forms and stops for you to check them, and links replies from employers to the right application.",
@@ -24,12 +25,14 @@
     "price_note": "once, for 2 computers",
     "platforms": "Mac (Apple silicon) and Windows 11",
     "url": "/ceevee/",
-    "on_sale": false
+    "on_sale": true,
+    "price_id": "pri_01m7h6mzqfxxp3y3b2vdr9zhfj",
+    "success_url": "https://turtlebox.studio/checkout/?done=ceevee"
   },
   {
     "slug": "golden",
     "name": "Golden",
-    "status": "In testing",
+    "status": "On sale",
     "kind": "Household finance and retirement",
     "tagline": "See when your household can retire, from your own statements.",
     "description": "Golden imports the statement files your bank and card companies provide, keeps your household's books, and runs a retirement plan that shows when you can retire and what would move the date. Your statements and plan stay on your computer, in an encrypted database.",
@@ -37,6 +40,8 @@
     "price_note": "once",
     "platforms": "Mac (Apple silicon) and Windows",
     "url": "/golden/",
-    "on_sale": false
+    "on_sale": true,
+    "price_id": "pri_01m7h6qqb0y4f9r6mftw05y772",
+    "success_url": "https://turtlebox.studio/checkout/?done=golden"
   }
 ]
