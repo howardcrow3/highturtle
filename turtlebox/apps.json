@@ -2,20 +2,41 @@
   {
     "slug": "backer",
     "name": "Backer",
-    "status": "In testing",
+    "status": "On sale",
+    "kind": "Photo and video backup",
+    "tagline": "Back up your photos and videos to a NAS you own.",
+    "description": "Backer copies your photo and video folders from a Mac or PC to a network drive at home (a NAS, such as a Synology), on a schedule or when you ask. It never deletes anything on the drive without asking.",
+    "price": "$4.99",
+    "price_note": "once",
+    "platforms": "Mac (Apple silicon) and Windows",
     "url": "/backer/",
-    "description": "A desktop app that backs up your photos and videos from a Mac or PC to a NAS you own, on a schedule or on demand."
+    "buy_url": "/backer/#download",
+    "on_sale": true
   },
   {
-    "slug": "opportunity-sizer",
-    "name": "Opportunity sizer",
-    "status": "Planned",
-    "description": "Estimate how big a product opportunity is from a few inputs, with the assumptions shown so you can change them."
+    "slug": "ceevee",
+    "name": "CeeVee",
+    "status": "In testing",
+    "kind": "Job search",
+    "tagline": "Run your whole job search from your own computer.",
+    "description": "CeeVee keeps your resume, the jobs you are tracking and your applications on your computer. Its built-in AI model drafts a tailored resume and cover letter for each job, fills in application forms and stops for you to check them, and links replies from employers to the right application.",
+    "price": "$19.99",
+    "price_note": "once, for 2 computers",
+    "platforms": "Mac (Apple silicon) and Windows 11",
+    "url": "/ceevee/",
+    "on_sale": false
   },
   {
-    "slug": "spec-checker",
-    "name": "Spec checker",
-    "status": "Planned",
-    "description": "Paste a product spec and get a list of gaps and open questions before it goes to engineering."
+    "slug": "golden",
+    "name": "Golden",
+    "status": "In testing",
+    "kind": "Household finance and retirement",
+    "tagline": "See when your household can retire, from your own statements.",
+    "description": "Golden imports the statement files your bank and card companies provide, keeps your household's books, and runs a retirement plan that shows when you can retire and what would move the date. Your statements and plan stay on your computer, in an encrypted database.",
+    "price": "$39.99",
+    "price_note": "once",
+    "platforms": "Mac (Apple silicon) and Windows",
+    "url": "/golden/",
+    "on_sale": false
   }
 ]
