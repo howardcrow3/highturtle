@@ -1,2 +1,7 @@
 backer/releases.json
 turtlebox/backer/releases.json
+
+# Per-machine Impeccable and Claude Code settings
+.impeccable/config.local.json
+.claude/settings.local.json
+.impeccable/hook.cache.json
