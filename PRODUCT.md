@@ -48,7 +48,7 @@ High Turtle provides the shared infrastructure: legal, payments, hosting, design
 
 ## Evidence on Hand
 
-- Real company facts: legal name, location (Sammamish, Washington, USA), contact address and the portfolio list.
+- Real company facts: legal name, street address (15790 Redmond Way #1171, Redmond, WA 98052, USA), contact address and the portfolio list.
 - Logo, mark and social image in `assets/`.
 - There are no testimonials, customer counts, revenue, metrics or press. Do not invent any of them.
 
