@@ -81,7 +81,15 @@ async function onTransactionCompleted(event, { store, log, onPurchase }) {
   return result;
 }
 
+async function onAdjustment(event, { log, onRefund }) {
+  const revoked = onRefund ? await onRefund(event.data) : 0;
+  log({ event: event.eventType, id: event.data.id, revoked });
+  return revoked ? 'revoked' : 'ok';
+}
+
 export const HANDLERS = {
+  'adjustment.created': onAdjustment,
+  'adjustment.updated': onAdjustment,
   'customer.created': onCustomer,
   'customer.updated': onCustomer,
   'subscription.created': onSubscription,

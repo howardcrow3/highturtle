@@ -8,7 +8,9 @@ import { CeeveeMemoryStore } from '../src/ceevee-store.mjs';
 import { makeCeeveeFulfillment } from '../src/ceevee-fulfillment.mjs';
 import { makeBackerFulfillment } from '../src/fulfillment.mjs';
 import { normalizeKey, deriveKey } from '../src/ceevee.mjs';
-import { SECRET, sign, webhookEvent, customerEvent, transactionCompletedEvent } from './fixtures.mjs';
+import { SECRET, sign, webhookEvent, customerEvent, transactionCompletedEvent, adjustmentEvent } from './fixtures.mjs';
+import { makeCeeveeRefund } from '../src/ceevee-fulfillment.mjs';
+import { signToken } from '../src/session.mjs';
 
 const SEED = randomBytes(32).toString('hex');
 const PKCS8 = Buffer.concat([Buffer.from('302e020100300506032b657004220420', 'hex'), Buffer.from(SEED, 'hex')]);
@@ -39,7 +41,8 @@ function setup(over = {}) {
   const backer = makeBackerFulfillment({ cfg: { ...cfg, backerPriceIds: ['pri_backer'] }, store, paddle, sendEmail, log });
   const onPurchase = async (t) => { await backer(t); await fulfil(t); };
   const now = new Date('2026-12-05T12:00:00.123Z');
-  const app = makeApp({ cfg, store, paddle, sendEmail, onPurchase, ceevee, now: () => now });
+  const onRefund = makeCeeveeRefund({ cfg, ceevee, log });
+  const app = makeApp({ cfg, store, paddle, sendEmail, onPurchase, onRefund, ceevee, now: () => now });
   const deliver = (payload) => { const b = JSON.stringify(payload); return app(webhookEvent(b, sign(b))); };
   const call = (route, body, method = 'POST') => app({
     rawPath: `/api/ceevee/v1/${route}`, requestContext: { http: { method } }, headers: { 'content-type': 'application/json' },
@@ -185,4 +188,68 @@ test('bad requests: junk body, bad machine, wrong method, unknown route, no sign
   assert.equal((await s.call('nothing', {})).statusCode, 404);
   const off = setup({ ceeveeSigningKey: '' });
   assert.equal((await off.call('trial', { machine: MACHINE_A })).statusCode, 503);
+});
+
+const activate = (s, key, machine) => s.call('activate', { key, machine, app_version: '1', platform: 'windows' });
+
+test('a full approved refund revokes the key; partial, pending and other actions do not', async () => {
+  const s = setup();
+  await buy(s);
+  const key = keyFrom(s.sent[0]);
+  for (const odd of [{ adjType: 'partial' }, { status: 'pending_approval' }, { action: 'credit' }, { transaction: 'txn_other' }]) {
+    await s.deliver(adjustmentEvent('adjustment.updated', odd));
+    assert.equal((await s.ceevee.getLicense(key)).status, 'active', JSON.stringify(odd));
+  }
+  assert.equal((await activate(s, key, MACHINE_A)).statusCode, 200);
+  const res = await s.deliver(adjustmentEvent('adjustment.updated'));
+  assert.equal(res.statusCode, 200);
+  assert.equal((await s.ceevee.getLicense(key)).status, 'revoked');
+  assert.equal((await activate(s, key, MACHINE_B)).statusCode, 404);
+  assert.equal((await s.deliver(adjustmentEvent('adjustment.created', { id: 'adj_02' }))).statusCode, 200); // redelivery is harmless
+});
+
+test('a refund revokes every key bought in that transaction', async () => {
+  const s = setup();
+  await buy(s, { quantity: 2 });
+  await s.deliver(adjustmentEvent('adjustment.updated'));
+  assert.deepEqual([...s.ceevee.licenses.values()].map((l) => l.status), ['revoked', 'revoked']);
+});
+
+function accountCall(s, body, { signedIn = true, email = 'buyer@example.com', type = 'application/json' } = {}) {
+  const tok = signToken(s.cfg.sessionSecret, 'session', { e: email }, 3600);
+  return s.app({
+    rawPath: '/api/billing/ceevee/release', requestContext: { http: { method: 'POST' } },
+    headers: { 'content-type': type }, cookies: signedIn ? [`tb_account=${tok}`] : [], body: JSON.stringify(body),
+  });
+}
+
+test('the owner can free a seat from the account page; the profile lists computers by short id', async () => {
+  const s = setup();
+  await buy(s);
+  const key = keyFrom(s.sent[0]);
+  await activate(s, key, MACHINE_A);
+  await activate(s, key, MACHINE_B);
+  const tok = signToken(s.cfg.sessionSecret, 'session', { e: 'buyer@example.com' }, 3600);
+  const me = JSON.parse((await s.app({ rawPath: '/api/billing/me', requestContext: { http: { method: 'GET' } }, headers: {}, cookies: [`tb_account=${tok}`] })).body);
+  const lic = me.licenses.find((l) => l.key === key);
+  assert.equal(lic.seats_used, 2);
+  assert.deepEqual(lic.machines.map((m) => m.id), [MACHINE_A.slice(0, 12), MACHINE_B.slice(0, 12)]);
+  assert.ok(!JSON.stringify(me).includes(MACHINE_A), 'the full machine hash is never sent to the page');
+  const res = await accountCall(s, { key, id: lic.machines[0].id });
+  assert.equal(res.statusCode, 200);
+  assert.equal((await activate(s, key, MACHINE_C)).statusCode, 200); // the freed seat can be taken
+});
+
+test('freeing a seat needs sign-in, the owner, JSON and a known computer', async () => {
+  const s = setup();
+  await buy(s);
+  const key = keyFrom(s.sent[0]);
+  await activate(s, key, MACHINE_A);
+  const id = MACHINE_A.slice(0, 12);
+  assert.equal((await accountCall(s, { key, id }, { signedIn: false })).statusCode, 401);
+  assert.equal((await accountCall(s, { key, id }, { email: 'someone@else.com' })).statusCode, 404);
+  assert.equal((await accountCall(s, { key, id }, { type: 'application/x-www-form-urlencoded' })).statusCode, 415);
+  assert.equal((await accountCall(s, { key, id: 'zzzzzzzzzzzz' })).statusCode, 404);
+  assert.equal((await accountCall(s, { key: 'nope', id })).statusCode, 400);
+  assert.equal(Object.keys((await s.ceevee.getLicense(key)).machines).length, 1, 'nothing was freed by the refused calls');
 });

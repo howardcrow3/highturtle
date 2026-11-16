@@ -18,7 +18,8 @@ The account page is `turtlebox/account/index.html` (`https://turtlebox.studio/ac
 
 `customer.created`, `customer.updated` → `highturtle-billing-customers`
 `subscription.created`, `subscription.updated`, `subscription.canceled` → `highturtle-billing-subscriptions`
-`transaction.completed` → `highturtle-billing-transactions`, then Backer fulfillment (`src/fulfillment.mjs`)
+`transaction.completed` → `highturtle-billing-transactions`, then Backer and CeeVee fulfillment (`src/fulfillment.mjs`, `src/ceevee-fulfillment.mjs`)
+`adjustment.created`, `adjustment.updated` → a full, approved refund revokes the CeeVee key(s) bought in that transaction (`makeCeeveeRefund`). Add these two events to the Paddle notification destination.
 Everything else is acknowledged with 200 and ignored.
 
 Writes are upserts keyed on the Paddle ID, guarded by the entity's `updated_at`, so redeliveries are
@@ -44,6 +45,7 @@ signing seed, so a Paddle retry re-sends the same key. Tables: `highturtle-ceeve
 | `POST /api/ceevee/v1/trial` | `{machine}` → signed trial token; the first start the server saw wins |
 | `POST /api/ceevee/v1/activate` | `{key, machine, app_version, platform}` → signed license for that machine; 404 `unknown_key`; 409 `seats_full` after 2 computers |
 | `POST /api/ceevee/v1/deactivate` | `{key, machine}` → 204, frees the seat |
+| `POST /api/billing/ceevee/release` | Signed-in owner only, JSON `{key, id}` where `id` is the short computer id from `/me`; frees that seat (account page) |
 
 Tokens are Ed25519 over the JSON bytes, signed with `CEEVEE_SIGNING_KEY` (64-hex seed in Secrets Manager); the app holds only the
 public half (`CEEVEE_LICENSE_PUBKEY`). Until the key is set the endpoints answer 503 and orders are forwarded to `OPS_EMAIL`

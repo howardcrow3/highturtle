@@ -14,8 +14,9 @@ import { loadConfig } from './config.mjs';
 import { DynamoStore } from './store.mjs';
 import { routeEvent } from './events.mjs';
 import { makeBackerFulfillment } from './fulfillment.mjs';
-import { makeCeeveeFulfillment } from './ceevee-fulfillment.mjs';
+import { makeCeeveeFulfillment, makeCeeveeRefund } from './ceevee-fulfillment.mjs';
 import { makeCeeveeApi, isCeeveePath } from './ceevee-api.mjs';
+import { normalizeKey } from './ceevee.mjs';
 import { CeeveeDynamoStore } from './ceevee-store.mjs';
 import { anySubscriptionGrantsAccess, subscriptionGrantsAccess } from './access.mjs';
 import { signToken, verifyToken, sessionCookie, readCookie, SESSION_TTL, COOKIE } from './session.mjs';
@@ -64,7 +65,7 @@ export function makeApp(deps) {
     }
     if (!verified) return json(401, { error: 'invalid signature' });
     try {
-      const result = await routeEvent(verified, { store, log, onPurchase: deps.onPurchase });
+      const result = await routeEvent(verified, { store, log, onPurchase: deps.onPurchase, onRefund: deps.onRefund });
       return json(200, { ok: true, result });
     } catch (err) {
       log({ error: 'webhook handler failed', event: verified.eventType, id: verified.eventId, message: String(err?.message || err) });
@@ -119,7 +120,31 @@ export function makeApp(deps) {
       product: 'CeeVee', key: l.license_key, status: l.status ?? 'active', seats: l.seats ?? null,
       seats_used: Object.keys(l.machines || {}).length, version: l.major ? `${l.major}.x` : null,
       date: l.created_at ?? l.issued_at ?? null,
+      // Computers holding a seat. The id is a short prefix of the machine hash: enough to pick one to free, never the whole hash.
+      machines: Object.entries(l.machines || {}).map(([hash, m]) => ({
+        id: hash.slice(0, 12), activated_at: m.activated_at ?? null, platform: m.platform || null, app_version: m.app_version || null,
+      })),
     }));
+  }
+
+  // Signed-in owner frees one of their computers' seats. JSON only (a cross-site form cannot send it).
+  async function ceeveeRelease(event) {
+    const email = sessionEmail(event);
+    if (!email) return json(401, { error: 'signin' });
+    if (!(header(event, 'content-type') || '').includes('application/json')) return json(415, { error: 'json_only' });
+    let body;
+    try { body = JSON.parse(rawBody(event)); } catch { body = null; }
+    const key = normalizeKey(body?.key);
+    const id = typeof body?.id === 'string' ? body.id : '';
+    if (!key || !/^[A-Za-z0-9+/=_-]{8,64}$/.test(id) || !deps.ceevee) return json(400, { error: 'bad_request' });
+    const lic = await deps.ceevee.getLicense(key);
+    // Same answer for "not yours" and "not found", so keys cannot be probed.
+    if (!lic || lic.email_lc !== email.trim().toLowerCase()) return json(404, { error: 'not_found' });
+    const matches = Object.keys(lic.machines || {}).filter((h) => h.startsWith(id));
+    if (matches.length !== 1) return json(404, { error: 'not_found' });
+    await deps.ceevee.releaseSeat(key, matches[0]);
+    log({ ceevee: 'seat freed from account', key_tail: key.slice(-5) });
+    return json(200, { ok: true });
   }
 
   async function currentCustomer(event) {
@@ -205,6 +230,7 @@ export function makeApp(deps) {
       if (path === '/api/billing/google/start' && method === 'GET') return googleStart();
       if (path === '/api/billing/google/callback' && method === 'GET') return await googleCallback(event);
       if (path === '/api/billing/me' && method === 'GET') return await me(event);
+      if (path === '/api/billing/ceevee/release' && method === 'POST') return await ceeveeRelease(event);
       if (path === '/api/billing/portal' && method === 'POST') return await portal(event);
       if (path === '/api/billing/signout' && method === 'POST') return signout();
       return json(404, { error: 'not found' });
@@ -236,7 +262,8 @@ async function buildApp() {
   const ceeveeFulfil = makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, log });
   // Each hook is idempotent on its own claim, so a retry after one fails is safe.
   const onPurchase = async (txn) => { await backer(txn); await ceeveeFulfil(txn); };
-  return makeApp({ cfg, store, paddle, sendEmail, onPurchase, ceevee });
+  const onRefund = makeCeeveeRefund({ cfg, ceevee, log });
+  return makeApp({ cfg, store, paddle, sendEmail, onPurchase, onRefund, ceevee });
 }
 
 export async function handler(event) {

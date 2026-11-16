@@ -33,6 +33,7 @@
   .key code { flex: 1; min-width: 0; font: 400 0.8125rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 0.6rem 0.75rem; background: color-mix(in srgb, var(--ink) 5%, var(--paper)); border: 1px solid var(--line); overflow-wrap: anywhere; color: var(--ink); }
   .key button { font: 500 0.6875rem/1 var(--font-sans); letter-spacing: 0.2em; text-transform: uppercase; padding: 0 0.9rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; }
   .key button:hover { background: var(--ink); color: var(--paper); }
+  .seat { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; margin-top: 0.5rem; font-size: 0.875rem; }
   .empty { color: var(--body); }
   .actions { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; align-items: center; }
   .actions form { display: inline; }
@@ -142,6 +143,20 @@
           }, function () { var r = document.createRange(); r.selectNodeContents(code); var s = getSelection(); s.removeAllRanges(); s.addRange(r); });
         };
         box.appendChild(code); box.appendChild(btn); li.appendChild(box);
+        (k.machines || []).forEach(function (m) {
+          var line = el('div', 'seat');
+          var label = [m.platform === 'windows' ? 'Windows' : m.platform === 'macos' ? 'Mac' : 'Computer', m.activated_at ? 'activated ' + day(m.activated_at) : '', m.app_version ? 'CeeVee ' + m.app_version : ''].filter(Boolean).join(' · ');
+          line.appendChild(el('span', null, label));
+          var free = el('button', 'link', 'Free this seat');
+          free.type = 'button';
+          free.onclick = function () {
+            free.disabled = true; free.textContent = 'Freeing…';
+            fetch('/api/billing/ceevee/release', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: k.key, id: m.id }) })
+              .then(function (r) { if (!r.ok) throw 0; location.reload(); })
+              .catch(function () { free.disabled = false; free.textContent = 'Could not free it. Try again'; });
+          };
+          line.appendChild(free); li.appendChild(line);
+        });
         $('keys').appendChild(li);
       });
       var pendingBacker = (me.purchases || []).some(function (p) { return p.backer && !keys.some(function (k) { return k.product === 'Backer'; }); });
