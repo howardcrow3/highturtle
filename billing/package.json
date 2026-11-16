@@ -4,7 +4,7 @@
   "description": "Paddle webhooks, subscription mirror and customer portal for turtlebox.studio",
   "main": "src/handler.mjs",
   "scripts": {
-    "test": "node --test test/billing.test.mjs",
+    "test": "node --test test/billing.test.mjs test/ceevee.test.mjs",
     "build": "esbuild src/handler.mjs --bundle --platform=node --target=node22 --format=esm --outfile=dist/index.mjs --banner:js=\"import { createRequire } from 'module'; const require = createRequire(import.meta.url);\""
   },
   "dependencies": {

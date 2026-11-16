@@ -14,6 +14,9 @@ import { loadConfig } from './config.mjs';
 import { DynamoStore } from './store.mjs';
 import { routeEvent } from './events.mjs';
 import { makeBackerFulfillment } from './fulfillment.mjs';
+import { makeCeeveeFulfillment } from './ceevee-fulfillment.mjs';
+import { makeCeeveeApi, isCeeveePath } from './ceevee-api.mjs';
+import { CeeveeDynamoStore } from './ceevee-store.mjs';
 import { anySubscriptionGrantsAccess, subscriptionGrantsAccess } from './access.mjs';
 import { signToken, verifyToken, sessionCookie, readCookie, LOGIN_TTL, SESSION_TTL, COOKIE } from './session.mjs';
 
@@ -51,6 +54,7 @@ function formField(event, name) {
 
 export function makeApp(deps) {
   const { cfg, store, paddle, sendEmail } = deps;
+  const ceeveeApi = deps.ceevee ? makeCeeveeApi({ cfg, ceevee: deps.ceevee, log, now: deps.now }) : null;
 
   async function webhook(event) {
     const signature = header(event, 'paddle-signature');
@@ -155,6 +159,7 @@ export function makeApp(deps) {
     const method = event.requestContext?.http?.method || event.httpMethod || 'GET';
     const path = (event.rawPath || event.path || '').replace(/\/+$/, '');
     try {
+      if (ceeveeApi && isCeeveePath(path)) return await ceeveeApi(event, method, path);
       if (path === '/api/billing/webhook' && method === 'POST') return await webhook(event);
       if (path === '/api/billing/signin' && method === 'POST') return await signin(event);
       if (path === '/api/billing/auth' && method === 'GET') return await auth(event);
@@ -185,8 +190,12 @@ async function buildApp() {
     ConfigurationSetName: cfg.configSet || undefined,
     Content: { Simple: { Subject: { Data: subject }, Body: { Text: { Data: text } } } },
   }));
-  const onPurchase = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log });
-  return makeApp({ cfg, store, paddle, sendEmail, onPurchase });
+  const ceevee = new CeeveeDynamoStore({ tables: cfg.tables, region: cfg.region });
+  const backer = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log });
+  const ceeveeFulfil = makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, log });
+  // Each hook is idempotent on its own claim, so a retry after one fails is safe.
+  const onPurchase = async (txn) => { await backer(txn); await ceeveeFulfil(txn); };
+  return makeApp({ cfg, store, paddle, sendEmail, onPurchase, ceevee });
 }
 
 export async function handler(event) {
