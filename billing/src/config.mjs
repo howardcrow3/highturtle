@@ -6,7 +6,7 @@
 
 import { SecretsManagerClient, GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 
-const SECRET_KEYS = ['PADDLE_API_KEY', 'PADDLE_WEBHOOK_SECRET', 'SESSION_SECRET', 'BACKER_SIGNING_KEY'];
+const SECRET_KEYS = ['PADDLE_API_KEY', 'PADDLE_WEBHOOK_SECRET', 'SESSION_SECRET', 'BACKER_SIGNING_KEY', 'GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET'];
 
 let cached = null;
 
@@ -40,6 +40,8 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
     // Hex Ed25519 seed that signs Backer keys. When missing, orders are forwarded to opsEmail to issue by hand.
     backerSigningKey: merged.BACKER_SIGNING_KEY || '',
     opsEmail: merged.OPS_EMAIL || 'info@turtlebox.studio',
+    googleClientId: merged.GOOGLE_CLIENT_ID || '',
+    googleClientSecret: merged.GOOGLE_CLIENT_SECRET || '',
   };
   cached = cfg;
   return cfg;

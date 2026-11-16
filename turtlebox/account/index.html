@@ -6,7 +6,7 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#F5F0E7">
   <title>Your account | Turtlebox</title>
-  <meta name="description" content="Manage your Turtlebox subscription, payment method and invoices.">
+  <meta name="description" content="Your Turtlebox purchases, invoices and billing.">
   <meta name="robots" content="noindex">
   <link rel="canonical" href="https://turtlebox.studio/account/">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -46,40 +46,43 @@
 <p id="msg" class="note" role="status" hidden></p>
 
 <section id="signed-out">
-  <p>Enter the email you used at checkout. We will send you a link to sign in.</p>
-  <form method="post" action="/api/billing/signin">
-    <label for="email">Email</label>
-    <input id="email" name="email" type="email" autocomplete="email" required>
-    <button class="btn" type="submit">Email me a sign-in link</button>
-  </form>
+  <p>Sign in with the Google account that uses the email you bought with to see your purchases and manage billing.</p>
+  <p style="margin-top:1.5rem"><a class="btn" href="/api/billing/google/start">Sign in with Google</a></p>
 </section>
 
 <section id="signed-in" hidden>
   <p>Signed in as <strong id="who"></strong>.</p>
-  <ul class="subs" id="subs"></ul>
-  <p>Update your payment method, change or cancel your plan, and download invoices in the billing portal, run by Paddle, our Merchant of Record.</p>
-  <form method="post" action="/api/billing/portal">
-    <button class="btn" type="submit">Manage billing</button>
-  </form>
+  <div id="none" hidden>
+    <p>We could not find any purchases for this email. If you bought with a different address, sign out and sign in with that Google account, or email <a href="mailto:info@turtlebox.studio">info@turtlebox.studio</a>.</p>
+  </div>
+  <div id="has">
+    <h2 style="font-size:1.375rem;margin-top:2rem">Purchases</h2>
+    <ul class="subs" id="purchases"></ul>
+    <ul class="subs" id="subs"></ul>
+    <p>Download invoices, update your payment method and manage any subscription in the billing portal, run by Paddle, our Merchant of Record.</p>
+    <form method="post" action="/api/billing/portal">
+      <button class="btn" type="submit">Manage billing</button>
+    </form>
+  </div>
   <form method="post" action="/api/billing/signout">
     <button class="link" type="submit">Sign out</button>
   </form>
 </section>
 
-<p class="fine" style="margin-top:2rem">Bought something one-time, like Backer? Find your order and receipt at <a href="https://paddle.net">paddle.net</a>.</p>
+<p class="fine" style="margin-top:2rem">You can also find any order and receipt at <a href="https://paddle.net">paddle.net</a>.</p>
 </main>
 <script>
 (function () {
   var q = new URLSearchParams(location.search), msg = document.getElementById('msg');
   var notes = {
-    sent: 'If that email belongs to a customer, a sign-in link is on its way. It works for 15 minutes.',
-    email: 'That email address does not look right. Please check it and try again.',
-    link: 'That sign-in link has expired or is not valid. Ask for a new one below.',
-    signin: 'Please sign in first.',
+    signin: 'Sign-in did not complete. Please try again.',
+    unavailable: 'Sign-in is not available just yet. Please try again later, or email info@turtlebox.studio.',
     portal: 'We could not open the billing portal just now. Please try again, or email info@turtlebox.studio.'
   };
-  var key = q.get('sent') ? 'sent' : q.get('error');
+  var key = q.get('error');
   if (key && notes[key]) { msg.textContent = notes[key]; msg.hidden = false; }
+  function day(d) { return d ? new Date(d).toLocaleDateString() : ''; }
+  function li(ul, text) { var x = document.createElement('li'); x.textContent = text; ul.appendChild(x); }
   fetch('/api/billing/me', { credentials: 'same-origin', headers: { accept: 'application/json' } })
     .then(function (r) { return r.json(); })
     .then(function (me) {
@@ -87,17 +90,21 @@
       document.getElementById('signed-out').hidden = true;
       document.getElementById('signed-in').hidden = false;
       document.getElementById('who').textContent = me.email;
+      if (!me.customer) { document.getElementById('none').hidden = false; document.getElementById('has').hidden = true; return; }
+      var pl = document.getElementById('purchases');
+      (me.purchases || []).forEach(function (p) {
+        var t = (p.backer ? 'Backer license' : 'Purchase') + ', ' + day(p.date);
+        if (p.invoice_number) t += ' (invoice ' + p.invoice_number + ')';
+        if (p.backer && p.license_status === 'emailed') t += '. Key sent by email.';
+        if (p.backer && p.license_status === 'manual') t += '. Key on its way by email.';
+        li(pl, t);
+      });
       var ul = document.getElementById('subs');
       (me.subscriptions || []).forEach(function (s) {
-        var li = document.createElement('li');
         var text = 'Subscription: ' + s.status.replace('_', ' ');
-        if (s.scheduled_change_action && s.scheduled_change_at) {
-          text += ' (' + s.scheduled_change_action + ' scheduled for ' + new Date(s.scheduled_change_at).toLocaleDateString() + ')';
-        } else if (s.next_billed_at && s.status !== 'canceled') {
-          text += ', renews ' + new Date(s.next_billed_at).toLocaleDateString();
-        }
-        li.textContent = text;
-        ul.appendChild(li);
+        if (s.scheduled_change_action && s.scheduled_change_at) text += ' (' + s.scheduled_change_action + ' scheduled for ' + day(s.scheduled_change_at) + ')';
+        else if (s.next_billed_at && s.status !== 'canceled') text += ', renews ' + day(s.next_billed_at);
+        li(ul, text);
       });
     })
     .catch(function () {});

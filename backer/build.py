@@ -224,6 +224,7 @@ THANKS = '''
       <li>Click <span class="kbd">Activate</span>.</li>
     </ol>
     <p class="lede">Keys are tied to the email address you bought with, and one key covers all 1.x versions.</p>
+    <p>See your purchases and invoices any time in <a href="/account/">your account</a> (sign in with Google).</p>
     <div class="downloads" style="width:100%">
       <div class="dl dl-mac">
         <h2>macOS</h2>

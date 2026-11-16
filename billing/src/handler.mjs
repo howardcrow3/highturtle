@@ -2,9 +2,9 @@
 //
 // One Lambda behind a function URL, reached through CloudFront at /api/billing/*.
 //   POST /api/billing/webhook   Paddle notification destination. Verifies the signature first.
-//   POST /api/billing/signin    form field "email": emails a sign-in link if that email is a customer
-//   GET  /api/billing/auth?t=   checks the sign-in link, sets the session cookie, goes to /account/
-//   GET  /api/billing/me        JSON: signed in?, email, access, subscriptions (for the account page)
+//   GET  /api/billing/google/start      sends the visitor to Google sign-in
+//   GET  /api/billing/google/callback   checks Google's answer, sets the session cookie, goes to /account/
+//   GET  /api/billing/me        JSON: signed in?, email, access, subscriptions, purchases (account page)
 //   POST /api/billing/portal    signed-in only: mints a Paddle customer portal session, 303 to it
 //   POST /api/billing/signout   clears the session cookie
 
@@ -15,9 +15,10 @@ import { DynamoStore } from './store.mjs';
 import { routeEvent } from './events.mjs';
 import { makeBackerFulfillment } from './fulfillment.mjs';
 import { anySubscriptionGrantsAccess, subscriptionGrantsAccess } from './access.mjs';
-import { signToken, verifyToken, sessionCookie, readCookie, LOGIN_TTL, SESSION_TTL, COOKIE } from './session.mjs';
+import { signToken, verifyToken, sessionCookie, readCookie, SESSION_TTL, COOKIE } from './session.mjs';
+import { authUrl, exchangeCode, newNonce } from './google.mjs';
 
-const EMAIL_RE = /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/;
+const OAUTH_TTL = 10 * 60;
 
 const log = (fields) => console.log(JSON.stringify(fields));
 
@@ -38,15 +39,6 @@ export function rawBody(event) {
 function header(event, name) {
   const h = event.headers || {};
   return h[name] ?? h[name.toLowerCase()] ?? Object.entries(h).find(([k]) => k.toLowerCase() === name.toLowerCase())?.[1];
-}
-
-function formField(event, name) {
-  const raw = rawBody(event);
-  const ctype = header(event, 'content-type') || '';
-  if (ctype.includes('application/json')) {
-    try { return JSON.parse(raw)[name]; } catch { return undefined; }
-  }
-  return new URLSearchParams(raw).get(name) ?? undefined;
 }
 
 export function makeApp(deps) {
@@ -76,47 +68,68 @@ export function makeApp(deps) {
     }
   }
 
-  async function signin(event) {
-    const email = String(formField(event, 'email') || '').trim();
-    const done = redirect(`${cfg.site}/account/?sent=1`);
-    if (!EMAIL_RE.test(email) || email.length > 254) return redirect(`${cfg.site}/account/?error=email`);
-    const customer = await store.findCustomerByEmail(email);
-    // Same answer whether or not the email is a customer, so the form does not reveal who is.
-    if (!customer) return done;
-    const token = signToken(cfg.sessionSecret, 'login', { e: customer.email_lc }, LOGIN_TTL);
-    const link = `${cfg.site}/api/billing/auth?t=${encodeURIComponent(token)}`;
-    await sendEmail({
-      to: customer.email,
-      subject: 'Sign in to your Turtlebox account',
-      text: `Use this link to sign in and manage your subscription, payment method and invoices:\n\n${link}\n\nIt works for 15 minutes. If you did not ask for it, ignore this email.\n\nTurtlebox`,
-    });
-    return done;
+  const redirectUri = `${cfg.site}/api/billing/google/callback`;
+  const stateCookie = (v, maxAge) => `tb_oauth=${v}; Path=/api/billing/google; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
+
+  function googleStart() {
+    if (!cfg.googleClientId || !cfg.googleClientSecret) return redirect(`${cfg.site}/account/?error=unavailable`);
+    const state = newNonce();
+    const nonce = newNonce();
+    const signed = signToken(cfg.sessionSecret, 'oauth', { s: state, n: nonce }, OAUTH_TTL);
+    return redirect(authUrl({ clientId: cfg.googleClientId, redirectUri, state, nonce }), [stateCookie(signed, OAUTH_TTL)]);
   }
 
-  async function auth(event) {
-    const t = event.queryStringParameters?.t;
-    const data = verifyToken(cfg.sessionSecret, 'login', t);
-    if (!data) return redirect(`${cfg.site}/account/?error=link`);
-    // Resolve the Paddle customer server-side from the verified email.
-    const customer = await store.findCustomerByEmail(data.e);
-    if (!customer) return redirect(`${cfg.site}/account/?error=link`);
-    const session = signToken(cfg.sessionSecret, 'session', { c: customer.customer_id }, SESSION_TTL);
-    return redirect(`${cfg.site}/account/`, [sessionCookie(session, SESSION_TTL)]);
+  async function googleCallback(event) {
+    const q = event.queryStringParameters || {};
+    const clear = stateCookie('', 0);
+    const saved = verifyToken(cfg.sessionSecret, 'oauth', readCookie(event, 'tb_oauth'));
+    if (!saved || !q.state || q.state !== saved.s || !q.code) return redirect(`${cfg.site}/account/?error=signin`, [clear]);
+    let email;
+    try {
+      email = await exchangeCode({ code: q.code, clientId: cfg.googleClientId, clientSecret: cfg.googleClientSecret,
+        redirectUri, nonce: saved.n, fetchImpl: deps.fetchImpl });
+    } catch (err) {
+      log({ warn: 'google sign-in failed', message: String(err?.message || err) });
+      return redirect(`${cfg.site}/account/?error=signin`, [clear]);
+    }
+    // The session holds only the Google-verified email. The Paddle customer is looked up from it,
+    // server-side, on every request, so purchases made after signing in show up too.
+    const session = signToken(cfg.sessionSecret, 'session', { e: email }, SESSION_TTL);
+    return redirect(`${cfg.site}/account/`, [clear, sessionCookie(session, SESSION_TTL)]);
+  }
+
+  function sessionEmail(event) {
+    return verifyToken(cfg.sessionSecret, 'session', readCookie(event, COOKIE))?.e || null;
   }
 
   async function currentCustomer(event) {
-    const data = verifyToken(cfg.sessionSecret, 'session', readCookie(event, COOKIE));
-    if (!data?.c) return null;
-    return store.getCustomer(data.c);
+    const email = sessionEmail(event);
+    return email ? store.findCustomerByEmail(email) : null;
   }
 
   async function me(event) {
-    const customer = await currentCustomer(event);
-    if (!customer) return json(200, { signedIn: false });
+    const email = sessionEmail(event);
+    if (!email) return json(200, { signedIn: false });
+    const customer = await store.findCustomerByEmail(email);
+    if (!customer) return json(200, { signedIn: true, email, customer: false, access: false, subscriptions: [], purchases: [] });
     const subs = await store.listSubscriptions(customer.customer_id);
+    const txns = await store.listTransactions(customer.customer_id).catch((err) => {
+      log({ warn: 'purchases unavailable', message: String(err?.message || err) });
+      return [];
+    });
     return json(200, {
       signedIn: true,
+      customer: true,
       email: customer.email,
+      purchases: txns
+        .filter((t) => t.status === 'completed' || t.status === 'paid')
+        .sort((a, b) => String(b.billed_at || b.paddle_created_at).localeCompare(String(a.billed_at || a.paddle_created_at)))
+        .map((t) => ({
+          date: t.billed_at || t.paddle_created_at,
+          invoice_number: t.invoice_number ?? null,
+          backer: (t.items || []).some((i) => (cfg.backerPriceIds || []).includes(i.price_id)),
+          license_status: t.fulfillment_status ?? null,
+        })),
       access: anySubscriptionGrantsAccess(subs, { pastDuePolicy: cfg.pastDuePolicy }),
       subscriptions: subs.map((s) => ({
         status: s.status,
@@ -156,8 +169,8 @@ export function makeApp(deps) {
     const path = (event.rawPath || event.path || '').replace(/\/+$/, '');
     try {
       if (path === '/api/billing/webhook' && method === 'POST') return await webhook(event);
-      if (path === '/api/billing/signin' && method === 'POST') return await signin(event);
-      if (path === '/api/billing/auth' && method === 'GET') return await auth(event);
+      if (path === '/api/billing/google/start' && method === 'GET') return googleStart();
+      if (path === '/api/billing/google/callback' && method === 'GET') return await googleCallback(event);
       if (path === '/api/billing/me' && method === 'GET') return await me(event);
       if (path === '/api/billing/portal' && method === 'POST') return await portal(event);
       if (path === '/api/billing/signout' && method === 'POST') return signout();
