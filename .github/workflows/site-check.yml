@@ -1,0 +1,34 @@
+name: Site check (read-only)
+
+# Fetches the live highturtle.com pages and reports whether the Google Tag Manager
+# container is in the HTML and whether Google serves that container. Changes nothing.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GTM_ID: GTM-TZCX2QL8
+    steps:
+      - name: Tag in the live HTML
+        run: |
+          for u in https://highturtle.com/ https://highturtle.com/terms.html https://highturtle.com/privacy.html https://highturtle.ai/ https://www.highturtle.com/; do
+            body=$(curl -sL -A "Mozilla/5.0" "$u")
+            n=$(printf '%s' "$body" | grep -c "$GTM_ID" || true)
+            echo "::notice title=$u::$n lines mention $GTM_ID"
+          done
+          curl -sI https://highturtle.com/ | grep -i -E "^(content-security-policy|x-cache|age|last-modified):" || true
+      - name: Container served by Google
+        run: |
+          code=$(curl -s -o gtm.js -w "%{http_code}" "https://www.googletagmanager.com/gtm.js?id=$GTM_ID")
+          echo "::notice title=gtm.js::HTTP $code, $(wc -c < gtm.js) bytes"
+          ids=$(grep -oE '"(G|AW|GT|UA)-[A-Z0-9-]+"' gtm.js | sort -u | tr '\n' ' ' || true)
+          echo "::notice title=tags in container::${ids:-none found}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "https://www.googletagmanager.com/ns.html?id=$GTM_ID")
+          echo "::notice title=ns.html::HTTP $code"

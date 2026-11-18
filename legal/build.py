@@ -25,21 +25,16 @@ TB_V = re.search(r'V = "(\w+)"', open(os.path.join(ROOT, "turtlebox", "build.py"
 PADDLE_BUYER_TERMS = "https://www.paddle.com/legal/checkout-buyer-terms"
 PADDLE_PRIVACY = "https://www.paddle.com/legal/privacy"
 
-# Google Tag Manager for highturtle.com (every High Turtle page carries it; Turtlebox pages do not).
+# Google tag for highturtle.com, exactly as Google Analytics gives it (High Turtle pages only; Turtlebox pages do not carry it).
 GTM_ID = "GTM-TZCX2QL8"
-GTM_HEAD = f"""
-  <!-- Google Tag Manager -->
-  <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
-  new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
-  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-  }})(window,document,'script','dataLayer','{GTM_ID}');</script>
-  <!-- End Google Tag Manager -->"""
-GTM_BODY = f"""
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={GTM_ID}"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->"""
+GTM_HEAD = """
+  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-TZCX2QL8"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  </script>"""
+GTM_BODY = ""
 
 STYLE = """<style>
   .legal { padding-block: 4rem; max-width: 46rem; }
