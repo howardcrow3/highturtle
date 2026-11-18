@@ -7,7 +7,7 @@
 #   - Secrets Manager secret highturtle/billing holding PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, SESSION_SECRET
 #   - Lambda role, the turtlebox-billing function (Node 22) + function URL
 #   - CloudFront routes /api/billing/* and /api/ceevee/* on turtlebox.studio, placed BEFORE /api/*
-#   - CeeVee tables highturtle-ceevee-licenses / -trials; CEEVEE_SIGNING_KEY in the secret; CEEVEE_PRICE_IDS on the function
+#   - CeeVee tables highturtle-ceevee-licenses / -trials; CEEVEE_SIGNING_KEY and GOLDEN_SIGNING_KEY in the secret; CEEVEE_PRICE_IDS, GOLDEN_PRICE_ID, GOLDEN_PLAID_PRICE_ID on the function
 # Secret values come from the PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET and BACKER_SIGNING_KEY environment variables (GitHub
 # secrets in the workflow). An empty value keeps whatever the secret already holds. SESSION_SECRET is
 # generated once and kept. This script never deletes anything.
@@ -88,6 +88,16 @@ fi
 CV_SEED=$(echo "$NEW" | jq -r .CEEVEE_SIGNING_KEY)
 CV_PUB=$(CV_SEED="$CV_SEED" node -e "const c=require('node:crypto');const k=c.createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b657004220420','hex'),Buffer.from(process.env.CV_SEED,'hex')]),format:'der',type:'pkcs8'});console.log(c.createPublicKey(k).export({format:'der',type:'spki'}).subarray(-32).toString('hex'))")
 echo "::notice title=CeeVee public key::CEEVEE_LICENSE_PUBKEY for the app build = $CV_PUB"
+# Golden licence signing key (base64url Ed25519 seed): same idea. Made here once if missing, so the private half only
+# ever exists in Secrets Manager. Its public half goes in apps/desktop/src-tauri/license_public_key.txt in howardcrow3/golden.
+if [ -z "$(echo "$NEW" | jq -r '.GOLDEN_SIGNING_KEY // empty')" ]; then
+  GSEED=$(openssl rand 32 | base64 | tr '+/' '-_' | tr -d '=\n')
+  NEW=$(echo "$NEW" | jq -c --arg k "$GSEED" '. + {GOLDEN_SIGNING_KEY:$k}')
+  echo "::notice title=Golden::No Golden signing key existed, so a new one was generated and stored in Secrets Manager."
+fi
+GOLDEN_SEED=$(echo "$NEW" | jq -r .GOLDEN_SIGNING_KEY)
+GOLDEN_PUB=$(GOLDEN_SEED="$GOLDEN_SEED" node -e "const c=require('node:crypto');const k=c.createPrivateKey({key:Buffer.concat([Buffer.from('302e020100300506032b657004220420','hex'),Buffer.from(process.env.GOLDEN_SEED,'base64url')]),format:'der',type:'pkcs8'});console.log(c.createPublicKey(k).export({format:'der',type:'spki'}).subarray(-32).toString('base64url'))")
+echo "::notice title=Golden public key::license_public_key.txt for the Golden app = $GOLDEN_PUB"
 # Take the ARN from the write itself: a describe right after create can miss the new secret.
 if [ "$EXISTS" = no ]; then
   SECRET_ARN=$(aws secretsmanager create-secret --name $SECRET_ID --secret-string "$NEW" --query ARN --output text)
@@ -117,11 +127,11 @@ ROLE_ARN=$(aws iam get-role --role-name $FN_ROLE --query Role.Arn --output text)
 echo "== 4. Lambda function =="
 (cd billing && npm ci --no-audit --no-fund >/dev/null && npm test >/dev/null && npm run build >/dev/null)
 rm -f /tmp/billing.zip; (cd billing/dist && zip -q /tmp/billing.zip index.mjs)
-ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN --arg cl $T_CLIC --arg ct $T_CTRIAL --arg cp "${CEEVEE_PRICE_IDS:-}" '{Variables:{
+ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN --arg cl $T_CLIC --arg ct $T_CTRIAL --arg cp "${CEEVEE_PRICE_IDS:-}" --arg gp "${GOLDEN_PRICE_ID:-}" --arg gpl "${GOLDEN_PLAID_PRICE_ID:-}" '{Variables:{
   BILLING_SECRET_ID:$s, PADDLE_ENVIRONMENT:"production", SITE:"https://turtlebox.studio",
   FROM_ADDR:"Turtlebox <account@turtlebox.studio>", REPLY_TO:"info@turtlebox.studio", CONFIG_SET:$c,
   CUSTOMERS_TABLE:$a, SUBSCRIPTIONS_TABLE:$b, TRANSACTIONS_TABLE:$t, ACCESS_PAST_DUE:"grant",
-  CEEVEE_LICENSES_TABLE:$cl, CEEVEE_TRIALS_TABLE:$ct, CEEVEE_PRICE_IDS:$cp,
+  CEEVEE_LICENSES_TABLE:$cl, CEEVEE_TRIALS_TABLE:$ct, CEEVEE_PRICE_IDS:$cp, GOLDEN_PRICE_ID:$gp, GOLDEN_PLAID_PRICE_ID:$gpl,
   BACKER_PRICE_IDS:"pri_01m7esmmmhtvqh0518kmb0xqdq", OPS_EMAIL:"info@turtlebox.studio"}}')
 if aws lambda get-function --function-name $FN >/dev/null 2>&1; then
   aws lambda update-function-code --function-name $FN --zip-file fileb:///tmp/billing.zip >/dev/null

@@ -14,6 +14,7 @@ import { loadConfig } from './config.mjs';
 import { DynamoStore } from './store.mjs';
 import { routeEvent } from './events.mjs';
 import { makeBackerFulfillment } from './fulfillment.mjs';
+import { makeGoldenFulfillment } from './golden-fulfillment.mjs';
 import { makeCeeveeFulfillment, makeCeeveeRefund } from './ceevee-fulfillment.mjs';
 import { makeCeeveeApi, isCeeveePath } from './ceevee-api.mjs';
 import { normalizeKey } from './ceevee.mjs';
@@ -260,8 +261,9 @@ async function buildApp() {
   const ceevee = new CeeveeDynamoStore({ tables: cfg.tables, region: cfg.region });
   const backer = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log });
   const ceeveeFulfil = makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, log });
+  const golden = makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log });
   // Each hook is idempotent on its own claim, so a retry after one fails is safe.
-  const onPurchase = async (txn) => { await backer(txn); await ceeveeFulfil(txn); };
+  const onPurchase = async (txn) => { await backer(txn); await ceeveeFulfil(txn); await golden(txn); };
   const onRefund = makeCeeveeRefund({ cfg, ceevee, log });
   return makeApp({ cfg, store, paddle, sendEmail, onPurchase, onRefund, ceevee });
 }
