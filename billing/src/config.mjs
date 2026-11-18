@@ -41,6 +41,9 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
     backerPriceIds: (merged.BACKER_PRICE_IDS || '').split(',').map((x) => x.trim()).filter(Boolean),
     // Hex Ed25519 seed that signs Backer keys. When missing, orders are forwarded to opsEmail to issue by hand.
     backerSigningKey: merged.BACKER_SIGNING_KEY || '',
+    // Public key the shipped Backer app trusts (crates/backer-license/public_key.hex in howardcrow3/Backer). The signing key
+    // must match it, otherwise buyers would get keys the app rejects, so a mismatch is treated like a missing key.
+    backerPublicKey: (merged.BACKER_PUBLIC_KEY || '80475df325e958aa1fe24db56f58cf9a8f636d66c1409f9a08744ac3a6da2516').trim().toLowerCase(),
     // CeeVee one-time purchases: Paddle price IDs that mean "issue a CeeVee license key".
     ceeveePriceIds: (merged.CEEVEE_PRICE_IDS || '').split(',').map((x) => x.trim()).filter(Boolean),
     // Hex Ed25519 seed that signs CeeVee licenses and trial tokens (public half is CEEVEE_LICENSE_PUBKEY in the app).

@@ -3,7 +3,7 @@
 // even though Paddle can deliver the event more than once. If the signing key is not configured yet, the
 // order goes to the support inbox instead so a key can be issued by hand; the buyer is never left with nothing.
 
-import { issueKey } from './license.mjs';
+import { issueKey, publicKeyHex } from './license.mjs';
 
 export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
   const priceIds = new Set(cfg.backerPriceIds || []);
@@ -24,14 +24,20 @@ export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
       if (!email && txn.customerId) email = (await paddle.customers.get(txn.customerId))?.email;
       if (!email) throw new Error(`no email for customer ${txn.customerId}`);
 
-      if (!cfg.backerSigningKey) {
+      let problem = '';
+      if (!cfg.backerSigningKey) problem = 'the signing key is not configured';
+      else if (cfg.backerPublicKey && (await publicKeyHex(cfg.backerSigningKey)) !== cfg.backerPublicKey) {
+        problem = `the configured signing key does not match the public key the Backer app trusts (${cfg.backerPublicKey.slice(0, 8)}...), so its keys would be rejected`;
+      }
+      if (problem) {
         await sendEmail({
           to: cfg.opsEmail,
           subject: `Backer order ${txn.id}: issue a license key by hand`,
-          text: `A Backer order completed but the signing key is not configured, so no key was sent.\n\nBuyer: ${email}\nQuantity: ${qty}\nPaddle transaction: ${txn.id}\n\nIssue with: backer-keygen issue ~/backer-signing-key.txt ${email}\nthen email the key to the buyer.`,
+          text: `A Backer order completed but ${problem}, so no key was sent.\n\nBuyer: ${email}\nQuantity: ${qty}\nPaddle transaction: ${txn.id}\n\nIssue with: backer-keygen issue ~/backer-signing-key.txt ${email}\nthen email the key to the buyer.\n\nOnce the key is fixed (GitHub secret BACKER_SIGNING_KEY, then run Billing setup), resend this transaction's webhook from Paddle (Developer tools > Notifications > Event log) and the buyer gets the key automatically.`,
         });
-        await store.finishFulfillment(txn.id, 'manual');
-        log({ fulfillment: 'manual', transaction: txn.id });
+        // Leave the order unfulfilled (not 'manual') so replaying the event from Paddle can still deliver the key.
+        await store.releaseFulfillment(txn.id);
+        log({ fulfillment: 'needs-key', transaction: txn.id, problem });
         return;
       }
 

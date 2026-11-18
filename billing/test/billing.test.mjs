@@ -323,7 +323,7 @@ test('a forged session cookie is refused', async () => {
 
 // ---------- Backer license fulfillment ----------
 
-import { issueKey } from '../src/license.mjs';
+import { issueKey, publicKeyHex } from '../src/license.mjs';
 import { makeBackerFulfillment } from '../src/fulfillment.mjs';
 
 const SEED = '9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60';
@@ -340,7 +340,7 @@ function backerSetup({ signingKey = SEED, failSend = false } = {}) {
   const paddle = new Paddle('k', { environment: Environment.sandbox });
   paddle.customers.get = async (id) => ({ id, email: 'late@example.com' });
   const cfg = { paddleWebhookSecret: SECRET, sessionSecret: 's', site: 'https://turtlebox.studio',
-    backerPriceIds: ['pri_backer'], backerSigningKey: signingKey, opsEmail: 'info@turtlebox.studio' };
+    backerPriceIds: ['pri_backer'], backerSigningKey: signingKey, backerPublicKey: '', opsEmail: 'info@turtlebox.studio' };
   let fail = failSend;
   const sendEmail = async (m) => { if (fail) { fail = false; throw new Error('ses down'); } sent.push(m); };
   const onPurchase = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log: () => {} });
@@ -413,7 +413,21 @@ test('without a signing key the order goes to the support inbox instead', async 
   assert.equal(sent.length, 1);
   assert.equal(sent[0].to, 'info@turtlebox.studio');
   assert.match(sent[0].subject, /issue a license key by hand/);
-  assert.equal(store.transactions.get('txn_01').fulfillment_status, 'manual');
+  assert.equal(store.transactions.get('txn_01').fulfillment_status, undefined); // stays replayable
+});
+
+test('a signing key that does not match the app public key is refused, and the order can be replayed', async () => {
+  const { deliver, sent, cfg } = backerSetup(); // SEED is not the app's key
+  cfg.backerPublicKey = '80475df325e958aa1fe24db56f58cf9a8f636d66c1409f9a08744ac3a6da2516';
+  await deliver(customerEvent('customer.created'));
+  await deliver(transactionCompletedEvent());
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].to, 'info@turtlebox.studio');
+  assert.match(sent[0].text, /does not match the public key/);
+  cfg.backerPublicKey = await publicKeyHex(SEED);
+  await deliver(transactionCompletedEvent());
+  assert.equal(sent.length, 2);
+  assert.equal(sent[1].to, 'Buyer@Example.com');
 });
 
 test('purchases of other prices send nothing', async () => {

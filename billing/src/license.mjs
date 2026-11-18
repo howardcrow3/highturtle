@@ -27,6 +27,16 @@ export function payloadFor(email, issuedDay) {
   return p;
 }
 
+// Public half (hex) of an Ed25519 seed, so a signing key can be checked against the key built into the app.
+export async function publicKeyHex(seedHex) {
+  const seed = seedHex.trim();
+  if (!/^[0-9a-fA-F]{64}$/.test(seed)) throw new Error('signing key must be 64 hex characters');
+  const pkcs8 = new Uint8Array([0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x70, 0x04, 0x22, 0x04, 0x20, ...hex(seed)]);
+  const key = await crypto.subtle.importKey('pkcs8', pkcs8, { name: 'Ed25519' }, true, ['sign']);
+  const jwk = await crypto.subtle.exportKey('jwk', key);
+  return Buffer.from(jwk.x, 'base64url').toString('hex');
+}
+
 export async function issueKey(seedHex, email, issuedDay = Math.floor(Date.now() / 86400000)) {
   const seed = seedHex.trim();
   if (!/^[0-9a-fA-F]{64}$/.test(seed)) throw new Error('signing key must be 64 hex characters');
