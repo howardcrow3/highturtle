@@ -25,6 +25,22 @@ TB_V = re.search(r'V = "(\w+)"', open(os.path.join(ROOT, "turtlebox", "build.py"
 PADDLE_BUYER_TERMS = "https://www.paddle.com/legal/checkout-buyer-terms"
 PADDLE_PRIVACY = "https://www.paddle.com/legal/privacy"
 
+# Google Tag Manager for highturtle.com (every High Turtle page carries it; Turtlebox pages do not).
+GTM_ID = "GTM-TZCX2QL8"
+GTM_HEAD = f"""
+  <!-- Google Tag Manager -->
+  <script>(function(w,d,s,l,i){{w[l]=w[l]||[];w[l].push({{'gtm.start':
+  new Date().getTime(),event:'gtm.js'}});var f=d.getElementsByTagName(s)[0],
+  j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+  'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+  }})(window,document,'script','dataLayer','{GTM_ID}');</script>
+  <!-- End Google Tag Manager -->"""
+GTM_BODY = f"""
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id={GTM_ID}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->"""
+
 STYLE = """<style>
   .legal { padding-block: 4rem; max-width: 46rem; }
   .legal h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; }
@@ -45,7 +61,9 @@ def shell(site, title, desc, path, body):
         nav = ('<a href="/#portfolio">Portfolio</a>\n'
                               '        <a href="/contact.html">Contact</a>')
         foot_intro = "<p>High Turtle LLC is a holding company for AI companies.</p>"
+        gtm_head, gtm_body = GTM_HEAD, GTM_BODY
     else:
+        gtm_head = gtm_body = ""
         html_open, scheme = ('<html lang="en" data-theme="light">',
                              '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
         css = f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">'
@@ -54,7 +72,7 @@ def shell(site, title, desc, path, body):
         foot_intro = "<p>Turtlebox makes Backer, CeeVee and Golden.</p>"
     return f"""<!doctype html>
 {html_open}
-<head>
+<head>{gtm_head}
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {scheme}
@@ -66,7 +84,7 @@ def shell(site, title, desc, path, body):
   {css}
   {STYLE}
 </head>
-<body>
+<body>{gtm_body}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="mark" viewBox="{MARK_VB}">{MARK_PATH}</symbol></svg>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">

@@ -12,6 +12,10 @@ The site of High Turtle LLC, a holding company for AI companies. Primary domain 
 - `favicon.svg`, `robots.txt`, `sitemap.xml`
 - `.github/workflows/deploy.yml`: syncs the site to S3 and clears the CloudFront cache on every push to `main`
 
+## Analytics
+
+Every High Turtle page carries the Google Tag Manager container `GTM-TZCX2QL8`: the GTM script at the top of `<head>` and the `noscript` iframe right after `<body>`. The policy pages get it from `legal/build.py` (`GTM_HEAD`, `GTM_BODY`). When you add a page, copy both blocks from `index.html`. Turtlebox and Montoya pages don't carry it.
+
 ## Adding a company
 
 Add a row to the "Portfolio" list in `index.html` and update the company count above it. If the company trades as High Turtle LLC, also add it to "Trading names" in Company details.
