@@ -1,7 +1,7 @@
 name: Site check (read-only)
 
-# Fetches the live highturtle.com pages and reports whether the Google Tag Manager
-# container is in the HTML and whether Google serves that container. Changes nothing.
+# Fetches the live turtlebox.studio pages (and highturtle.com, which should not carry it) and reports
+# whether the Google tag is in the HTML and whether Google serves that container. Changes nothing.
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
     steps:
       - name: Tag in the live HTML
         run: |
-          for u in https://highturtle.com/ https://highturtle.com/terms.html https://highturtle.com/privacy.html https://highturtle.ai/ https://www.highturtle.com/; do
+          for u in https://turtlebox.studio/ https://turtlebox.studio/apps/ https://turtlebox.studio/backer/ https://turtlebox.studio/ceevee/ https://turtlebox.studio/golden/ https://turtlebox.studio/checkout/ https://turtlebox.studio/account/ https://turtlebox.studio/terms.html https://highturtle.com/; do
             body=$(curl -sL -A "Mozilla/5.0" "$u")
             n=$(printf '%s' "$body" | grep -c "$GTM_ID" || true)
             echo "::notice title=$u::$n lines mention $GTM_ID"
