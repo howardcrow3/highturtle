@@ -33,6 +33,9 @@ jobs:
       CEEVEE_SIGNING_KEY: ${{ secrets.CEEVEE_SIGNING_KEY }}
       # Comma-separated Paddle price IDs for CeeVee. A repository variable is preferred; a secret of the same name also works.
       CEEVEE_PRICE_IDS: ${{ inputs.ceevee_price_ids || vars.CEEVEE_PRICE_IDS || vars.CEEVEE_PRICE_ID || secrets.CEEVEE_PRICE_IDS }}
+      # Golden's Paddle price IDs (public, not secret): repository variables, same values as in howardcrow3/golden.
+      GOLDEN_PRICE_ID: ${{ vars.GOLDEN_PRICE_ID }}
+      GOLDEN_PLAID_PRICE_ID: ${{ vars.GOLDEN_PLAID_PRICE_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
