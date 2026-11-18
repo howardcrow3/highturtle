@@ -25,16 +25,7 @@ TB_V = re.search(r'V = "(\w+)"', open(os.path.join(ROOT, "turtlebox", "build.py"
 PADDLE_BUYER_TERMS = "https://www.paddle.com/legal/checkout-buyer-terms"
 PADDLE_PRIVACY = "https://www.paddle.com/legal/privacy"
 
-# Google tag for highturtle.com, exactly as Google Analytics gives it (High Turtle pages only; Turtlebox pages do not carry it).
-GTM_ID = "GTM-TZCX2QL8"
-GTM_HEAD = """
-  <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-TZCX2QL8"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-  </script>"""
-GTM_BODY = ""
+from gtag import GTAG  # Google tag for turtlebox.studio (turtlebox/gtag.py); High Turtle pages don't carry it
 
 STYLE = """<style>
   .legal { padding-block: 4rem; max-width: 46rem; }
@@ -56,9 +47,9 @@ def shell(site, title, desc, path, body):
         nav = ('<a href="/#portfolio">Portfolio</a>\n'
                               '        <a href="/contact.html">Contact</a>')
         foot_intro = "<p>High Turtle LLC is a holding company for AI companies.</p>"
-        gtm_head, gtm_body = GTM_HEAD, GTM_BODY
+        gtm_head = ""
     else:
-        gtm_head = gtm_body = ""
+        gtm_head = "\n" + GTAG
         html_open, scheme = ('<html lang="en" data-theme="light">',
                              '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
         css = f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">'
@@ -79,7 +70,7 @@ def shell(site, title, desc, path, body):
   {css}
   {STYLE}
 </head>
-<body>{gtm_body}
+<body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="mark" viewBox="{MARK_VB}">{MARK_PATH}</symbol></svg>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site-header">

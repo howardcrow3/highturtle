@@ -22,6 +22,7 @@ sys.path.insert(0, os.path.join(ROOT, "legal"))
 from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
 sys.path.insert(0, OUT)
 from nav import nav_links  # same menu as the other Turtlebox pages
+from gtag import add_tag  # Google tag on every Turtlebox page
 from showcase import gallery, feature_groups, BACKER_FEATURES  # screenshots and feature list, shared with the other app pages
 TB_V = re.search(r'V = "(\w+)"', open(os.path.join(OUT, "build.py")).read()).group(1)  # same cache tag as the Turtlebox pages
 
@@ -551,7 +552,7 @@ def main():
     pages = render(cfg, False)
     os.makedirs(os.path.join(OUT, "backer"), exist_ok=True)
     for f, p in pages.items():
-        open(os.path.join(OUT, "backer", f), "w").write(fill(p, cfg))
+        open(os.path.join(OUT, "backer", f), "w").write(add_tag(fill(p, cfg)))
     open(os.path.join(OUT, "assets", "backer.css"), "w").write(CSS)
     if os.path.exists(os.path.join(HERE, "releases.json")):  # published copy, so the release watcher can tell when the site is out of date
         shutil.copy(os.path.join(HERE, "releases.json"), os.path.join(OUT, "backer", "releases.json"))

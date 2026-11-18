@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "legal"))
 sys.path.insert(0, HERE)
 from site_legal import footer_block  # policy links and legal name (Paddle requirements)
 from nav import nav_links
+from gtag import add_tag  # Google tag on every page
 from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
@@ -397,6 +398,8 @@ prob = """  <div class="simple wrap">
   </div>"""
 root = os.path.join(HERE)
 def w(rel, content):
+    if rel.endswith(".html"):
+        content = add_tag(content)
     p = os.path.join(root, rel); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, "w").write(content)
 
 desc_home = "Turtlebox makes Backer, CeeVee and Golden: desktop apps for Mac and Windows that keep your files on your computer. Each is a single purchase."

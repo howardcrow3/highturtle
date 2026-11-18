@@ -12,10 +12,6 @@ The site of High Turtle LLC, a holding company for AI companies. Primary domain 
 - `favicon.svg`, `robots.txt`, `sitemap.xml`
 - `.github/workflows/deploy.yml`: syncs the site to S3 and clears the CloudFront cache on every push to `main`
 
-## Analytics
-
-Every High Turtle page carries the Google tag `GTM-TZCX2QL8` at the top of `<head>`, exactly as Google Analytics gives it. The policy pages get it from `legal/build.py` (`GTM_HEAD`). When you add a page, copy it from `index.html`. Turtlebox and Montoya pages don't carry it.
-
 ## Adding a company
 
 Add a row to the "Portfolio" list in `index.html` and update the company count above it. If the company trades as High Turtle LLC, also add it to "Trading names" in Company details.
@@ -70,6 +66,10 @@ Apps for download live in the private S3 bucket `turtlebox-downloads` as `<app-s
 3. Someone enters their address, gets an email from `downloads@turtlebox.studio` with a link (valid 7 days), and clicking it adds them to the High Turtle list and starts a 5-minute download. People who unsubscribed earlier are not re-added.
 
 Code: `lambda/downloads.py`, set up by `infra/setup-downloads.sh`. Pushes to `lambda/downloads.py` or `turtlebox/` deploy through the `Deploy turtlebox.studio` workflow.
+
+## Turtlebox analytics
+
+Every turtlebox.studio page carries the Google tag `GTM-TZCX2QL8`, exactly as Google Analytics gives it, first in `<head>`. It lives in `turtlebox/gtag.py`; `turtlebox/build.py`, `backer/build.py` and `legal/build.py` add it to the pages they write. `turtlebox/account/index.html` is hand-written, so it carries a copy. High Turtle pages don't carry it.
 
 ## Turtlebox mail and extra domains
 
