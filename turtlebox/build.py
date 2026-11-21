@@ -402,6 +402,70 @@ def w(rel, content):
         content = add_tag(content)
     p = os.path.join(root, rel); os.makedirs(os.path.dirname(p), exist_ok=True); open(p, "w").write(content)
 
+
+ceevee_privacy = """  <div class="wrap page-head">
+    <h1>CeeVee privacy notice</h1>
+    <p>Last updated 21 November 2026. CeeVee is sold by High Turtle LLC under the Turtlebox name.</p>
+  </div>
+  <section class="section" aria-label="Privacy">
+    <div class="wrap prose-help">
+      <p>CeeVee runs on your computer. Your resume, profile, jobs, documents, mail and chats are stored on your computer and are not sent to us.</p>
+      <h2>What stays on your computer</h2>
+      <ul>
+        <li>Your resume, profile, job list, applications, documents and notes, in CeeVee&rsquo;s data folder.</li>
+        <li>The AI model and everything you ask it. It runs locally; nothing you write to it leaves your computer.</li>
+        <li>Your LinkedIn connections file, if you import one.</li>
+        <li>A small log file and crash reports, to help fix problems. They hold no resume, job or email text. They leave your computer only if you send them to support yourself.</li>
+      </ul>
+      <h2>What CeeVee sends over the internet</h2>
+      <ul>
+        <li><strong>License and trial checks</strong> go to turtlebox.studio: a random machine identifier (a one-way hash, not your name or computer name), the app version, and your license key when you activate or remove it.</li>
+        <li><strong>Update checks</strong> go to dl.turtlebox.studio: a request for the update file list. No account or personal data.</li>
+        <li><strong>Downloading the AI model</strong> goes to Hugging Face, a model host. A normal file download; they see your IP address, as any website would.</li>
+        <li><strong>Searching for jobs</strong> goes to the job boards and company career pages you choose, with the same requests your browser would make to read public job lists.</li>
+        <li><strong>Applying for a job</strong> goes to the employer&rsquo;s application site, through Chrome or Edge on your computer. It sends what you submit, the same as if you typed it yourself.</li>
+        <li><strong>Buying</strong> is handled by Paddle.com, our online reseller and Merchant of Record. Your payment details go to Paddle, not to CeeVee.</li>
+      </ul>
+      <p>CeeVee has no analytics or advertising trackers.</p>
+      <h2>Optional: Sign in with Google</h2>
+      <p>If you choose to sign in with Google, CeeVee asks for read-only access to your Gmail (the gmail.readonly permission), plus your email address and basic profile. CeeVee uses it for one purpose: to notice replies from employers and recruiters so it can keep your job applications up to date.</p>
+      <ul>
+        <li>Mail is read by CeeVee on your computer and stored only on your computer. It is not sent to turtlebox.studio, High Turtle LLC or any other server, and no person at High Turtle LLC can see it.</li>
+        <li>CeeVee does not use your mail for advertising, does not sell it, and does not use it to train AI models.</li>
+        <li>CeeVee&rsquo;s own local AI model reads your mail on your computer to sort replies. Nothing is shared with another AI service.</li>
+        <li>You can sign out at any time in Settings, and revoke access at myaccount.google.com/permissions. Deleting CeeVee&rsquo;s data folder removes the stored mail.</li>
+      </ul>
+      <p>CeeVee&rsquo;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+      <h2>Your choices</h2>
+      <ul>
+        <li>Delete all your CeeVee data: quit CeeVee and delete its data folder. Windows: <code>%APPDATA%\\studio.turtlebox.ceevee</code>. Mac: <code>~/Library/Application Support/studio.turtlebox.ceevee</code>.</li>
+        <li>Free a license seat: Settings, License, &ldquo;Remove from this computer&rdquo;, or <a href="/ceevee/license/">turtlebox.studio/ceevee/license</a>.</li>
+        <li>Questions: <a href="/contact.html">contact us</a>. See also the <a href="/privacy.html">Turtlebox site privacy policy</a>.</li>
+      </ul>
+    </div>
+  </section>"""
+ceevee_terms = """  <div class="wrap page-head">
+    <h1>CeeVee terms of use</h1>
+    <p>Last updated 21 November 2026. CeeVee is sold by High Turtle LLC under the Turtlebox name.</p>
+  </div>
+  <section class="section" aria-label="Terms">
+    <div class="wrap prose-help">
+      <ol>
+        <li><strong>What you get.</strong> A license to run CeeVee on up to 2 of your own computers. The price is paid once. After the 14-day trial, CeeVee is read-only (you can view and export your data) until a license is activated.</li>
+        <li><strong>Your data is yours.</strong> It lives on your computer. We do not receive or sell it.</li>
+        <li><strong>You are in charge of applications.</strong> CeeVee drafts documents and fills in application forms. You choose how much it may do without asking. You are responsible for what is sent in your name and for following each job site&rsquo;s rules.</li>
+        <li><strong>AI can be wrong.</strong> CeeVee&rsquo;s drafts and suggestions come from a small AI model running on your computer and can contain mistakes. Read them before you rely on them.</li>
+        <li><strong>Not advice.</strong> CeeVee does not give career, legal or financial advice and does not promise you a job or an interview.</li>
+        <li><strong>Fair use.</strong> Do not copy, resell or share your license key, or reverse engineer CeeVee to remove the license check.</li>
+        <li><strong>Third-party services.</strong> Job boards, employers, Google and others have their own terms. CeeVee does not control them.</li>
+        <li><strong>Updates.</strong> CeeVee updates itself with signed files from turtlebox.studio. Updates are not tied to license status.</li>
+        <li><strong>No warranty; limit of liability.</strong> CeeVee is provided as is. To the extent the law allows, our liability is limited to the price you paid.</li>
+        <li><strong>Refunds.</strong> See the <a href="/refund.html">refund policy</a>.</li>
+        <li><strong>Contact.</strong> <a href="/contact.html">Contact us</a>. See also the <a href="/terms.html">Turtlebox site terms</a>.</li>
+      </ol>
+    </div>
+  </section>"""
+
 desc_home = "Turtlebox makes Backer, CeeVee and Golden: desktop apps for Mac and Windows that keep your files on your computer. Each is a single purchase."
 w("index.html", page("Turtlebox | Backer, CeeVee and Golden", desc_home, home, "/"))
 w("apps/index.html", page("Apps | Turtlebox", "Backer, CeeVee and Golden: desktop apps for Mac and Windows from Turtlebox.", apps_page, "/apps/", nav_current="apps"))
@@ -410,12 +474,14 @@ w("golden/index.html", page("Golden retirement planning app | Turtlebox", by_slu
 w("ceevee/buy/index.html", page("Buy CeeVee | Turtlebox", "Buy CeeVee: $19.99 once for 2 computers.", ceevee_buy, "/ceevee/buy/", robots=False, nav_current="ceevee"))
 w("ceevee/license/index.html", page("Your CeeVee license | Turtlebox", "Find your CeeVee license key and move it to another computer.", ceevee_license, "/ceevee/license/", robots=False, nav_current="ceevee"))
 w("ceevee/help/index.html", page("CeeVee help | Turtlebox", "Install CeeVee, get started, manage your license and fix common problems.", ceevee_help, "/ceevee/help/", nav_current="ceevee"))
+w("ceevee/privacy/index.html", page("CeeVee privacy notice | Turtlebox", "What CeeVee keeps on your computer, what it sends, and how its optional Google sign-in uses your Gmail.", ceevee_privacy, "/ceevee/privacy/", nav_current="ceevee"))
+w("ceevee/terms/index.html", page("CeeVee terms of use | Turtlebox", "Terms for using CeeVee.", ceevee_terms, "/ceevee/terms/", nav_current="ceevee"))
 w("checkout/index.html", page("Checkout | Turtlebox", "Paddle checkout for Turtlebox apps.", checkout_body, "/checkout/", robots=False))
 w("download-sent.html", page("Check your inbox | Turtlebox", "Download link sent.", sent, "/download-sent.html", robots=False))
 w("download-problem.html", page("Download problem | Turtlebox", "Download problem.", prob, "/download-problem.html", robots=False))
 w("404.html", page("Page not found | Turtlebox", "Page not found.", nf, "/404.html", robots=False))
 w("robots.txt", "User-agent: *\nAllow: /\n\nSitemap: https://turtlebox.studio/sitemap.xml\n")
-urls = ["/", "/apps/", "/backer/", "/backer/releases.html", "/backer/notes.html", "/ceevee/", "/ceevee/help/", "/golden/",
+urls = ["/", "/apps/", "/backer/", "/backer/releases.html", "/backer/notes.html", "/ceevee/", "/ceevee/help/", "/ceevee/privacy/", "/ceevee/terms/", "/golden/",
         "/terms.html", "/refund.html", "/privacy.html", "/contact.html"]
 w("sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
   + "".join(f"  <url><loc>https://turtlebox.studio{u}</loc></url>\n" for u in urls) + "</urlset>\n")
