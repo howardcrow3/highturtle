@@ -35,6 +35,11 @@ jobs:
         run: python3 backer/fetch_releases.py
         env:
           GITHUB_TOKEN: ${{ github.token }}
+      - name: Build store pages (Golden plan prices come from repository variables)
+        run: python3 turtlebox/build.py
+        env:
+          GOLDEN_PLAID_PRICE_ID: ${{ vars.GOLDEN_PLAID_PRICE_ID }}
+          GOLDEN_PLAID_ANNUAL: ${{ vars.GOLDEN_PLAID_ANNUAL }}
       - name: Build Backer pages (skipped until backer/config.json is complete)
         run: python3 backer/build.py
       - name: Upload assets

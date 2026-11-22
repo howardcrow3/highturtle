@@ -21,7 +21,7 @@ from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb12"
+V = "tb13"
 e = html.escape
 
 
@@ -124,7 +124,24 @@ def buy_plate(a, hid, compact=False):
     else:
         action = f'<p class="soon">Not on sale yet</p>' + (
             f'<a class="btn btn-small btn-quiet" href="{e(a["url"])}#buy">Get notified</a>' if compact else notify_form(a, hid))
-    return f'<div class="buy-plate">{price}{plats}{action}</div>'
+    return f'<div class="buy-plate">{price}{plats}{action}{plans_block(a, compact)}</div>'
+
+
+def plans_block(a, compact=False):
+    """Optional subscription plans under the one-time price (Golden: automatic bank updates). A plan without a
+    price_id yet is left out, so nothing shows until Paddle has the price."""
+    plans = [p for p in a.get("plans", []) if p.get("price_id")]
+    if not plans or not a.get("on_sale"):
+        return ""
+    if compact:
+        prices = " or ".join(f'<span class="num">{e(p["price"])}</span> {e(p["per"])}' for p in plans)
+        return f'<p class="plans-line">{e(a["plans_title"])}: {prices}. <a href="{e(a["url"])}#buy">See plans</a></p>'
+    btns = "".join(
+        f'<a class="btn btn-quiet btn-plan" href="{e(a["url"])}#buy" data-paddle-price="{e(p["price_id"])}" data-success="{e(p["success_url"])}">'
+        f'<span class="num">{e(p["price"])}</span> {e(p["per"])}</a>' for p in plans)
+    return (f'<div class="plans"><p class="plans-title">{e(a["plans_title"])}</p>'
+            f'<p class="plans-note">{e(a["plans_note"])}</p><div class="plans-row">{btns}</div>'
+            f'<p class="fine">Renews until you cancel.</p></div>')
 
 
 def status_chip(a):
@@ -146,6 +163,10 @@ def store_row(a, level="h2"):
 
 
 apps = json.load(open(os.path.join(HERE, "apps.json")))
+for _a in apps:  # a plan's Paddle price can come from a GitHub Actions variable named in price_id_var (set in the deploy)
+    for _p in _a.get("plans", []):
+        if not _p.get("price_id") and _p.get("price_id_var"):
+            _p["price_id"] = os.environ.get(_p["price_id_var"], "").strip()
 by_slug = {a["slug"]: a for a in apps}
 store = '<ul class="store">\n' + "\n".join(store_row(a) for a in apps) + "\n    </ul>"
 
@@ -153,7 +174,7 @@ HOW_TO_BUY = """  <section class="section" aria-labelledby="buying-h">
     <div class="wrap">
       <h2 id="buying-h">How buying works</h2>
       <ul class="points">
-        <li><h3>Pay once</h3><p>Each app has one price. There is no subscription. A license key covers every update within its major version.</p></li>
+        <li><h3>Pay once</h3><p>Each app has a one-time price, and a license key covers every update within its major version. Golden also offers an optional monthly or yearly plan that adds automatic bank updates.</p></li>
         <li><h3>Key by email</h3><p>Your license key arrives by email a few minutes after checkout. It is also in <a href="/account/">your account</a> when you sign in with Google.</p></li>
         <li><h3>14 days to change your mind</h3><p>Paddle, our Merchant of Record, takes payment and adds any tax. Ask for a refund within 14 days. <a href="/refund.html">Refund policy</a></p></li>
       </ul>
@@ -245,11 +266,11 @@ APP_PAGES = {
             ]),
         ],
         "facts": [
-            ("Price", "$39.99 once."),
+            ("Price", "$39.99 once. Or $9.97 a month or $100 a year with automatic bank updates through Plaid."),
             ("Trial", "14 days with every feature."),
             ("Computers", "A Mac with Apple silicon running macOS 13 or newer, or Windows 11 (64-bit)."),
             ("Where it works", "United States households. Six states' income tax (AR, CT, MD, MN, NY and VT) is approximate for now."),
-            ("What goes over the internet", "Update checks only, by default. Bank connections are planned as an optional extra for $5 a month and are not available yet."),
+            ("What goes over the internet", "Update and license checks only, by default. With a monthly or yearly plan, your bank and card accounts update automatically through Plaid."),
         ],
         "help": "",
     },
