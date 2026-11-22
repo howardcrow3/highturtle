@@ -1,0 +1,92 @@
+name: Backer update hosting setup (AWS, run by hand)
+
+# Creates (or updates) the AWS pieces that serve Backer app updates: a private S3 bucket behind CloudFront and the
+# role Backer's release job assumes (GitHub OIDC, so Backer needs no AWS keys). Safe to re-run; never deletes anything.
+# The template is tools/update-hosting/template.yaml in howardcrow3/Backer.
+#
+# Secrets used: AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY (the same setup keys the other workflows here use).
+# Optional: BACKER_ADMIN_TOKEN, a fine-grained token on howardcrow3/Backer with Variables and Secrets read/write.
+# With it the workflow sets Backer's UPDATE_BASE_URL, UPDATE_S3_BUCKET, UPDATE_AWS_REGION and AWS_UPDATE_ROLE_ARN;
+# without it the values are printed in the run summary for you to paste into Backer's Settings.
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: AWS region for the bucket and stack
+        required: false
+        default: us-east-2
+
+permissions:
+  contents: read
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      REGION: ${{ inputs.region }}
+      STACK: backer-updates
+      BACKER_REPO: howardcrow3/Backer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: howardcrow3/Backer
+          path: backer
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.region }}
+      - name: Deploy the stack
+        run: |
+          set -euo pipefail
+          # An account can have only one GitHub OIDC provider; reuse it when it already exists.
+          ARN=$(aws iam list-open-id-connect-providers --query "OpenIDConnectProviderList[?contains(Arn,'token.actions.githubusercontent.com')].Arn | [0]" --output text)
+          PARAMS=("GitHubRepo=$BACKER_REPO")
+          if [ -n "$ARN" ] && [ "$ARN" != "None" ]; then
+            echo "Reusing existing OIDC provider $ARN"
+            PARAMS+=(CreateGitHubOidcProvider=false "ExistingOidcProviderArn=$ARN")
+          fi
+          aws cloudformation deploy --stack-name "$STACK" --template-file backer/tools/update-hosting/template.yaml \
+            --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset --parameter-overrides "${PARAMS[@]}"
+      - name: Read the outputs
+        id: out
+        run: |
+          set -euo pipefail
+          get() { aws cloudformation describe-stacks --stack-name "$STACK" --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text; }
+          echo "bucket=$(get BucketName)" >> "$GITHUB_OUTPUT"
+          echo "base=$(get BaseUrl)" >> "$GITHUB_OUTPUT"
+          echo "role=$(get RoleArn)" >> "$GITHUB_OUTPUT"
+      - name: Smoke test (CloudFront answers, bucket stays private)
+        run: |
+          set -u
+          code=$(curl -s -o /dev/null -w '%{http_code}' "${{ steps.out.outputs.base }}/latest.json" || true)
+          echo "latest.json -> HTTP $code (403/404 is normal until the first release uploads it)"
+          direct=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ steps.out.outputs.bucket }}.s3.$REGION.amazonaws.com/backer/latest.json" || true)
+          echo "bucket direct -> HTTP $direct (must not be 200)"
+          [ "$direct" != "200" ]
+      - name: Set Backer's variables and secret (needs BACKER_ADMIN_TOKEN)
+        env:
+          GH_TOKEN: ${{ secrets.BACKER_ADMIN_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "BACKER_ADMIN_TOKEN not set; paste the values from the summary into Backer's Settings."; exit 0; fi
+          gh variable set UPDATE_S3_BUCKET --repo "$BACKER_REPO" --body "${{ steps.out.outputs.bucket }}"
+          gh variable set UPDATE_BASE_URL --repo "$BACKER_REPO" --body "${{ steps.out.outputs.base }}"
+          gh variable set UPDATE_AWS_REGION --repo "$BACKER_REPO" --body "$REGION"
+          gh secret set AWS_UPDATE_ROLE_ARN --repo "$BACKER_REPO" --body "${{ steps.out.outputs.role }}"
+          echo "SET=1" >> "$GITHUB_ENV"
+      - name: Summary
+        run: |
+          {
+            echo "## Backer update hosting is ready"
+            echo
+            echo "| Setting on howardcrow3/Backer | Kind | Value |"
+            echo "|---|---|---|"
+            echo "| \`UPDATE_S3_BUCKET\` | variable | \`${{ steps.out.outputs.bucket }}\` |"
+            echo "| \`UPDATE_BASE_URL\` | variable | \`${{ steps.out.outputs.base }}\` |"
+            echo "| \`UPDATE_AWS_REGION\` | variable | \`$REGION\` |"
+            echo "| \`AWS_UPDATE_ROLE_ARN\` | secret | \`${{ steps.out.outputs.role }}\` |"
+            echo
+            if [ "${SET:-0}" = "1" ]; then echo "These were set on Backer for you."; else echo "Add them in Backer under Settings, Secrets and variables, Actions. The next Backer release then publishes the update feed."; fi
+          } >> "$GITHUB_STEP_SUMMARY"
