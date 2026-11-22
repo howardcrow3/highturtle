@@ -18,6 +18,7 @@ import { makeGoldenFulfillment } from './golden-fulfillment.mjs';
 import { makeCeeveeFulfillment, makeCeeveeRefund } from './ceevee-fulfillment.mjs';
 import { makeCeeveeApi, isCeeveePath } from './ceevee-api.mjs';
 import { normalizeKey } from './ceevee.mjs';
+import { makeBackerApi, isBackerPath, keyIdOf } from './backer-activation.mjs';
 import { CeeveeDynamoStore } from './ceevee-store.mjs';
 import { anySubscriptionGrantsAccess, subscriptionGrantsAccess } from './access.mjs';
 import { signToken, verifyToken, sessionCookie, readCookie, SESSION_TTL, COOKIE } from './session.mjs';
@@ -48,6 +49,7 @@ function header(event, name) {
 
 export function makeApp(deps) {
   const { cfg, store, paddle, sendEmail } = deps;
+  const backerApi = deps.backer ? makeBackerApi({ cfg, store: deps.backer, log, now: deps.now }) : null;
   const ceeveeApi = deps.ceevee ? makeCeeveeApi({ cfg, ceevee: deps.ceevee, log, now: deps.now }) : null;
 
   async function webhook(event) {
@@ -110,6 +112,11 @@ export function makeApp(deps) {
   }
   const sessionEmail = (event) => sessionData(event)?.e || null;
 
+  // Computers holding a seat. The id is a short prefix of the machine hash: enough to pick one to free, never the whole hash.
+  const seatList = (machines) => Object.entries(machines || {}).map(([hash, m]) => ({
+    id: hash.slice(0, 12), activated_at: m.activated_at ?? null, platform: m.platform || null, app_version: m.app_version || null,
+  }));
+
   // CeeVee licenses are keyed by email, so they show even before a Paddle customer row exists.
   async function ceeveeLicenses(email) {
     if (!deps.ceevee?.findLicensesByEmail) return [];
@@ -121,30 +128,43 @@ export function makeApp(deps) {
       product: 'CeeVee', key: l.license_key, status: l.status ?? 'active', seats: l.seats ?? null,
       seats_used: Object.keys(l.machines || {}).length, version: l.major ? `${l.major}.x` : null,
       date: l.created_at ?? l.issued_at ?? null,
-      // Computers holding a seat. The id is a short prefix of the machine hash: enough to pick one to free, never the whole hash.
-      machines: Object.entries(l.machines || {}).map(([hash, m]) => ({
-        id: hash.slice(0, 12), activated_at: m.activated_at ?? null, platform: m.platform || null, app_version: m.app_version || null,
-      })),
+      machines: seatList(l.machines),
     }));
   }
 
+  // The activation row for a Backer key we emailed (by the key's id), or null when it has not been activated yet.
+  async function backerActivation(key) {
+    const id = keyIdOf(key);
+    if (!id || !deps.backer) return null;
+    return deps.backer.getLicense(id).catch((err) => {
+      log({ warn: 'backer activation unavailable', message: String(err?.message || err) });
+      return null;
+    });
+  }
+
   // Signed-in owner frees one of their computers' seats. JSON only (a cross-site form cannot send it).
-  async function ceeveeRelease(event) {
+  // Works for CeeVee keys and Backer keys; the key text says which.
+  async function releaseSeat(event) {
     const email = sessionEmail(event);
     if (!email) return json(401, { error: 'signin' });
     if (!(header(event, 'content-type') || '').includes('application/json')) return json(415, { error: 'json_only' });
     let body;
     try { body = JSON.parse(rawBody(event)); } catch { body = null; }
-    const key = normalizeKey(body?.key);
     const id = typeof body?.id === 'string' ? body.id : '';
-    if (!key || !/^[A-Za-z0-9+/=_-]{8,64}$/.test(id) || !deps.ceevee) return json(400, { error: 'bad_request' });
-    const lic = await deps.ceevee.getLicense(key);
+    if (!/^[A-Za-z0-9+/=_-]{8,64}$/.test(id)) return json(400, { error: 'bad_request' });
+    const ceeveeKey = normalizeKey(body?.key);
+    let backerId = null, owned, rowStore, rowKey;
+    if (ceeveeKey && deps.ceevee) { rowStore = deps.ceevee; rowKey = ceeveeKey; }
+    else if (!ceeveeKey && deps.backer && (backerId = keyIdOf(body?.key))) { rowStore = deps.backer; rowKey = backerId; }
+    else return json(400, { error: 'bad_request' });
+    const lic = await rowStore.getLicense(rowKey);
     // Same answer for "not yours" and "not found", so keys cannot be probed.
-    if (!lic || lic.email_lc !== email.trim().toLowerCase()) return json(404, { error: 'not_found' });
+    owned = lic && lic.email_lc === email.trim().toLowerCase();
+    if (!owned) return json(404, { error: 'not_found' });
     const matches = Object.keys(lic.machines || {}).filter((h) => h.startsWith(id));
     if (matches.length !== 1) return json(404, { error: 'not_found' });
-    await deps.ceevee.releaseSeat(key, matches[0]);
-    log({ ceevee: 'seat freed from account', key_tail: key.slice(-5) });
+    await rowStore.releaseSeat(rowKey, matches[0]);
+    log({ [backerId ? 'backer' : 'ceevee']: 'seat freed from account', key_tail: rowKey.slice(-5) });
     return json(200, { ok: true });
   }
 
@@ -171,9 +191,13 @@ export function makeApp(deps) {
       .sort((a, b) => String(b.billed_at || b.paddle_created_at).localeCompare(String(a.billed_at || a.paddle_created_at)));
     const isBacker = (t) => (t.items || []).some((i) => backerPrices.includes(i.price_id));
     const isCeevee = (t) => !!t.ceevee_fulfillment_status;
-    const backerKeys = paid.filter(isBacker).flatMap((t) => (t.license_keys || []).map((key) => ({
-      product: 'Backer', key, status: 'active', version: '1.x', date: t.billed_at || t.paddle_created_at,
-      invoice_number: t.invoice_number ?? null,
+    const backerKeys = await Promise.all(paid.filter(isBacker).flatMap((t) => (t.license_keys || []).map(async (key) => {
+      const act = await backerActivation(key);
+      return {
+        product: 'Backer', key, status: act?.status ?? 'active', version: '1.x', date: t.billed_at || t.paddle_created_at,
+        invoice_number: t.invoice_number ?? null,
+        seats: act?.seats ?? cfg.backerSeats, seats_used: Object.keys(act?.machines || {}).length, machines: seatList(act?.machines),
+      };
     })));
     return json(200, {
       ...profile,
@@ -227,11 +251,12 @@ export function makeApp(deps) {
     const path = (event.rawPath || event.path || '').replace(/\/+$/, '');
     try {
       if (ceeveeApi && isCeeveePath(path)) return await ceeveeApi(event, method, path);
+      if (backerApi && isBackerPath(path)) return await backerApi(event, method, path);
       if (path === '/api/billing/webhook' && method === 'POST') return await webhook(event);
       if (path === '/api/billing/google/start' && method === 'GET') return googleStart();
       if (path === '/api/billing/google/callback' && method === 'GET') return await googleCallback(event);
       if (path === '/api/billing/me' && method === 'GET') return await me(event);
-      if (path === '/api/billing/ceevee/release' && method === 'POST') return await ceeveeRelease(event);
+      if ((path === '/api/billing/release' || path === '/api/billing/ceevee/release') && method === 'POST') return await releaseSeat(event);
       if (path === '/api/billing/portal' && method === 'POST') return await portal(event);
       if (path === '/api/billing/signout' && method === 'POST') return signout();
       return json(404, { error: 'not found' });
@@ -259,13 +284,15 @@ async function buildApp() {
     Content: { Simple: { Subject: { Data: subject }, Body: { Text: { Data: text } } } },
   }));
   const ceevee = new CeeveeDynamoStore({ tables: cfg.tables, region: cfg.region });
+  // Same atomic seat logic as CeeVee, on the Backer activation table (rows keyed by the key's id).
+  const backerAct = new CeeveeDynamoStore({ tables: { ceeveeLicenses: cfg.tables.backerActivations }, region: cfg.region });
   const backer = makeBackerFulfillment({ cfg, store, paddle, sendEmail, log });
   const ceeveeFulfil = makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, log });
   const golden = makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log });
   // Each hook is idempotent on its own claim, so a retry after one fails is safe.
   const onPurchase = async (txn) => { await backer(txn); await ceeveeFulfil(txn); await golden(txn); };
   const onRefund = makeCeeveeRefund({ cfg, ceevee, log });
-  return makeApp({ cfg, store, paddle, sendEmail, onPurchase, onRefund, ceevee });
+  return makeApp({ cfg, store, paddle, sendEmail, onPurchase, onRefund, ceevee, backer: backerAct });
 }
 
 export async function handler(event) {

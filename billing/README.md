@@ -51,6 +51,26 @@ Tokens are Ed25519 over the JSON bytes, signed with `CEEVEE_SIGNING_KEY` (64-hex
 public half (`CEEVEE_LICENSE_PUBKEY`). Until the key is set the endpoints answer 503 and orders are forwarded to `OPS_EMAIL`
 (the event stays retryable; redeliver it from Paddle once the key is in).
 
+### Backer activation (2 computers per key)
+
+Keys stay offline-checkable, but the app also activates online (`src/backer-activation.mjs`, row logic shared with CeeVee's store). Routes, reached
+through CloudFront at `/api/backer/*`:
+
+| Route | What it does |
+|---|---|
+| `POST /api/backer/v1/activate` | `{key, machine, app_version, platform}` → `{token, refresh_after, expires_at}`. 404 `unknown_key` (signature fails), 403 `revoked`, 409 `seats_full` after 2 computers |
+| `POST /api/backer/v1/deactivate` | `{key, machine}` → 204, frees the seat (the app's Deactivate button) |
+| `POST /api/billing/release` | Signed-in owner only, `{key, id}`; frees one computer from `/account/`. Handles CeeVee and Backer keys |
+
+- The key's signature is checked with `BACKER_PUBLIC_KEY` before anything is stored, so only genuine keys get a row. Existing keys need no migration:
+  a row (table `highturtle-backer-activations`, id = SHA-256 of the key's bytes, never the key text) is created on first activation.
+- The token is `base64url(json).base64url(sig)`, Ed25519 over `"backer-activation-v1\0" + json` with the same `BACKER_SIGNING_KEY` (the domain prefix
+  keeps it distinct from license-key signatures). It is bound to the key id and the machine, good for 90 days, and the app refreshes after 7, so a
+  license-service outage never stops a backup.
+- Support reset: run the **Backer seat reset** workflow with the buyer's email (or the key); it empties the computers on that buyer's keys.
+- To deactivate a key for good (refund, abuse), set `status` to `revoked` on its row; the app stops at its next refresh (within 7 days).
+- Two units bought in one order get identical keys (same email, same day), so they share the 2 computers.
+
 ## Golden licensing
 
 A completed transaction with `GOLDEN_PRICE_ID` (core, one-time) or `GOLDEN_PLAID_PRICE_ID` (bank-connection add-on, monthly) emails the

@@ -47,7 +47,7 @@ export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
       await sendEmail({
         to: email,
         subject: plural ? 'Your Backer license keys' : 'Your Backer license key',
-        text: `Thanks for buying Backer.\n\nYour license key${plural ? 's' : ''}:\n\n${keys.join('\n\n')}\n\nTo turn it on: open Backer, go to Settings, then License, paste the key and click Activate.\nThe key is tied to ${email} and covers all 1.x versions.\n\nDownload Backer: ${cfg.site}/backer/\nOrder: ${txn.invoiceNumber || txn.id} (receipt from Paddle, our Merchant of Record)\nQuestions: reply to this email.\n\nTurtlebox`,
+        text: `Thanks for buying Backer.\n\nYour license key${plural ? 's' : ''}:\n\n${keys.join('\n\n')}\n\nTo turn it on: open Backer, go to Settings, then License, paste the key and click Activate.\nThe key is tied to ${email}, covers all 1.x versions and works on up to ${cfg.backerSeats || 2} computers at once. To move it to a new computer, choose Deactivate in Settings, License on the old one, or free a computer at ${cfg.site}/account/.\n\nDownload Backer: ${cfg.site}/backer/\nOrder: ${txn.invoiceNumber || txn.id} (receipt from Paddle, our Merchant of Record)\nQuestions: reply to this email.\n\nTurtlebox`,
       });
       await store.finishFulfillment(txn.id, 'emailed', 'fulfillment', { license_keys: keys });
       log({ fulfillment: 'emailed', transaction: txn.id, keys: keys.length });

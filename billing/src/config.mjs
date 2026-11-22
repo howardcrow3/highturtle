@@ -33,6 +33,7 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
       transactions: merged.TRANSACTIONS_TABLE || 'highturtle-billing-transactions',
       ceeveeLicenses: merged.CEEVEE_LICENSES_TABLE || 'highturtle-ceevee-licenses',
       ceeveeTrials: merged.CEEVEE_TRIALS_TABLE || 'highturtle-ceevee-trials',
+      backerActivations: merged.BACKER_ACTIVATIONS_TABLE || 'highturtle-backer-activations',
     },
     // What a past_due subscription means for access: "grant" (default, Paddle is still retrying
     // the payment) or "deny".
@@ -44,6 +45,8 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
     // Public key the shipped Backer app trusts (crates/backer-license/public_key.hex in howardcrow3/Backer). The signing key
     // must match it, otherwise buyers would get keys the app rejects, so a mismatch is treated like a missing key.
     backerPublicKey: (merged.BACKER_PUBLIC_KEY || '80475df325e958aa1fe24db56f58cf9a8f636d66c1409f9a08744ac3a6da2516').trim().toLowerCase(),
+    // Computers one Backer key may be active on (the promise on turtlebox.studio and in the Paddle listing).
+    backerSeats: Number(merged.BACKER_SEATS) || 2,
     // CeeVee one-time purchases: Paddle price IDs that mean "issue a CeeVee license key".
     ceeveePriceIds: (merged.CEEVEE_PRICE_IDS || '').split(',').map((x) => x.trim()).filter(Boolean),
     // Hex Ed25519 seed that signs CeeVee licenses and trial tokens (public half is CEEVEE_LICENSE_PUBKEY in the app).

@@ -6,7 +6,8 @@
 #     protection and point-in-time recovery on (they mirror live billing state)
 #   - Secrets Manager secret highturtle/billing holding PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET, SESSION_SECRET
 #   - Lambda role, the turtlebox-billing function (Node 22) + function URL
-#   - CloudFront routes /api/billing/* and /api/ceevee/* on turtlebox.studio, placed BEFORE /api/*
+#   - CloudFront routes /api/billing/*, /api/ceevee/* and /api/backer/* on turtlebox.studio, placed BEFORE /api/*
+#   - Backer activation table highturtle-backer-activations (2 computers per key; see billing/src/backer-activation.mjs)
 #   - CeeVee tables highturtle-ceevee-licenses / -trials; CEEVEE_SIGNING_KEY and GOLDEN_SIGNING_KEY in the secret; CEEVEE_PRICE_IDS, GOLDEN_PRICE_ID, GOLDEN_PLAID_PRICE_ID on the function
 # Secret values come from the PADDLE_API_KEY, PADDLE_WEBHOOK_SECRET and BACKER_SIGNING_KEY environment variables (GitHub
 # secrets in the workflow). An empty value keeps whatever the secret already holds. SESSION_SECRET is
@@ -22,6 +23,7 @@ T_SUBS=highturtle-billing-subscriptions
 T_TXN=highturtle-billing-transactions
 T_CLIC=highturtle-ceevee-licenses
 T_CTRIAL=highturtle-ceevee-trials
+T_BACT=highturtle-backer-activations
 CONFIG_SET=highturtle
 DEPLOY_ROLE=turtlebox-github-deploy
 export AWS_DEFAULT_REGION=$REGION
@@ -57,6 +59,7 @@ if [ "$(aws dynamodb describe-table --table-name $T_TXN --query "length(Table.Gl
 fi
 make_table $T_CLIC license_key email-index email_lc
 make_table $T_CTRIAL machine
+make_table $T_BACT license_key
 
 echo "== 2. Secret =="
 CURRENT='{}'; EXISTS=no
@@ -116,7 +119,7 @@ T="arn:aws:dynamodb:$REGION:$ACCOUNT:table"
 cat > /tmp/lambda-policy.json <<JSON
 {"Version":"2012-10-17","Statement":[
  {"Effect":"Allow","Action":["dynamodb:UpdateItem","dynamodb:PutItem","dynamodb:GetItem","dynamodb:Query"],
-  "Resource":["$T/$T_CUST","$T/$T_CUST/index/*","$T/$T_SUBS","$T/$T_SUBS/index/*","$T/$T_TXN","$T/$T_TXN/index/*","$T/$T_CLIC","$T/$T_CLIC/index/*","$T/$T_CTRIAL"]},
+  "Resource":["$T/$T_CUST","$T/$T_CUST/index/*","$T/$T_SUBS","$T/$T_SUBS/index/*","$T/$T_TXN","$T/$T_TXN/index/*","$T/$T_CLIC","$T/$T_CLIC/index/*","$T/$T_CTRIAL","$T/$T_BACT"]},
  {"Effect":"Allow","Action":["secretsmanager:GetSecretValue"],"Resource":"$SECRET_ARN"},
  {"Effect":"Allow","Action":["ses:SendEmail"],"Resource":["arn:aws:ses:$REGION:$ACCOUNT:identity/*","arn:aws:ses:$REGION:$ACCOUNT:configuration-set/$CONFIG_SET"]}
 ]}
@@ -127,11 +130,11 @@ ROLE_ARN=$(aws iam get-role --role-name $FN_ROLE --query Role.Arn --output text)
 echo "== 4. Lambda function =="
 (cd billing && npm ci --no-audit --no-fund >/dev/null && npm test >/dev/null && npm run build >/dev/null)
 rm -f /tmp/billing.zip; (cd billing/dist && zip -q /tmp/billing.zip index.mjs)
-ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN --arg cl $T_CLIC --arg ct $T_CTRIAL --arg cp "${CEEVEE_PRICE_IDS:-}" --arg gp "${GOLDEN_PRICE_ID:-}" --arg gpl "${GOLDEN_PLAID_PRICE_ID:-}" '{Variables:{
+ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN --arg cl $T_CLIC --arg ct $T_CTRIAL --arg ba $T_BACT --arg cp "${CEEVEE_PRICE_IDS:-}" --arg gp "${GOLDEN_PRICE_ID:-}" --arg gpl "${GOLDEN_PLAID_PRICE_ID:-}" '{Variables:{
   BILLING_SECRET_ID:$s, PADDLE_ENVIRONMENT:"production", SITE:"https://turtlebox.studio",
   FROM_ADDR:"Turtlebox <account@turtlebox.studio>", REPLY_TO:"info@turtlebox.studio", CONFIG_SET:$c,
   CUSTOMERS_TABLE:$a, SUBSCRIPTIONS_TABLE:$b, TRANSACTIONS_TABLE:$t, ACCESS_PAST_DUE:"grant",
-  CEEVEE_LICENSES_TABLE:$cl, CEEVEE_TRIALS_TABLE:$ct, CEEVEE_PRICE_IDS:$cp, GOLDEN_PRICE_ID:$gp, GOLDEN_PLAID_PRICE_ID:$gpl,
+  CEEVEE_LICENSES_TABLE:$cl, CEEVEE_TRIALS_TABLE:$ct, BACKER_ACTIVATIONS_TABLE:$ba, BACKER_SEATS:"2", CEEVEE_PRICE_IDS:$cp, GOLDEN_PRICE_ID:$gp, GOLDEN_PLAID_PRICE_ID:$gpl,
   BACKER_PRICE_IDS:"pri_01m7esmmmhtvqh0518kmb0xqdq", OPS_EMAIL:"info@turtlebox.studio"}}')
 if aws lambda get-function --function-name $FN >/dev/null 2>&1; then
   aws lambda update-function-code --function-name $FN --zip-file fileb:///tmp/billing.zip >/dev/null
@@ -153,7 +156,7 @@ aws lambda add-permission --function-name $FN --statement-id url-invoke --action
 aws lambda add-permission --function-name $FN --statement-id url-invoke-fn --action lambda:InvokeFunction --principal '*' --invoked-via-function-url >/dev/null 2>&1 || true
 URL_HOST=$(echo "$URL" | sed -E 's#https://([^/]+)/?#\1#')
 
-echo "== 6. CloudFront: /api/billing/* and /api/ceevee/* before /api/* =="
+echo "== 6. CloudFront: /api/billing/*, /api/ceevee/* and /api/backer/* before /api/* =="
 CP=$(aws cloudfront list-cache-policies --type managed --query "CachePolicyList.Items[?CachePolicy.CachePolicyConfig.Name=='Managed-CachingDisabled'].CachePolicy.Id | [0]" --output text)
 ORP=$(aws cloudfront list-origin-request-policies --type managed --query "OriginRequestPolicyList.Items[?OriginRequestPolicy.OriginRequestPolicyConfig.Name=='Managed-AllViewerExceptHostHeader'].OriginRequestPolicy.Id | [0]" --output text)
 aws cloudfront get-distribution-config --id $DIST_ID > /tmp/cf.json
@@ -169,8 +172,8 @@ jq --arg dom "$URL_HOST" --arg cp "$CP" --arg orp "$ORP" '
       TargetOriginId:"billing-lambda", ViewerProtocolPolicy:"redirect-to-https", Compress:true, SmoothStreaming:false,
       AllowedMethods:{Quantity:7, Items:["GET","HEAD","OPTIONS","PUT","PATCH","POST","DELETE"], CachedMethods:{Quantity:2, Items:["GET","HEAD"]}},
       CachePolicyId:$cp, OriginRequestPolicyId:$orp, FunctionAssociations:{Quantity:0}}) as $b
-  | .CacheBehaviors.Items = ([($b + {PathPattern:"/api/billing/*"}), ($b + {PathPattern:"/api/ceevee/*"})]
-      + ((.CacheBehaviors.Items // []) | map(select(.PathPattern != "/api/billing/*" and .PathPattern != "/api/ceevee/*"))))
+  | .CacheBehaviors.Items = ([($b + {PathPattern:"/api/billing/*"}), ($b + {PathPattern:"/api/ceevee/*"}), ($b + {PathPattern:"/api/backer/*"})]
+      + ((.CacheBehaviors.Items // []) | map(select(.PathPattern != "/api/billing/*" and .PathPattern != "/api/ceevee/*" and .PathPattern != "/api/backer/*"))))
   | .CacheBehaviors.Quantity = (.CacheBehaviors.Items | length)' /tmp/cf.json > /tmp/cf-new.json
 aws cloudfront update-distribution --id $DIST_ID --if-match "$ETAG" --distribution-config file:///tmp/cf-new.json >/dev/null
 
