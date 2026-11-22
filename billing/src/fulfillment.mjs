@@ -3,7 +3,15 @@
 // even though Paddle can deliver the event more than once. If the signing key is not configured yet, the
 // order goes to the support inbox instead so a key can be issued by hand; the buyer is never left with nothing.
 
+import { createHash } from 'node:crypto';
 import { issueKey, publicKeyHex } from './license.mjs';
+
+// Every unit gets its own key, and so its own 2 computers. The key's "issued day" is not used by the app, so it carries a small
+// per-unit offset (from the transaction id and unit number) to make keys differ even for one email on one day.
+export function unitDay(txnId, index, today = Math.floor(Date.now() / 86400000)) {
+  const h = createHash('sha256').update(`backer-unit|${txnId}|${index}`).digest();
+  return today + h.readUInt16BE(0);
+}
 
 export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
   const priceIds = new Set(cfg.backerPriceIds || []);
@@ -42,7 +50,7 @@ export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
       }
 
       const keys = [];
-      for (let i = 0; i < qty; i++) keys.push(await issueKey(cfg.backerSigningKey, email));
+      for (let i = 0; i < qty; i++) keys.push(await issueKey(cfg.backerSigningKey, email, unitDay(txn.id, i)));
       const plural = keys.length > 1;
       await sendEmail({
         to: email,

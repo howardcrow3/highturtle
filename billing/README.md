@@ -69,7 +69,7 @@ through CloudFront at `/api/backer/*`:
   license-service outage never stops a backup.
 - Support reset: run the **Backer seat reset** workflow with the buyer's email (or the key); it empties the computers on that buyer's keys.
 - To deactivate a key for good (refund, abuse), set `status` to `revoked` on its row; the app stops at its next refresh (within 7 days).
-- Two units bought in one order get identical keys (same email, same day), so they share the 2 computers.
+- Every unit gets its own key (and so its own 2 computers): the key's unused "issued day" carries a small per-unit offset (`unitDay` in `src/fulfillment.mjs`).
 
 ## Golden licensing
 

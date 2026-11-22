@@ -145,3 +145,15 @@ test('the owner sees their computers on the account page and can free one; other
   assert.equal((await release(s, { key, id: lic.machines[0].id })).statusCode, 200);
   assert.equal((await activate(s, key, C)).statusCode, 200, 'the freed seat can be taken');
 });
+
+test('a two-unit order gets two different keys, each with its own 2 computers', async () => {
+  const s = setup();
+  await s.deliver(customerEvent('customer.created'));
+  assert.equal((await s.deliver(transactionCompletedEvent({ priceId: 'pri_backer', quantity: 2 }))).statusCode, 200);
+  const keys = s.sent[0].text.match(/BACKER(-[A-Z2-7]{1,5})+/g);
+  assert.equal(keys.length, 2);
+  assert.notEqual(keys[0], keys[1]);
+  for (const m of [A, B]) { assert.equal((await activate(s, keys[0], m)).statusCode, 200); }
+  assert.equal((await activate(s, keys[0], C)).statusCode, 409);
+  assert.equal((await activate(s, keys[1], C)).statusCode, 200);
+});
