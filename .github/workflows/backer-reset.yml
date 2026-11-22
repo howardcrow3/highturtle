@@ -1,0 +1,42 @@
+name: Backer seat reset
+
+# Support tool: empties the computers registered on a Backer key, so the buyer can activate on new computers.
+# Give the buyer's email (resets every Backer key bought with it) or paste one key. Changes only that key's computer list.
+# The buyer can also do this themselves at turtlebox.studio/account/ ("Free this seat").
+
+on:
+  workflow_dispatch:
+    inputs:
+      email:
+        description: Buyer's email (resets all their Backer keys). Leave empty if you give a key.
+        required: false
+      key:
+        description: A Backer license key (BACKER-...). Leave empty if you give an email.
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      AWS_DEFAULT_REGION: us-east-2
+      EMAIL: ${{ inputs.email }}
+      KEY: ${{ inputs.key }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Reset
+        run: |
+          set -euo pipefail
+          [ -n "$EMAIL$KEY" ] || { echo "::error::Give an email or a key."; exit 1; }
+          node billing/scripts/backer-reset.mjs
