@@ -64,6 +64,14 @@
 .soon { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); display: flex; align-items: center; gap: 12px; margin-top: var(--space-xs); }
 .soon::before { content: ""; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border-control); }
 
+/* Optional subscription plans under the one-time price */
+.plans { width: 100%; margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: var(--space-xs); }
+.plans-title { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }
+.plans-note { font-size: 0.9375rem; color: var(--body); }
+.plans-row { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xs); }
+.btn-plan { font-size: 0.8125rem; letter-spacing: 0.08em; text-transform: none; }
+.plans-line { font-size: 0.9375rem; color: var(--body); margin-top: var(--space-xs); }
+
 /* Release news signup (posts to highturtle.com, no script needed) */
 .notify-form { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .notify-form label { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }

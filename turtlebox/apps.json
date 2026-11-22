@@ -42,6 +42,26 @@
     "url": "/golden/",
     "on_sale": true,
     "price_id": "pri_01m7h6qqb0y4f9r6mftw05y772",
-    "success_url": "https://turtlebox.studio/checkout/?done=golden"
+    "success_url": "https://turtlebox.studio/checkout/?done=golden",
+    "plans_title": "With automatic bank updates",
+    "plans_note": "Everything in Golden, plus your bank and card accounts update on their own through Plaid.",
+    "plans": [
+      {
+        "label": "Monthly",
+        "price": "$9.97",
+        "per": "a month",
+        "price_id": "",
+        "success_url": "https://turtlebox.studio/checkout/?done=golden",
+        "price_id_var": "GOLDEN_PLAID_PRICE_ID"
+      },
+      {
+        "label": "Yearly",
+        "price": "$100",
+        "per": "a year",
+        "price_id": "",
+        "success_url": "https://turtlebox.studio/checkout/?done=golden",
+        "price_id_var": "GOLDEN_PLAID_ANNUAL"
+      }
+    ]
   }
 ]
