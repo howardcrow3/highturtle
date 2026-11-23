@@ -9,6 +9,7 @@ test('Backer email shows every key in text and HTML and escapes the address', ()
   assert.ok(m.html.includes('a&lt;b&gt;@x.com'));
   assert.ok(m.html.includes('https://turtlebox.studio/backer/') && m.html.includes('/assets/icons/backer-144.png'));
   assert.ok(m.text.includes('up to 2 computers'));
+  for (const k of ['BACKER-AAAA-BBBB', 'BACKER-CCCC-DDDD']) { assert.ok(m.text.includes(`https://turtlebox.studio/backer/activate/#key=${k}`)); assert.ok(m.html.includes(`href="https://turtlebox.studio/backer/activate/#key=${k}"`)); }
 });
 
 test('Backer email uses the singular for one key', () => {
