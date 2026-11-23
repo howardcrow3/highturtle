@@ -132,3 +132,27 @@ test('the email carries a one-click activation link and the same key', async () 
   const token = tokenIn(s.sent[0]);
   assert.ok(s.sent[0].text.includes(`golden://activate?key=${token}`));
 });
+
+test('an annual Plaid purchase carries a year, and a renewal is a fresh key with a later date', async () => {
+  const s = setup({ goldenPlaidYearlyPriceId: 'pri_golden_year' });
+  await s.deliver(customerEvent('customer.created'));
+  await s.deliver(transactionCompletedEvent({ id: 'txn_y1', priceId: 'pri_golden_year' }));
+  await s.deliver(transactionCompletedEvent({ id: 'txn_y2', priceId: 'pri_golden_plaid' }));
+  assert.equal(s.sent.length, 2);
+  const dates = s.sent.map((m) => JSON.parse(Buffer.from(tokenIn(m).split('.')[0], 'base64url')).plaid_until);
+  assert.equal(dates[0], '2027-11-15');
+  assert.equal(dates[1], '2026-12-15');
+  assert.notEqual(tokenIn(s.sent[0]), tokenIn(s.sent[1]));
+  for (const m of s.sent) assert.ok(m.text.includes('golden://activate?key='));
+});
+
+test('core plus the annual add-on in one checkout sends one email with both', async () => {
+  const s = setup({ goldenPlaidYearlyPriceId: 'pri_golden_year' });
+  await s.deliver(customerEvent('customer.created'));
+  const evt = transactionCompletedEvent({ id: 'txn_b', priceId: 'pri_golden' });
+  evt.data.items.push({ ...evt.data.items[0], price: { ...evt.data.items[0].price, id: 'pri_golden_year' } });
+  await s.deliver(evt);
+  assert.equal(s.sent.length, 1);
+  const p = JSON.parse(Buffer.from(tokenIn(s.sent[0]).split('.')[0], 'base64url'));
+  assert.equal(p.plaid_until, '2027-11-15');
+});
