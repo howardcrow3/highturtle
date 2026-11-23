@@ -153,6 +153,7 @@ def store_row(a, level="h2"):
     more = f'<a class="link" href="{e(a["url"])}">About {e(a["name"])}</a>'
     return f"""      <li class="app-row" id="{e(a["slug"])}">
         <div class="app-row-text">
+          <img class="app-icon" src="/assets/icons/{e(a["slug"])}.svg" width="56" height="56" alt="">
           <{level} class="app-name"><a href="{e(a["url"])}">{e(a["name"])}</a></{level}>
           <p class="app-tagline">{e(a["tagline"])}</p>
           <p class="app-desc">{e(a["description"])}</p>
@@ -309,6 +310,7 @@ def app_page(slug):
     return f"""  <section class="app-hero" id="buy">
     <div class="wrap app-hero-grid">
       <div>
+        <img class="app-icon app-icon-lg" src="/assets/icons/{e(slug)}.svg" width="88" height="88" alt="">
         <h1 class="app-title">{e(a["name"])}</h1>
         <p class="app-headline">{e(p["h1"])}</p>
         <p class="lede">{e(p["lede"])}</p>

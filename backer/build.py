@@ -29,7 +29,7 @@ TB_V = re.search(r'V = "(\w+)"', open(os.path.join(OUT, "build.py")).read()).gro
 mark_svg = open(os.path.join(ROOT, "assets", "mark.svg")).read()
 MARK_PATH = re.search(r"<path[^>]*/>", mark_svg).group(0)
 MARK_VB = re.search(r'viewBox="([^"]+)"', mark_svg).group(1)
-icon_svg = open(os.path.join(HERE, "icon-placeholder.svg")).read()
+icon_svg = open(os.path.join(OUT, "assets", "icons", "backer.svg")).read()
 ICON_INNER = re.sub(r"^<svg[^>]*>|</svg>$", "", icon_svg.strip())
 CSS = open(os.path.join(HERE, "backer.css")).read()
 
@@ -76,7 +76,7 @@ def footer(extra=""):
   </div>
 </footer>'''
 
-SPRITES = f'<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="mark" viewBox="{MARK_VB}">{MARK_PATH}</symbol><symbol id="icon" viewBox="0 0 64 64">{ICON_INNER}</symbol></svg>'
+SPRITES = f'<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="mark" viewBox="{MARK_VB}">{MARK_PATH}</symbol><symbol id="icon" viewBox="100 100 824 824">{ICON_INNER}</symbol></svg>'
 
 VERSION_JS = '''<script>
 /* Show the current version from latest.json. If the request fails, the version stays hidden. */
@@ -120,6 +120,7 @@ PADDLE_JS = '''<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script
 INDEX = '''
   <main id="main">
     <section class="bk-hero" id="download"><div class="wrap">
+      <img class="app-icon app-icon-lg" src="/assets/icons/backer.svg" width="88" height="88" alt="">
       <h1 class="app-title">Backer</h1>
       <p class="app-headline">Back up your photos and videos.</p>
       <p class="lede">Backer copies your photo and video folders from a Mac or PC to a Synology or other NAS you own, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>

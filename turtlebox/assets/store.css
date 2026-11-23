@@ -121,6 +121,8 @@
 @media (prefers-reduced-motion: reduce) { .car-track { scroll-behavior: auto; } }
 
 /* App name on the product pages: the name is the h1, the promise sits under it */
+.app-icon { display: block; width: 56px; height: 56px; border-radius: 22%; }
+.app-icon-lg { width: 88px; height: 88px; margin-bottom: var(--space-md); }
 .app-title { font-size: clamp(3rem, 7vw, 5rem); font-weight: 300; letter-spacing: -0.04em; line-height: 1; color: var(--ink); margin: 0; }
 .app-title::after { content: ""; display: block; width: 56px; height: 2px; margin-top: var(--space-md); background: var(--accent); }
 .app-headline { margin-top: var(--space-md); font-size: clamp(1.5rem, 3vw, 2.125rem); font-weight: 300; letter-spacing: -0.02em; line-height: 1.2; color: var(--ink); max-width: 20em; text-wrap: balance; }
