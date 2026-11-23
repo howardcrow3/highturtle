@@ -58,6 +58,14 @@ jobs:
           echo "bucket=$(get BucketName)" >> "$GITHUB_OUTPUT"
           echo "base=$(get BaseUrl)" >> "$GITHUB_OUTPUT"
           echo "role=$(get RoleArn)" >> "$GITHUB_OUTPUT"
+      - name: Read Backer's OIDC subject customization (read only)
+        env:
+          GH_TOKEN: ${{ secrets.BACKER_ADMIN_TOKEN }}
+        run: |
+          set +e
+          echo "Repo identity:"; gh api repos/howardcrow3/Backer --jq '{full_name,id,owner_id:.owner.id,private}'
+          echo "OIDC sub customization:"; gh api repos/howardcrow3/Backer/actions/oidc/customization/sub 2>&1
+          echo "Org-level (user repos have none):"; gh api orgs/howardcrow3/actions/oidc/customization/sub 2>&1 | head -3
       - name: Smoke test (CloudFront answers, bucket stays private)
         run: |
           set -u
