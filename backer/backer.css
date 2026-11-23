@@ -8,7 +8,8 @@
 .bk-hero { padding-block: var(--space-3xl) var(--space-2xl); }
 .bk-hero .eyebrow { display: flex; align-items: center; gap: 12px; font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--body); }
 .bk-hero .eyebrow svg { width: 40px; height: 40px; flex: none; }
-.bk-hero h1 { margin-top: var(--space-md); font-size: clamp(3rem, 7vw, 5rem); font-weight: 300; letter-spacing: -0.04em; line-height: 1; max-width: 12em; text-wrap: balance; }
+.bk-hero h1 { margin-top: 0; font-size: clamp(3rem, 7vw, 5rem); font-weight: 300; letter-spacing: -0.04em; line-height: 1; max-width: 12em; text-wrap: balance; }
+.bk-hero .app-row-meta { margin-top: var(--space-lg); }
 .bk-hero .lede strong { color: var(--ink); font-weight: 400; }
 
 /* Buy first, trial second */
