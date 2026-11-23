@@ -48,16 +48,17 @@ export function addMonths(isoDay, n) {
 }
 
 /** Licence fields for a completed transaction: what was bought and the add-on's paid-through date. */
-export function goldenFields(txn, { priceId, plaidPriceId }) {
-  let core = 0, plaid = 0;
+export function goldenFields(txn, { priceId, plaidPriceId, plaidYearlyPriceId }) {
+  let core = 0, plaid = 0, yearly = false;
   for (const i of txn.items || []) {
     const id = i.price?.id;
     if (id && id === priceId) core += i.quantity || 1;
     else if (id && id === plaidPriceId) plaid += i.quantity || 1;
+    else if (id && id === plaidYearlyPriceId) { plaid += i.quantity || 1; yearly = true; }
   }
   if (!core && !plaid) return null;
   const issued = day(txn.billedAt) || day(txn.createdAt);
   if (!issued) throw new Error(`no date on transaction ${txn.id}`);
-  const plaidUntil = plaid ? (day(txn.billingPeriod?.endsAt) || addMonths(issued, 1)) : null;
+  const plaidUntil = plaid ? (day(txn.billingPeriod?.endsAt) || addMonths(issued, yearly ? 12 : 1)) : null;
   return { core, plaid, issued, plaidUntil };
 }

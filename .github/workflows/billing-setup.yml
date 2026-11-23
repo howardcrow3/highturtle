@@ -36,6 +36,7 @@ jobs:
       # Golden's Paddle price IDs (public, not secret): repository variables, same values as in howardcrow3/golden.
       GOLDEN_PRICE_ID: ${{ vars.GOLDEN_PRICE_ID }}
       GOLDEN_PLAID_PRICE_ID: ${{ vars.GOLDEN_PLAID_PRICE_ID }}
+      GOLDEN_PLAID_YEARLY_PRICE_ID: ${{ vars.GOLDEN_PLAID_YEARLY_PRICE_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

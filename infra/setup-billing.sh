@@ -130,11 +130,11 @@ ROLE_ARN=$(aws iam get-role --role-name $FN_ROLE --query Role.Arn --output text)
 echo "== 4. Lambda function =="
 (cd billing && npm ci --no-audit --no-fund >/dev/null && npm test >/dev/null && npm run build >/dev/null)
 rm -f /tmp/billing.zip; (cd billing/dist && zip -q /tmp/billing.zip index.mjs)
-ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN --arg cl $T_CLIC --arg ct $T_CTRIAL --arg ba $T_BACT --arg cp "${CEEVEE_PRICE_IDS:-}" --arg gp "${GOLDEN_PRICE_ID:-}" --arg gpl "${GOLDEN_PLAID_PRICE_ID:-}" '{Variables:{
+ENVJSON=$(jq -nc --arg s "$SECRET_ARN" --arg c $CONFIG_SET --arg a $T_CUST --arg b $T_SUBS --arg t $T_TXN --arg cl $T_CLIC --arg ct $T_CTRIAL --arg ba $T_BACT --arg cp "${CEEVEE_PRICE_IDS:-}" --arg gp "${GOLDEN_PRICE_ID:-}" --arg gpl "${GOLDEN_PLAID_PRICE_ID:-}" --arg gpy "${GOLDEN_PLAID_YEARLY_PRICE_ID:-}" '{Variables:{
   BILLING_SECRET_ID:$s, PADDLE_ENVIRONMENT:"production", SITE:"https://turtlebox.studio",
   FROM_ADDR:"Turtlebox <account@turtlebox.studio>", REPLY_TO:"info@turtlebox.studio", CONFIG_SET:$c,
   CUSTOMERS_TABLE:$a, SUBSCRIPTIONS_TABLE:$b, TRANSACTIONS_TABLE:$t, ACCESS_PAST_DUE:"grant",
-  CEEVEE_LICENSES_TABLE:$cl, CEEVEE_TRIALS_TABLE:$ct, BACKER_ACTIVATIONS_TABLE:$ba, BACKER_SEATS:"2", CEEVEE_PRICE_IDS:$cp, GOLDEN_PRICE_ID:$gp, GOLDEN_PLAID_PRICE_ID:$gpl,
+  CEEVEE_LICENSES_TABLE:$cl, CEEVEE_TRIALS_TABLE:$ct, BACKER_ACTIVATIONS_TABLE:$ba, BACKER_SEATS:"2", CEEVEE_PRICE_IDS:$cp, GOLDEN_PRICE_ID:$gp, GOLDEN_PLAID_PRICE_ID:$gpl, GOLDEN_PLAID_YEARLY_PRICE_ID:$gpy,
   BACKER_PRICE_IDS:"pri_01m7esmmmhtvqh0518kmb0xqdq", OPS_EMAIL:"info@turtlebox.studio"}}')
 if aws lambda get-function --function-name $FN >/dev/null 2>&1; then
   aws lambda update-function-code --function-name $FN --zip-file fileb:///tmp/billing.zip >/dev/null
