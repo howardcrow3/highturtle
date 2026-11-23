@@ -276,12 +276,12 @@ async function buildApp() {
   });
   const store = new DynamoStore({ tables: cfg.tables, region: cfg.region });
   const ses = new SESv2Client({ region: cfg.region });
-  const sendEmail = ({ to, subject, text }) => ses.send(new SendEmailCommand({
+  const sendEmail = ({ to, subject, text, html }) => ses.send(new SendEmailCommand({
     FromEmailAddress: cfg.fromAddr,
     Destination: { ToAddresses: [to] },
     ReplyToAddresses: cfg.replyTo ? [cfg.replyTo] : undefined,
     ConfigurationSetName: cfg.configSet || undefined,
-    Content: { Simple: { Subject: { Data: subject }, Body: { Text: { Data: text } } } },
+    Content: { Simple: { Subject: { Data: subject }, Body: { Text: { Data: text }, ...(html ? { Html: { Data: html } } : {}) } } },
   }));
   const ceevee = new CeeveeDynamoStore({ tables: cfg.tables, region: cfg.region });
   // Same atomic seat logic as CeeVee, on the Backer activation table (rows keyed by the key's id).
