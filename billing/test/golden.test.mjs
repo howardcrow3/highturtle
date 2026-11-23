@@ -125,12 +125,15 @@ test('a failed email releases the claim so Paddle retries', async () => {
   assert.equal(sent.length, 1);
 });
 
-test('the email carries a one-click activation link and the same key', async () => {
+test('the email has an Activate button, a copyable key and a plain-text fallback', async () => {
   const s = setup();
   await s.deliver(customerEvent('customer.created'));
   await s.deliver(transactionCompletedEvent({ priceId: 'pri_golden' }));
   const token = tokenIn(s.sent[0]);
-  assert.ok(s.sent[0].text.includes(`golden://activate?key=${token}`));
+  assert.ok(s.sent[0].text.includes(`https://turtlebox.studio/golden/activate/#key=${token}`));
+  assert.ok(s.sent[0].html.includes(`href="https://turtlebox.studio/golden/activate/#key=${token}"`));
+  assert.match(s.sent[0].html, />Activate Golden</);
+  assert.ok(s.sent[0].html.includes(token), 'the key is shown for copying');
 });
 
 test('an annual Plaid purchase carries a year, and a renewal is a fresh key with a later date', async () => {
@@ -143,7 +146,7 @@ test('an annual Plaid purchase carries a year, and a renewal is a fresh key with
   assert.equal(dates[0], '2027-11-15');
   assert.equal(dates[1], '2026-12-15');
   assert.notEqual(tokenIn(s.sent[0]), tokenIn(s.sent[1]));
-  for (const m of s.sent) assert.ok(m.text.includes('golden://activate?key='));
+  for (const m of s.sent) assert.ok(m.text.includes('/golden/activate/#key=') && m.html.includes('/golden/activate/#key='));
 });
 
 test('core plus the annual add-on in one checkout sends one email with both', async () => {

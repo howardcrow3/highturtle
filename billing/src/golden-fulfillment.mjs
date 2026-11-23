@@ -4,6 +4,7 @@
 // goes to the support inbox and stays replayable from Paddle, so the buyer is never left with nothing.
 
 import { issueGoldenToken, goldenFields } from './golden.mjs';
+import { goldenEmail } from './golden-email.mjs';
 
 export function makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log }) {
   const ids = { priceId: cfg.goldenPriceId, plaidPriceId: cfg.goldenPlaidPriceId, plaidYearlyPriceId: cfg.goldenPlaidYearlyPriceId };
@@ -35,23 +36,8 @@ export function makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log }) {
       const token = await issueGoldenToken(cfg.goldenSigningKey, {
         issued: fields.issued, plaidUntil: fields.plaidUntil, buyer: txn.customerId,
       });
-      const renewal = !fields.core && fields.plaidUntil;
-      const lines = [
-        renewal
-          ? `Your Golden bank-connection add-on is paid through ${fields.plaidUntil}. Paste this new licence key into Golden to keep it active:`
-          : 'Thanks for buying Golden. Your licence key:',
-        '', token, '',
-        `Activate in one click (Golden must be installed): golden://activate?key=${token}`,
-        'If the link does not open Golden, open it, go to the Licence screen, paste the key and choose Activate.',
-        'It works offline and covers every 1.x update. Keep this email; you can use the key again on a new computer.',
-      ];
-      if (!renewal && fields.plaidUntil) lines.push('', `The bank-connection add-on is included through ${fields.plaidUntil}.`);
-      lines.push('', `Order: ${txn.invoiceNumber || txn.id} (receipt from Paddle, our Merchant of Record)`, 'Questions: reply to this email.', '', 'Turtlebox');
-      await sendEmail({
-        to: email,
-        subject: renewal ? 'Your Golden bank-connection licence is renewed' : 'Your Golden licence key',
-        text: lines.join('\n'),
-      });
+      const mail = goldenEmail({ token, site: cfg.site, core: fields.core, plaidUntil: fields.plaidUntil, order: txn.invoiceNumber || txn.id });
+      await sendEmail({ to: email, subject: mail.subject, text: mail.text, html: mail.html });
       await store.finishFulfillment(txn.id, 'emailed', 'golden_fulfillment');
       log({ golden: 'emailed', transaction: txn.id });
     } catch (err) {
