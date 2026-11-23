@@ -78,7 +78,7 @@ test('a CeeVee purchase creates a license and emails the key and activation link
   assert.equal(s.sent.length, 1);
   assert.equal(s.sent[0].to, 'Buyer@Example.com');
   const key = keyFrom(s.sent[0]);
-  assert.ok(s.sent[0].text.includes(`ceevee://activate?key=${key}`));
+  assert.ok(s.sent[0].text.includes(`/ceevee/activate/#key=${key}`));
   const lic = await s.ceevee.getLicense(key);
   assert.equal(lic.seats, 2);
   assert.equal(lic.transaction_id, 'txn_01');
@@ -252,4 +252,27 @@ test('freeing a seat needs sign-in, the owner, JSON and a known computer', async
   assert.equal((await accountCall(s, { key, id: 'zzzzzzzzzzzz' })).statusCode, 404);
   assert.equal((await accountCall(s, { key: 'nope', id })).statusCode, 400);
   assert.equal(Object.keys((await s.ceevee.getLicense(key)).machines).length, 1, 'nothing was freed by the refused calls');
+});
+
+test('the license email carries an Activate button, the key block, seats and the download link', async () => {
+  const s = setup();
+  await buy(s);
+  const mail = s.sent[0];
+  const key = keyFrom(mail);
+  assert.equal(mail.subject, 'Your CeeVee license key');
+  assert.ok(mail.html.includes(`href="https://turtlebox.studio/ceevee/activate/#key=${key}"`));
+  assert.ok(mail.html.includes('Activate CeeVee'));
+  assert.ok(mail.html.includes('/assets/icons/ceevee-144.png'));
+  assert.match(mail.html, /up to 2 computers/);
+  assert.ok(mail.text.includes(`Activate CeeVee: https://turtlebox.studio/ceevee/activate/#key=${key}`));
+  assert.ok(mail.text.includes('https://turtlebox.studio/ceevee/license'));
+  assert.ok(mail.text.includes('Order '));
+});
+
+test('quantity 2: one email, two keys, each with its own button', async () => {
+  const s = setup();
+  await buy(s, { quantity: 2 });
+  assert.equal(s.sent[0].subject, 'Your CeeVee license keys');
+  assert.equal((s.sent[0].html.match(/Activate CeeVee<\/a>/g) || []).length, 2);
+  assert.equal(new Set(s.sent[0].text.match(/CEEV(-[0-9A-Z]{5}){4}/g)).size, 2);
 });
