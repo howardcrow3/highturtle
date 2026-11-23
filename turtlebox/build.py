@@ -21,7 +21,7 @@ from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb13"
+V = "tb14"
 e = html.escape
 
 
@@ -309,9 +309,10 @@ def app_page(slug):
     return f"""  <section class="app-hero" id="buy">
     <div class="wrap app-hero-grid">
       <div>
-        <h1>{e(p["h1"])}</h1>
+        <h1 class="app-title">{e(a["name"])}</h1>
+        <p class="app-headline">{e(p["h1"])}</p>
         <p class="lede">{e(p["lede"])}</p>
-        <div class="app-row-meta">{status_chip(a)}<p class="app-kind">{e(a["name"])}, a Turtlebox app &middot; {e(a["kind"])}</p></div>
+        <div class="app-row-meta">{status_chip(a)}<p class="app-kind">{e(a["kind"])} &middot; a Turtlebox app</p></div>
       </div>
       {buy_plate(a, slug + "-hero")}
     </div>

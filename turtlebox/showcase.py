@@ -12,9 +12,11 @@ def e(s):
 
 SIZES = {  # width, height of each file, so the browser can reserve space before the image loads
     "backer-jobs": (1200, 760), "backer-run": (1200, 760),
-    "ceevee-jobs": (1600, 1000), "ceevee-documents": (1600, 1000), "ceevee-inbox": (1600, 1000), "ceevee-applications": (1600, 1000),
-    "golden-overview": (1600, 1000), "golden-plan": (1600, 1000), "golden-transactions": (1600, 1000), "golden-whatif": (1600, 650),
 }
+for _k in ["ceevee-jobs", "ceevee-documents", "ceevee-inbox", "ceevee-applications",
+           "golden-overview", "golden-plan", "golden-whatif", "golden-retirewhen", "golden-ss", "golden-sankey", "golden-roth",
+           "golden-transactions"]:
+    SIZES[_k] = (1600, 1000)
 
 SCREENS = {
     "backer": [
@@ -34,46 +36,90 @@ SCREENS = {
          "Nothing is sent until you approve it."),
     ],
     "golden": [
-        ("golden-overview", "Golden's Overview showing a monthly spending budget, net worth with each account, and where the household is headed.",
-         "Your household at a glance: budget, net worth and where you're headed."),
-        ("golden-plan", "Golden's retirement plan showing an 86% chance the money lasts to 95 and the assumptions behind it.",
-         "The chance your money lasts, and every assumption behind it."),
-        ("golden-whatif", "Golden's What if screen comparing the plan now with the plan if one partner retires at 60.",
-         "Ask “what if” in plain words and see the plan with and without the change."),
+        ("golden-overview", "Golden's Overview with a getting-started checklist, this month's income, spending and savings, and net worth by account.",
+         "Your household at a glance: what came in this month, what you kept, and what you're worth."),
+        ("golden-plan", "Golden's retirement plan: an 86% chance the money lasts to 95, a fan chart of outcomes and a histogram of final balances.",
+         "The chance your money lasts, with the range of good and rough outcomes."),
+        ("golden-whatif", "Golden's What if screen showing the plan dropping from 86% to 79% if one partner retires at 60.",
+         "Ask “what if” in plain words and see the plan before and after the change."),
+        ("golden-retirewhen", "Golden's safe spending and earliest retirement age results, with the chance of success at each age.",
+         "How much you could spend each year, and the earliest age you could retire."),
+        ("golden-ss", "Golden's Social Security table comparing claiming at 62, 64, 67 and 70, with break-even ages.",
+         "Compare Social Security claiming ages, and see when waiting pays off."),
+        ("golden-sankey", "Golden's flow chart of where a year's money goes, with heads-ups and milestones below it.",
+         "Where the money goes in each year of the plan, and the milestones along the way."),
+        ("golden-roth", "Golden's Roth conversion table comparing no conversions with three conversion strategies.",
+         "Compare Roth conversion strategies by tax paid, what's left for heirs and the chance the plan works."),
         ("golden-transactions", "Golden's Transactions list with dates, payees, accounts, amounts and categories.",
-         "Every transaction from your statements, sorted into categories that you can fix in one click."),
+         "Every transaction from your statements, sorted into categories you can fix in one click."),
     ],
 }
 
+CAROUSEL_JS = """<script>
+(function () {
+  document.querySelectorAll('[data-carousel]').forEach(function (root) {
+    var track = root.querySelector('.car-track'), slides = track.children, n = slides.length;
+    var prev = root.querySelector('[data-car-prev]'), next = root.querySelector('[data-car-next]');
+    var dots = root.querySelectorAll('[data-car-dot]'), count = root.querySelector('[data-car-count]');
+    root.classList.add('car-js');
+    function current() { return Math.round(track.scrollLeft / track.clientWidth); }
+    function go(i) { i = Math.max(0, Math.min(n - 1, i)); track.scrollTo({ left: i * track.clientWidth, behavior: 'smooth' }); }
+    function sync() {
+      var i = current();
+      prev.disabled = i === 0; next.disabled = i === n - 1;
+      dots.forEach(function (d, k) { d.setAttribute('aria-current', k === i ? 'true' : 'false'); });
+      if (count) count.textContent = (i + 1) + ' of ' + n;
+      for (var k = 0; k < n; k++) slides[k].setAttribute('aria-hidden', k === i ? 'false' : 'true');
+    }
+    prev.addEventListener('click', function () { go(current() - 1); });
+    next.addEventListener('click', function () { go(current() + 1); });
+    dots.forEach(function (d, k) { d.addEventListener('click', function () { go(k); }); });
+    track.addEventListener('keydown', function (ev) {
+      if (ev.key === 'ArrowRight') { ev.preventDefault(); go(current() + 1); }
+      if (ev.key === 'ArrowLeft') { ev.preventDefault(); go(current() - 1); }
+    });
+    var t; track.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(sync, 60); });
+    window.addEventListener('resize', sync);
+    sync();
+  });
+})();
+</script>"""
+
 
 def gallery(slug, name, heading_id="screens-h"):
-    """A screenshot section: the first shot large, the rest in a row below it (two shots sit side by side)."""
+    """A screenshot carousel: one screen at a time with its caption, arrows, dots and a count. Without JavaScript it
+    is a row you can scroll sideways. Each image links to the full-size file."""
     shots = SCREENS[slug]
-
-    def fig(i, key, alt, cap):
+    slides = []
+    for i, (key, alt, cap) in enumerate(shots):
         w, h = SIZES[key]
         lazy = "" if i == 0 else ' loading="lazy"'
-        return (f'<figure class="shot{" shot-lead" if i == 0 else ""}">'
-                f'<a class="shot-link" href="/assets/screens/{key}.webp">'  # opens the full-size image, for small screens
-                f'<img src="/assets/screens/{key}.webp" width="{w}" height="{h}" alt="{e(alt)}"{lazy} decoding="async"></a>'
-                f'<figcaption>{e(cap)}</figcaption></figure>')
-
-    figs = [fig(i, *s) for i, s in enumerate(shots)]
-    if len(figs) == 2:  # two shots sit side by side, with no lead
-        figs = [fig(1, *s) for s in shots]
-        lead, rest, cls = "", "\n        ".join(figs), "shots-rest shots-rest-2"
-    else:
-        lead, rest, cls = figs[0], "\n        ".join(figs[1:]), f"shots-rest shots-rest-{len(figs) - 1}"
+        slides.append(
+            f'<li class="car-slide"><figure class="shot">'
+            f'<a class="shot-link" href="/assets/screens/{key}.webp">'
+            f'<img src="/assets/screens/{key}.webp" width="{w}" height="{h}" alt="{e(alt)}"{lazy} decoding="async"></a>'
+            f'<figcaption>{e(cap)}</figcaption></figure></li>')
+    dots = "".join(f'<button type="button" class="car-dot" data-car-dot aria-label="Screen {i + 1}: {e(c)}"></button>'
+                   for i, (_, _, c) in enumerate(shots))
+    arrows = ('<div class="car-arrows">'
+              '<button type="button" class="car-btn" data-car-prev aria-label="Previous screen"><span aria-hidden="true">&larr;</span></button>'
+              '<button type="button" class="car-btn" data-car-next aria-label="Next screen"><span aria-hidden="true">&rarr;</span></button></div>')
     return f"""  <section class="section shots-section" aria-labelledby="{heading_id}">
     <div class="wrap">
-      <h2 id="{heading_id}">See {e(name)}</h2>
-      {lead}
-      <div class="{cls}">
-        {rest}
+      <div class="car" data-carousel role="region" aria-roledescription="carousel" aria-labelledby="{heading_id}">
+        <div class="car-head">
+          <h2 id="{heading_id}">See {e(name)}</h2>
+          <p class="car-count num" data-car-count aria-live="polite">{len(shots)} screens</p>
+          {arrows}
+        </div>
+        <ol class="car-track" tabindex="0" aria-label="{e(name)} screenshots">
+          {"".join(slides)}
+        </ol>
+        <div class="car-foot"><div class="car-dots">{dots}</div><p class="fine">Screens shown with sample data.</p></div>
       </div>
-      <p class="fine shots-note">Screens shown with sample data.</p>
     </div>
-  </section>"""
+  </section>
+{CAROUSEL_JS}"""
 
 
 def feature_groups(groups, indent="      "):

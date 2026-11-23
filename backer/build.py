@@ -17,7 +17,7 @@ import json, os, re, shutil, sys, urllib.parse
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "turtlebox")
-V = "bk2"
+V = "bk3"
 sys.path.insert(0, os.path.join(ROOT, "legal"))
 from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
 sys.path.insert(0, OUT)
@@ -120,9 +120,10 @@ PADDLE_JS = '''<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script
 INDEX = '''
   <main id="main">
     <section class="bk-hero" id="download"><div class="wrap">
-      <p class="eyebrow"><svg aria-hidden="true"><use href="#icon"/></svg>Backer, a Turtlebox app</p>
-      <h1>Back up your photos and videos.</h1>
+      <h1 class="app-title">Backer</h1>
+      <p class="app-headline">Back up your photos and videos.</p>
       <p class="lede">Backer copies your photo and video folders from a Mac or PC to a Synology or other NAS you own, on a schedule or on demand. <strong>It never deletes anything on the NAS without asking.</strong> No cloud, no subscription.</p>
+      <div class="app-row-meta"><p class="status status-live">On sale</p><p class="app-kind">Photo and video backup &middot; a Turtlebox app</p></div>
 
       <div class="buy">
         <a class="btn btn-buy" href="{{CHECKOUT_URL}}" data-paddle-buy>Buy Backer &middot; {{PRICE}}</a>
