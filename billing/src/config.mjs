@@ -57,6 +57,8 @@ export async function loadConfig(env = process.env, { fetchSecret = defaultFetch
     // (public half is in apps/desktop/src-tauri/license_public_key.txt in howardcrow3/golden).
     goldenPriceId: (merged.GOLDEN_PRICE_ID || '').trim(),
     goldenPlaidPriceId: (merged.GOLDEN_PLAID_PRICE_ID || '').trim(),
+    // The same add-on billed once a year ($100) instead of monthly ($9.97).
+    goldenPlaidYearlyPriceId: (merged.GOLDEN_PLAID_YEARLY_PRICE_ID || '').trim(),
     goldenSigningKey: merged.GOLDEN_SIGNING_KEY || '',
     opsEmail: merged.OPS_EMAIL || 'info@turtlebox.studio',
     googleClientId: merged.GOOGLE_CLIENT_ID || '',

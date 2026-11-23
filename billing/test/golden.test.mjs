@@ -36,7 +36,7 @@ test('addMonths clamps like chrono', () => {
   assert.equal(addMonths('2026-12-15', 1), '2027-01-15');
 });
 
-const ids = { priceId: 'pri_core', plaidPriceId: 'pri_plaid' };
+const ids = { priceId: 'pri_core', plaidPriceId: 'pri_plaid', plaidYearlyPriceId: 'pri_year' };
 const txnOf = (items, extra = {}) => ({ id: 'txn_1', billedAt: '2026-11-20T10:00:00Z', items: items.map((id) => ({ price: { id }, quantity: 1 })), ...extra });
 
 test('goldenFields: core, plaid, both, neither', () => {
@@ -44,6 +44,9 @@ test('goldenFields: core, plaid, both, neither', () => {
   assert.equal(goldenFields(txnOf(['pri_plaid']), ids).plaidUntil, '2026-12-20');
   assert.equal(goldenFields(txnOf(['pri_plaid'], { billingPeriod: { endsAt: '2026-12-22T00:00:00Z' } }), ids).plaidUntil, '2026-12-22');
   assert.equal(goldenFields(txnOf(['pri_core', 'pri_plaid']), ids).core, 1);
+  // The yearly add-on runs a year from purchase unless Paddle gives the period end.
+  assert.equal(goldenFields(txnOf(['pri_year']), ids).plaidUntil, '2027-11-20');
+  assert.equal(goldenFields(txnOf(['pri_year'], { billingPeriod: { endsAt: '2027-11-22T00:00:00Z' } }), ids).plaidUntil, '2027-11-22');
   assert.equal(goldenFields(txnOf(['pri_other']), ids), null);
   assert.throws(() => goldenFields({ id: 't', items: [{ price: { id: 'pri_core' } }] }, ids), /no date/);
 });
@@ -120,4 +123,12 @@ test('a failed email releases the claim so Paddle retries', async () => {
   fail = false;
   await run(txn);
   assert.equal(sent.length, 1);
+});
+
+test('the email carries a one-click activation link and the same key', async () => {
+  const s = setup();
+  await s.deliver(customerEvent('customer.created'));
+  await s.deliver(transactionCompletedEvent({ priceId: 'pri_golden' }));
+  const token = tokenIn(s.sent[0]);
+  assert.ok(s.sent[0].text.includes(`golden://activate?key=${token}`));
 });

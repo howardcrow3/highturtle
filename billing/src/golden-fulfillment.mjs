@@ -6,10 +6,10 @@
 import { issueGoldenToken, goldenFields } from './golden.mjs';
 
 export function makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log }) {
-  const ids = { priceId: cfg.goldenPriceId, plaidPriceId: cfg.goldenPlaidPriceId };
+  const ids = { priceId: cfg.goldenPriceId, plaidPriceId: cfg.goldenPlaidPriceId, plaidYearlyPriceId: cfg.goldenPlaidYearlyPriceId };
 
   return async function onPurchase(txn) {
-    if (!ids.priceId && !ids.plaidPriceId) return;
+    if (!ids.priceId && !ids.plaidPriceId && !ids.plaidYearlyPriceId) return;
     const fields = goldenFields(txn, ids);
     if (!fields) return;
     if (!(await store.claimFulfillment(txn.id, new Date(), 'golden_fulfillment'))) {
@@ -41,7 +41,8 @@ export function makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log }) {
           ? `Your Golden bank-connection add-on is paid through ${fields.plaidUntil}. Paste this new licence key into Golden to keep it active:`
           : 'Thanks for buying Golden. Your licence key:',
         '', token, '',
-        'To activate: open Golden, go to the Licence screen, paste the key and choose Activate.',
+        `Activate in one click (Golden must be installed): golden://activate?key=${token}`,
+        'If the link does not open Golden, open it, go to the Licence screen, paste the key and choose Activate.',
         'It works offline and covers every 1.x update. Keep this email; you can use the key again on a new computer.',
       ];
       if (!renewal && fields.plaidUntil) lines.push('', `The bank-connection add-on is included through ${fields.plaidUntil}.`);
