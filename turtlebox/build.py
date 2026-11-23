@@ -21,7 +21,7 @@ from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb14"
+V = "tb15"
 e = html.escape
 
 
@@ -241,6 +241,11 @@ APP_PAGES = {
             ("What goes over the internet", "License and update checks, the one-time model download, and the mailbox and job sites you choose to connect."),
         ],
         "help": "/ceevee/help/",
+        # No CeeVee release is published yet. Its release workflow puts stable copies at these addresses; set
+        # "ready" to True after the first stable release.
+        "trial": {"ready": False, "macos": "macOS 13 or newer, Apple silicon", "windows": "Windows 11, 64-bit",
+                  "mac_url": "https://dl.turtlebox.studio/ceevee/latest/CeeVee.dmg", "win_url": "https://dl.turtlebox.studio/ceevee/latest/CeeVee-setup.exe",
+                  "mac_file": "CeeVee.dmg", "win_file": "CeeVee-setup.exe", "github": "", "note": ""},
     },
     "golden": {
         "title": "Golden household finance and retirement app",
@@ -299,8 +304,70 @@ APP_PAGES = {
             ("What goes over the internet", "Update and license checks only, by default. With a monthly or yearly plan, your bank and card accounts update automatically through Plaid."),
         ],
         "help": "",
+        # Golden's installers are the rolling "nightly" release on GitHub. Their names carry the build number, so
+        # the page looks up the current files when it loads, and falls back to the release page.
+        "trial": {"ready": True, "macos": "macOS 13 or newer, Apple silicon", "windows": "Windows 10 or 11, 64-bit",
+                  "mac_url": "https://github.com/howardcrow3/golden/releases/tag/nightly", "win_url": "https://github.com/howardcrow3/golden/releases/tag/nightly",
+                  "mac_file": "Golden for Mac (.dmg)", "win_file": "Golden for Windows (setup .exe)",
+                  "github": "howardcrow3/golden@nightly",
+                  "note": "This is the latest build of Golden, updated as we work on it."},
     },
 }
+
+
+TRIAL_JS = """<script>
+(function () {
+  var ua = navigator.userAgent || '';
+  document.documentElement.setAttribute('data-os', /Windows/.test(ua) ? 'win' : (/Mac/.test(ua) ? 'mac' : ''));
+  document.querySelectorAll('[data-gh-release]').forEach(function (box) {
+    var r = box.getAttribute('data-gh-release').split('@');
+    fetch('https://api.github.com/repos/' + r[0] + '/releases/tags/' + r[1], { headers: { Accept: 'application/vnd.github+json' } })
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (rel) {
+        if (!rel || !rel.assets) return;
+        [['mac', /_aarch64\\.dmg$/], ['win', /-setup\\.exe$/]].forEach(function (k) {
+          var a = rel.assets.filter(function (x) { return k[1].test(x.name); })[0];
+          var link = box.querySelector('[data-dl=' + k[0] + ']'), file = box.querySelector('[data-file=' + k[0] + ']');
+          if (a && link) { link.href = a.browser_download_url; if (file) file.textContent = a.name + ' \\u00b7 ' + Math.round(a.size / 1048576) + ' MB'; }
+        });
+      }).catch(function () {});
+  });
+})();
+</script>"""
+
+
+def trial_section(a, t):
+    """Free 14-day trial downloads for Mac and Windows. The card for this computer is listed first."""
+    if not t or not t.get("ready"):
+        return ""
+    name = e(a["name"])
+    gh = f' data-gh-release="{e(t["github"])}"' if t.get("github") else ""
+    note = f'<p class="fine trial-note">{e(t["note"])}</p>' if t.get("note") else ""
+    return f"""  <section class="section trial" id="try" aria-labelledby="try-h">
+    <div class="wrap"{gh}>
+      <h2 id="try-h">Try {name} free for 14 days</h2>
+      <p class="trial-lede">Every feature, no account and no card. When the trial ends, buy a license to keep going.</p>
+      <div class="trial-dls">
+        <div class="trial-dl trial-dl-mac">
+          <h3>Mac <span class="rec">For this computer</span></h3>
+          <p class="req">{e(t["macos"])}</p>
+          <a class="btn" data-dl="mac" href="{e(t["mac_url"])}">Download for Mac</a>
+          <p class="file" data-file="mac">{e(t["mac_file"])}</p>
+          <p class="fine">If your Mac says it can't check the app, right-click it and choose Open.</p>
+        </div>
+        <div class="trial-dl trial-dl-win">
+          <h3>Windows <span class="rec">For this computer</span></h3>
+          <p class="req">{e(t["windows"])}</p>
+          <a class="btn" data-dl="win" href="{e(t["win_url"])}">Download for Windows</a>
+          <p class="file" data-file="win">{e(t["win_file"])}</p>
+          <p class="fine">The installer isn't code-signed yet, so Windows may warn you. Choose More info, then Run anyway.</p>
+        </div>
+      </div>
+      {note}
+    </div>
+  </section>
+{TRIAL_JS}
+"""
 
 
 def app_page(slug):
@@ -319,7 +386,7 @@ def app_page(slug):
       {buy_plate(a, slug + "-hero")}
     </div>
   </section>
-{gallery(slug, a["name"])}
+{trial_section(a, p.get("trial"))}{gallery(slug, a["name"])}
   <section class="section" aria-labelledby="what-h">
     <div class="wrap">
       <h2 id="what-h">What {e(a["name"])} does</h2>
