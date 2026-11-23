@@ -128,7 +128,7 @@ def buy_plate(a, hid, compact=False):
 
 
 def plans_block(a, compact=False):
-    """Optional subscription plans under the one-time price (Golden: automatic bank updates). A plan without a
+    """Optional subscription plans under the one-time price (Golden: automatic bank updates, coming soon). A plan without a
     price_id yet is left out, so nothing shows until Paddle has the price."""
     plans = [p for p in a.get("plans", []) if p.get("price_id")]
     if not plans or not a.get("on_sale"):
@@ -175,7 +175,7 @@ HOW_TO_BUY = """  <section class="section" aria-labelledby="buying-h">
     <div class="wrap">
       <h2 id="buying-h">How buying works</h2>
       <ul class="points">
-        <li><h3>Pay once</h3><p>Each app has a one-time price, and a license key covers every update within its major version. Golden also offers an optional monthly or yearly plan that adds automatic bank updates.</p></li>
+        <li><h3>Pay once</h3><p>Each app has a one-time price, and a license key covers every update within its major version. Golden also offers an optional monthly or yearly plan. Automatic bank updates for those plans are coming soon.</p></li>
         <li><h3>Key by email</h3><p>Your license key arrives by email a few minutes after checkout. It is also in <a href="/account/">your account</a> when you sign in with Google.</p></li>
         <li><h3>14 days to change your mind</h3><p>Paddle, our Merchant of Record, takes payment and adds any tax. Ask for a refund within 14 days. <a href="/refund.html">Refund policy</a></p></li>
       </ul>
@@ -297,11 +297,11 @@ APP_PAGES = {
             ]),
         ],
         "facts": [
-            ("Price", "$39.99 once. Or $9.97 a month or $100 a year with automatic bank updates through Plaid."),
+            ("Price", "$39.99 once. Or $9.97 a month or $100 a year, with automatic bank updates through Plaid coming soon."),
             ("Trial", "14 days with every feature."),
             ("Computers", "A Mac with Apple silicon running macOS 13 or newer, or Windows 11 (64-bit)."),
             ("Where it works", "United States households. Five states' income tax (AR, MD, MN, NY and VT) is approximate for now."),
-            ("What goes over the internet", "Update and license checks only, by default. With a monthly or yearly plan, your bank and card accounts update automatically through Plaid."),
+            ("What goes over the internet", "Update and license checks only. Automatic bank updates through Plaid are coming soon. When they arrive they will be optional, part of the monthly or yearly plan."),
         ],
         "help": "",
         # Golden's installers are the rolling "nightly" release on GitHub. Their names carry the build number, so

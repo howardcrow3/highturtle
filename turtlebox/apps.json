@@ -43,8 +43,8 @@
     "on_sale": true,
     "price_id": "pri_01m7h6qqb0y4f9r6mftw05y772",
     "success_url": "https://turtlebox.studio/checkout/?done=golden",
-    "plans_title": "With automatic bank updates",
-    "plans_note": "Everything in Golden, plus your bank and card accounts update on their own through Plaid.",
+    "plans_title": "Plans with automatic bank updates (coming soon)",
+    "plans_note": "Everything in Golden. Automatic bank and card updates through Plaid aren't available yet. They will be added to these plans when they are ready. Until then, you import statements the same way as with the one-time license.",
     "plans": [
       {
         "label": "Monthly",
