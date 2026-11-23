@@ -58,6 +58,15 @@ jobs:
           echo "bucket=$(get BucketName)" >> "$GITHUB_OUTPUT"
           echo "base=$(get BaseUrl)" >> "$GITHUB_OUTPUT"
           echo "role=$(get RoleArn)" >> "$GITHUB_OUTPUT"
+      - name: Diagnose the OIDC trust (read only)
+        run: |
+          set +e
+          P=$(aws iam list-open-id-connect-providers --query "OpenIDConnectProviderList[?contains(Arn,'token.actions.githubusercontent.com')].Arn | [0]" --output text)
+          echo "Provider: $P"
+          aws iam get-open-id-connect-provider --open-id-connect-provider-arn "$P" --query '{ClientIDList:ClientIDList,Url:Url,Thumbs:ThumbprintList}' --output json
+          R=$(echo "${{ steps.out.outputs.role }}" | sed 's|.*/||')
+          echo "Role trust policy for $R:"
+          aws iam get-role --role-name "$R" --query 'Role.AssumeRolePolicyDocument' --output json
       - name: Smoke test (CloudFront answers, bucket stays private)
         run: |
           set -u
