@@ -93,16 +93,39 @@
 .facts dd { margin: 0; max-width: 40em; }
 .facts-fine { margin-top: var(--space-md); }
 
+/* Free trial downloads (CeeVee, Golden). The card for this computer comes first and gets the filled button. */
+.trial-lede { margin-top: var(--space-xs); font-size: 1.125rem; color: var(--body); max-width: 40em; }
+.trial-dls { margin-top: var(--space-lg); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+.trial-dl { background: var(--surface); border: 1px solid var(--line); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+html[data-os="win"] .trial-dl-win { order: -1; }
+.trial-dl h3 { font-size: 1.75rem; font-weight: 300; line-height: 1.2; letter-spacing: -0.02em; display: flex; flex-wrap: wrap; align-items: center; gap: 12px var(--space-sm); }
+.trial-dl .rec { display: none; font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); align-items: center; gap: 8px; }
+.trial-dl .rec::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+html[data-os="mac"] .trial-dl-mac .rec, html[data-os="win"] .trial-dl-win .rec { display: inline-flex; }
+.trial-dl .req { font-size: 1rem; color: var(--body); }
+.trial-dl .btn { margin-top: var(--space-sm); align-self: flex-start; }
+html[data-os="mac"] .trial-dl-win .btn, html[data-os="win"] .trial-dl-mac .btn { background: transparent; color: var(--ink); }
+.trial-dl .file { font-size: 0.8125rem; color: var(--body); overflow-wrap: anywhere; }
+.trial-dl .fine { margin-top: var(--space-xs); }
+.trial-note { margin-top: var(--space-md); }
+
 /* Screenshot carousel: one screen at a time, arrows and dots. Without JavaScript the track scrolls sideways. */
 .car-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-lg); margin-bottom: var(--space-lg); }
 .car-head h2 { margin: 0; margin-right: auto; }
 .car-count { margin: 0; font-size: 0.9375rem; color: var(--body); }
-.car-arrows { display: none; gap: var(--space-xs); }
-.car-js .car-arrows { display: flex; }
-.car-btn { width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid var(--border-control); background: transparent; color: var(--ink); font-size: 1.25rem; cursor: pointer; border-radius: 0; }
-.car-btn:hover:not(:disabled) { background: var(--surface); }
-.car-btn:disabled { opacity: 0.35; cursor: default; }
-.car-btn:focus-visible, .car-dot:focus-visible, .car-track:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.car-stage { position: relative; container-type: inline-size; }
+/* Big arrows on the left and right, centred on the screenshot (16:10, so its middle is 31.25% of the width down) */
+.car-side { display: none; position: absolute; z-index: 1; top: calc(31.25cqw - 32px); width: 64px; height: 64px; place-items: center; padding: 0;
+  border: 1px solid var(--border-control); border-radius: 50%; background: color-mix(in srgb, var(--paper) 92%, transparent); color: var(--ink);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.12); cursor: pointer; transition: background-color 0.15s, color 0.15s, opacity 0.15s; }
+.car-js .car-side { display: grid; }
+.car-side-prev { left: -32px; }
+.car-side-next { right: -32px; }
+.car-side:hover:not(:disabled) { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.car-side:disabled { opacity: 0; pointer-events: none; }
+@media (max-width: 1340px) { .car-side-prev { left: 12px; } .car-side-next { right: 12px; } }
+@media (max-width: 600px) { .car-side { width: 44px; height: 44px; top: calc(31.25cqw - 22px); } .car-side svg { width: 22px; height: 22px; } .car-side-prev { left: 6px; } .car-side-next { right: 6px; } }
+.car-side:focus-visible, .car-dot:focus-visible, .car-track:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .car-track { list-style: none; margin: 0; padding: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .car-track::-webkit-scrollbar { display: none; }
 .car-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; padding-right: 1px; }
@@ -152,5 +175,5 @@
   .app-hero { padding-block: var(--space-2xl) var(--space-xl); }
   .buy-plate { padding: var(--space-lg); }
   .facts > div { grid-template-columns: minmax(0, 1fr); }
-  .fgroups { grid-template-columns: minmax(0, 1fr); }
+  .fgroups, .trial-dls { grid-template-columns: minmax(0, 1fr); }
 }

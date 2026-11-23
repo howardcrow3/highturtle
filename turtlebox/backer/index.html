@@ -31,8 +31,8 @@
   document.documentElement.setAttribute('data-os', os);
 })();
 </script>
-<link rel="stylesheet" href="/assets/styles.css?v=tb14">
-<link rel="stylesheet" href="/assets/store.css?v=tb14">
+<link rel="stylesheet" href="/assets/styles.css?v=tb15">
+<link rel="stylesheet" href="/assets/store.css?v=tb15">
 <link rel="stylesheet" href="/assets/backer.css?v=bk3">
 </head>
 <body>
@@ -50,7 +50,7 @@
       <a class="nav-app" href="/ceevee/">CeeVee</a>
       <a class="nav-app" href="/golden/">Golden</a>
       <a class="acct" href="/account/" data-acct><svg class="acct-icon" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="5.5" r="2.75"/><path d="M2.5 14c.6-2.9 2.8-4.5 5.5-4.5s4.9 1.6 5.5 4.5"/></svg><span class="acct-label">Sign in</span></a>
-      <script src="/assets/account.js?v=tb14" defer></script>
+      <script src="/assets/account.js?v=tb15" defer></script>
     </nav>
   </div>
 </header>
@@ -97,11 +97,13 @@
         <div class="car-head">
           <h2 id="screens-h">See Backer</h2>
           <p class="car-count num" data-car-count aria-live="polite">2 screens</p>
-          <div class="car-arrows"><button type="button" class="car-btn" data-car-prev aria-label="Previous screen"><span aria-hidden="true">&larr;</span></button><button type="button" class="car-btn" data-car-next aria-label="Next screen"><span aria-hidden="true">&rarr;</span></button></div>
         </div>
-        <ol class="car-track" tabindex="0" aria-label="Backer screenshots">
-          <li class="car-slide"><figure class="shot"><a class="shot-link" href="/assets/screens/backer-jobs.webp"><img src="/assets/screens/backer-jobs.webp" width="1200" height="760" alt="Backer&#x27;s Jobs screen listing four backup jobs with their status, schedule and next run." decoding="async"></a><figcaption>Every backup job on one screen: what it copies, when it runs next, and whether it needs you.</figcaption></figure></li><li class="car-slide"><figure class="shot"><a class="shot-link" href="/assets/screens/backer-run.webp"><img src="/assets/screens/backer-run.webp" width="1200" height="760" alt="A Backer run summary with counts of copied, unchanged, skipped and excluded files and two items that need attention." loading="lazy" decoding="async"></a><figcaption>After each run, a plain summary of what was copied and anything Backer couldn&#x27;t copy, with the reason.</figcaption></figure></li>
-        </ol>
+        <div class="car-stage">
+          <ol class="car-track" tabindex="0" aria-label="Backer screenshots">
+            <li class="car-slide"><figure class="shot"><a class="shot-link" href="/assets/screens/backer-jobs.webp"><img src="/assets/screens/backer-jobs.webp" width="1200" height="760" alt="Backer&#x27;s Jobs screen listing four backup jobs with their status, schedule and next run." decoding="async"></a><figcaption>Every backup job on one screen: what it copies, when it runs next, and whether it needs you.</figcaption></figure></li><li class="car-slide"><figure class="shot"><a class="shot-link" href="/assets/screens/backer-run.webp"><img src="/assets/screens/backer-run.webp" width="1200" height="760" alt="A Backer run summary with counts of copied, unchanged, skipped and excluded files and two items that need attention." loading="lazy" decoding="async"></a><figcaption>After each run, a plain summary of what was copied and anything Backer couldn&#x27;t copy, with the reason.</figcaption></figure></li>
+          </ol>
+          <button type="button" class="car-side car-side-prev" data-car-prev aria-label="Previous screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button><button type="button" class="car-side car-side-next" data-car-next aria-label="Next screen"><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+        </div>
         <div class="car-foot"><div class="car-dots"><button type="button" class="car-dot" data-car-dot aria-label="Screen 1: Every backup job on one screen: what it copies, when it runs next, and whether it needs you."></button><button type="button" class="car-dot" data-car-dot aria-label="Screen 2: After each run, a plain summary of what was copied and anything Backer couldn&#x27;t copy, with the reason."></button></div><p class="fine">Screens shown with sample data.</p></div>
       </div>
     </div>

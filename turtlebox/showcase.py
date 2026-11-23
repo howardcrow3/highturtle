@@ -87,7 +87,7 @@ CAROUSEL_JS = """<script>
 
 
 def gallery(slug, name, heading_id="screens-h"):
-    """A screenshot carousel: one screen at a time with its caption, arrows, dots and a count. Without JavaScript it
+    """A screenshot carousel: one screen at a time with its caption, big arrows on each side, dots and a count. Without JavaScript it
     is a row you can scroll sideways. Each image links to the full-size file."""
     shots = SCREENS[slug]
     slides = []
@@ -101,20 +101,22 @@ def gallery(slug, name, heading_id="screens-h"):
             f'<figcaption>{e(cap)}</figcaption></figure></li>')
     dots = "".join(f'<button type="button" class="car-dot" data-car-dot aria-label="Screen {i + 1}: {e(c)}"></button>'
                    for i, (_, _, c) in enumerate(shots))
-    arrows = ('<div class="car-arrows">'
-              '<button type="button" class="car-btn" data-car-prev aria-label="Previous screen"><span aria-hidden="true">&larr;</span></button>'
-              '<button type="button" class="car-btn" data-car-next aria-label="Next screen"><span aria-hidden="true">&rarr;</span></button></div>')
+    chev = '<svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="{d}"/></svg>'
+    prev = f'<button type="button" class="car-side car-side-prev" data-car-prev aria-label="Previous screen">{chev.format(d="M15 5l-7 7 7 7")}</button>'
+    nxt = f'<button type="button" class="car-side car-side-next" data-car-next aria-label="Next screen">{chev.format(d="M9 5l7 7-7 7")}</button>'
     return f"""  <section class="section shots-section" aria-labelledby="{heading_id}">
     <div class="wrap">
       <div class="car" data-carousel role="region" aria-roledescription="carousel" aria-labelledby="{heading_id}">
         <div class="car-head">
           <h2 id="{heading_id}">See {e(name)}</h2>
           <p class="car-count num" data-car-count aria-live="polite">{len(shots)} screens</p>
-          {arrows}
         </div>
-        <ol class="car-track" tabindex="0" aria-label="{e(name)} screenshots">
-          {"".join(slides)}
-        </ol>
+        <div class="car-stage">
+          <ol class="car-track" tabindex="0" aria-label="{e(name)} screenshots">
+            {"".join(slides)}
+          </ol>
+          {prev}{nxt}
+        </div>
         <div class="car-foot"><div class="car-dots">{dots}</div><p class="fine">Screens shown with sample data.</p></div>
       </div>
     </div>
