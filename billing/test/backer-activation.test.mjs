@@ -150,7 +150,7 @@ test('a two-unit order gets two different keys, each with its own 2 computers', 
   const s = setup();
   await s.deliver(customerEvent('customer.created'));
   assert.equal((await s.deliver(transactionCompletedEvent({ priceId: 'pri_backer', quantity: 2 }))).statusCode, 200);
-  const keys = s.sent[0].text.match(/BACKER(-[A-Z2-7]{1,5})+/g);
+  const keys = s.sent[0].text.match(/^BACKER(-[A-Z2-7]{1,5})+$/gm);
   assert.equal(keys.length, 2);
   assert.notEqual(keys[0], keys[1]);
   for (const m of [A, B]) { assert.equal((await activate(s, keys[0], m)).statusCode, 200); }

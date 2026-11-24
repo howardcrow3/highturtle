@@ -5,6 +5,7 @@
 
 import { createHash } from 'node:crypto';
 import { issueKey, publicKeyHex } from './license.mjs';
+import { backerEmail } from './backer-email.mjs';
 
 // Every unit gets its own key, and so its own 2 computers. The key's "issued day" is not used by the app, so it carries a small
 // per-unit offset (from the transaction id and unit number) to make keys differ even for one email on one day.
@@ -51,12 +52,8 @@ export function makeBackerFulfillment({ cfg, store, paddle, sendEmail, log }) {
 
       const keys = [];
       for (let i = 0; i < qty; i++) keys.push(await issueKey(cfg.backerSigningKey, email, unitDay(txn.id, i)));
-      const plural = keys.length > 1;
-      await sendEmail({
-        to: email,
-        subject: plural ? 'Your Backer license keys' : 'Your Backer license key',
-        text: `Thanks for buying Backer.\n\nYour license key${plural ? 's' : ''}:\n\n${keys.join('\n\n')}\n\nTo turn it on: open Backer, go to Settings, then License, paste the key and click Activate.\nThe key is tied to ${email}, covers all 1.x versions and works on up to ${cfg.backerSeats || 2} computers at once. To move it to a new computer, choose Deactivate in Settings, License on the old one, or free a computer at ${cfg.site}/account/.\n\nDownload Backer: ${cfg.site}/backer/\nOrder: ${txn.invoiceNumber || txn.id} (receipt from Paddle, our Merchant of Record)\nQuestions: reply to this email.\n\nTurtlebox`,
-      });
+      const mail = backerEmail({ keys, email, site: cfg.site, seats: cfg.backerSeats || 2, order: txn.invoiceNumber || txn.id });
+      await sendEmail({ to: email, subject: mail.subject, text: mail.text, html: mail.html });
       await store.finishFulfillment(txn.id, 'emailed', 'fulfillment', { license_keys: keys });
       log({ fulfillment: 'emailed', transaction: txn.id, keys: keys.length });
     } catch (err) {
