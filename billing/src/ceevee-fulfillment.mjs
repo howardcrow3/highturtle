@@ -1,10 +1,11 @@
 // CeeVee one-time purchase fulfillment, run from transaction.completed (after the Backer hook).
-// Creates one license per unit bought and emails the key plus a ceevee://activate link. At most once per
+// Creates one license per unit bought and emails the key plus an Activate button (ceevee-email.mjs; the button opens an https page that hands the key to ceevee://activate). At most once per
 // transaction (its own claim field, so it never collides with Backer). Keys are derived from the transaction,
 // so a retry after a half-finished run re-sends the same key. Without a signing key the order goes to the
 // support inbox instead, and the buyer is never left with nothing.
 
 import { deriveKey } from './ceevee.mjs';
+import { ceeveeEmail } from './ceevee-email.mjs';
 
 export function makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, log }) {
   const priceIds = new Set(cfg.ceeveePriceIds || []);
@@ -44,13 +45,8 @@ export function makeCeeveeFulfillment({ cfg, store, ceevee, paddle, sendEmail, l
         });
         keys.push(key);
       }
-      const plural = keys.length > 1;
-      const links = keys.map((k) => `${k}\nActivate in one click: ceevee://activate?key=${k}`).join('\n\n');
-      await sendEmail({
-        to: email,
-        subject: plural ? 'Your CeeVee license keys' : 'Your CeeVee license key',
-        text: `Thanks for buying CeeVee.\n\nYour license key${plural ? 's' : ''}:\n\n${links}\n\nIf the link does not open CeeVee, open the app, go to Settings, then License, paste the key and click Activate. Each key works on up to ${cfg.ceeveeSeats} computers, and you can free a seat any time at ${cfg.site}/ceevee/license.\n\nDownload CeeVee: ${cfg.site}/ceevee/\nOrder: ${txn.invoiceNumber || txn.id} (receipt from Paddle, our Merchant of Record)\nQuestions: reply to this email.\n\nTurtlebox`,
-      });
+      const mail = ceeveeEmail({ keys, site: cfg.site, seats: cfg.ceeveeSeats, order: txn.invoiceNumber || txn.id });
+      await sendEmail({ to: email, subject: mail.subject, text: mail.text, html: mail.html });
       await store.finishFulfillment(txn.id, 'emailed', 'ceevee_fulfillment');
       log({ ceevee: 'emailed', transaction: txn.id, keys: keys.length });
     } catch (err) {
