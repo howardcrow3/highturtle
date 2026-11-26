@@ -1,0 +1,82 @@
+name: Feedback service deploy
+
+# Deploys feedback/template.yaml (CloudFormation stack highturtle-feedback, us-east-2): the
+# https://feedback.turtlebox.studio/v1/feedback endpoint, its Lambda and DynamoDB tables.
+# Safe to re-run. Never deletes data: the feedback table has deletion protection and is retained.
+# App signing keys live only in SSM (/highturtle/feedback/app-keys). This repo is public, so the
+# workflow never prints them; read them in the AWS console (Systems Manager > Parameter Store).
+
+on:
+  push:
+    branches: [main]
+    paths: ["feedback/**", ".github/workflows/feedback-deploy.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: feedback-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-2
+  ZONE: turtlebox.studio
+  DOMAIN: feedback.turtlebox.studio
+  KEYS_PARAM: /highturtle/feedback/app-keys
+  APPS: backer ceevee golden
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Unit tests
+        working-directory: feedback
+        run: npm test
+      - uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Make sure every app has a signing key (values are never printed)
+        run: |
+          set -euo pipefail
+          current=$(aws ssm get-parameter --name "$KEYS_PARAM" --with-decryption --query Parameter.Value --output text 2>/dev/null || echo '{}')
+          updated="$current"
+          for app in $APPS; do
+            if [ "$(jq -r --arg a "$app" '.[$a] // empty' <<<"$updated")" = "" ]; then
+              updated=$(jq -c --arg a "$app" --arg k "$(openssl rand -hex 32)" '. + {($a): $k}' <<<"$updated")
+              echo "Created a signing key for $app"
+            fi
+          done
+          if [ "$updated" != "$current" ]; then
+            aws ssm put-parameter --name "$KEYS_PARAM" --type SecureString --overwrite --value "$updated" >/dev/null
+          fi
+      - name: Deploy stack
+        run: |
+          set -euo pipefail
+          ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE." --query "HostedZones[?Name=='$ZONE.'].Id | [0]" --output text | sed 's#/hostedzone/##')
+          sam deploy --template-file feedback/template.yaml --stack-name highturtle-feedback \
+            --resolve-s3 --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset \
+            --parameter-overrides "HostedZoneId=$ZONE_ID" "DomainName=$DOMAIN" "AppKeysParam=$KEYS_PARAM"
+          aws cloudformation describe-stacks --stack-name highturtle-feedback --query "Stacks[0].Outputs" --output table
+      - name: Smoke test (stores nothing)
+        run: |
+          set -u
+          url="https://$DOMAIN/v1"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            h=$(curl -s -o /dev/null -w '%{http_code}' "$url/health" || true); [ "$h" = "200" ] && break; sleep 15
+          done
+          noorigin=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{"app":"backer","rating":5}' "$url/feedback")
+          badsig=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'x-ht-app: backer' -H "x-ht-timestamp: $(date +%s)" -H 'x-ht-signature: 00' -d '{"app":"backer","rating":5}' "$url/feedback")
+          honeypot=$(curl -s -o /dev/null -w '%{http_code}' -X POST -H 'origin: https://turtlebox.studio' -d '{"app":"turtlebox-site","rating":5,"hp":"smoke"}' "$url/feedback")
+          echo "::notice title=feedback smoke::health=$h (200) no-origin=$noorigin (403) bad-signature=$badsig (401) honeypot=$honeypot (201, not stored)"
+          [ "$h" = 200 ] && [ "$noorigin" = 403 ] && [ "$badsig" = 401 ] && [ "$honeypot" = 201 ]

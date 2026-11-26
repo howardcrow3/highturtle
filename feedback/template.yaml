@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  High Turtle feedback service. POST https://<domain>/v1/feedback stores a rating (1-5) and/or a message
+  from a signed app (Backer, CeeVee, Golden) or one of our websites. Pay-per-use only: HTTP API, one
+  arm64 Lambda, two on-demand DynamoDB tables. Deployed by .github/workflows/feedback-deploy.yml.
+
+Parameters:
+  DomainName:
+    Type: String
+    Default: feedback.turtlebox.studio
+  HostedZoneId:
+    Type: String
+    Description: Route 53 zone that holds DomainName (the workflow looks it up).
+  AppKeysParam:
+    Type: String
+    Default: /highturtle/feedback/app-keys
+    Description: SSM SecureString holding {"backer":"<hex>","ceevee":"<hex>","golden":"<hex>"}. Created by the workflow.
+  AllowedOrigins:
+    Type: CommaDelimitedList
+    Default: https://highturtle.com,https://www.highturtle.com,https://highturtle.ai,https://www.highturtle.ai,https://turtlebox.studio,https://www.turtlebox.studio
+
+Resources:
+  FeedbackTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TableName: highturtle-feedback
+      BillingMode: PAY_PER_REQUEST
+      DeletionProtectionEnabled: true
+      PointInTimeRecoverySpecification: { PointInTimeRecoveryEnabled: true }
+      AttributeDefinitions:
+        - { AttributeName: id, AttributeType: S }
+        - { AttributeName: app, AttributeType: S }
+        - { AttributeName: createdAt, AttributeType: S }
+      KeySchema:
+        - { AttributeName: id, KeyType: HASH }
+      GlobalSecondaryIndexes:
+        - IndexName: app-createdAt
+          KeySchema:
+            - { AttributeName: app, KeyType: HASH }
+            - { AttributeName: createdAt, KeyType: RANGE }
+          Projection: { ProjectionType: ALL }
+
+  # Short-lived rate-limit counters and used signatures. Rows expire on their own (TTL).
+  LimitsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: highturtle-feedback-limits
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+      TimeToLiveSpecification: { AttributeName: expiresAt, Enabled: true }
+
+  FunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/lambda/highturtle-feedback
+      RetentionInDays: 30
+
+  FeedbackFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: highturtle-feedback
+      CodeUri: src/
+      Handler: handler.handler
+      Runtime: nodejs22.x
+      Architectures: [arm64]
+      MemorySize: 256
+      Timeout: 6
+      LoggingConfig: { LogGroup: !Ref FunctionLogs }
+      Environment:
+        Variables:
+          FEEDBACK_TABLE: !Ref FeedbackTable
+          LIMITS_TABLE: !Ref LimitsTable
+          APP_KEYS_PARAM: !Ref AppKeysParam
+          ALLOWED_ORIGINS: !Join [',', !Ref AllowedOrigins]
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action: dynamodb:PutItem
+              Resource: !GetAtt FeedbackTable.Arn
+            - Effect: Allow
+              Action: [dynamodb:PutItem, dynamodb:UpdateItem]
+              Resource: !GetAtt LimitsTable.Arn
+            - Effect: Allow
+              Action: ssm:GetParameter
+              Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppKeysParam}
+      Events:
+        Submit:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Method: POST, Path: /v1/feedback }
+        Health:
+          Type: HttpApi
+          Properties: { ApiId: !Ref Api, Method: GET, Path: /v1/health }
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - { DomainName: !Ref DomainName, HostedZoneId: !Ref HostedZoneId }
+
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      # Whole-API ceiling, so a flood can't run up the bill. Feedback volume is far below this.
+      DefaultRouteSettings:
+        ThrottlingRateLimit: 5
+        ThrottlingBurstLimit: 20
+      CorsConfiguration:
+        AllowOrigins: !Split
+          - ','
+          - !Join [',', [!Join [',', !Ref AllowedOrigins], 'tauri://localhost,http://tauri.localhost,https://tauri.localhost']]
+        AllowMethods: [POST, GET, OPTIONS]
+        AllowHeaders: [content-type, x-ht-app, x-ht-timestamp, x-ht-signature]
+        MaxAge: 86400
+      Domain:
+        DomainName: !Ref DomainName
+        CertificateArn: !Ref Certificate
+        EndpointConfiguration: REGIONAL
+        Route53:
+          HostedZoneId: !Ref HostedZoneId
+
+Outputs:
+  Endpoint:
+    Value: !Sub https://${DomainName}/v1/feedback
+  ApiUrl:
+    Value: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/v1/feedback
+  Table:
+    Value: !Ref FeedbackTable
