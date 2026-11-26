@@ -1,0 +1,14 @@
+{
+  "name": "highturtle-feedback",
+  "version": "1.0.0",
+  "description": "In-app and website feedback intake for High Turtle / Turtlebox apps",
+  "private": true,
+  "type": "module",
+  "main": "src/handler.mjs",
+  "scripts": {
+    "test": "node --test test/feedback.test.mjs"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
