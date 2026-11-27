@@ -23,7 +23,8 @@ app / website ──HTTPS──> API Gateway HTTP API ──> Lambda highturtle-
   "rating": 4,                  // whole number 1-5            (rating, message or both)
   "message": "Add a schedule",  // up to 5000 characters
   "category": "feature",        // feature | issue | praise | other   (optional)
-  "email": "me@example.com",    // optional, only if the user chooses to give it
+  "email": "me@example.com",    // optional; checked for a valid address format (max 254 chars)
+  "anonymous": false,           // optional; true = the email is dropped and never stored
   "appVersion": "1.2.0",        // optional
   "platform": "macos",          // optional
   "locale": "en-US"             // optional
@@ -41,7 +42,8 @@ Errors are `{"error": "..."}` with 400 (bad input), 401 (bad signature), 403 (or
 | `id` | random UUID made by the server (partition key) |
 | `createdAt` | server time, ISO 8601 UTC |
 | `app` | which product the feedback is about |
-| `rating`, `message`, `category`, `email`, `appVersion`, `platform`, `locale` | as sent |
+| `rating`, `message`, `category`, `appVersion`, `platform`, `locale` | as sent |
+| `email` | as sent, unless `anonymous` was true (then no email is stored at all) |
 | `source` | `app` (signed) or `web` (website origin) |
 | `status` | `new`; free for triage later |
 
@@ -99,7 +101,10 @@ commit a key.
 
 1. A "Send feedback" item in the app's Help menu / settings opens a small dialog.
 2. Five tappable stars (optional), a category choice (Idea / Problem / Praise / Other), a text box
-   (max 5000 chars, show a counter near the limit), and an optional "Email me back" field.
+   (max 5000 chars, show a counter near the limit), an optional Email field and a "Send anonymously"
+   checkbox (unchecked by default). Prefill Email from the signed-in account or license when there is one.
+   When "Send anonymously" is checked, disable the Email field and send `anonymous: true` with no `email`.
+   Check the address format before sending; the server checks it again.
 3. Send is enabled once there is a rating or some text. Fill in `appVersion` and `platform` automatically.
 4. On success show "Thanks, we read every one" and close. On 429 say "You've sent a lot of feedback
    recently, try again later". On a network error keep the text and offer Retry.
