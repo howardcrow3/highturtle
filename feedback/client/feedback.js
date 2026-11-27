@@ -2,7 +2,8 @@
 // and Node 18+ (uses fetch and Web Crypto).
 //
 // Website (no key; the page's origin must be one of our domains):
-//   await sendFeedback({ app: 'turtlebox-site', rating: 5, message: 'Love it' });
+//   await sendFeedback({ app: 'turtlebox-site', rating: 5, message: 'Love it', email: 'me@example.com' });
+//   await sendFeedback({ app: 'turtlebox-site', rating: 5, message: 'Love it', anonymous: true }); // no email sent
 //
 // Desktop app (signed with the app's key, injected at build time, never committed):
 //   await sendFeedback({ app: 'golden', rating: 4, message: '...', category: 'feature', appVersion: '1.3.0' },
@@ -21,6 +22,8 @@ async function hmacHex(keyHex, text) {
 }
 
 export async function sendFeedback(feedback, { key, url = FEEDBACK_URL } = {}) {
+  // "Send anonymously": the email never leaves the device.
+  if (feedback.anonymous) { feedback = { ...feedback }; delete feedback.email; }
   const body = JSON.stringify(feedback);
   const headers = { 'content-type': 'application/json' };
   if (key) {

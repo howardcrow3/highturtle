@@ -116,6 +116,36 @@ test('validation rules', () => {
   assert.deepEqual(validate({ app: 'golden', rating: 5 }).item, { app: 'golden', rating: 5 });
 });
 
+test('email is optional and checked on the server', () => {
+  for (const bad of ['nope', 'a@b', 'a@b.c', 'a b@c.co', 'a@b..co', '.a@b.co', 'a..b@c.co', 'a@-b.co', 'a\n@b.co', '<a@b.co>', 'a@b@c.co',
+    `${'x'.repeat(65)}@b.co`, `a@${'b'.repeat(250)}.co`, 42, true, {}]) {
+    assert.equal(validate({ app: 'backer', message: 'hi', email: bad }).ok, false, JSON.stringify(bad));
+  }
+  for (const good of ['a@b.co', 'first.last+tag@mail.example.com', 'O\'Neil@Example.ORG', 'x_y-z@sub-domain.example.io']) {
+    assert.equal(validate({ app: 'backer', message: 'hi', email: good }).item.email, good);
+  }
+  for (const none of [undefined, null, '', '   ']) assert.equal(validate({ app: 'backer', message: 'hi', email: none }).item.email, undefined);
+});
+
+test('anonymous feedback never keeps an email', async () => {
+  assert.equal(validate({ app: 'backer', message: 'hi', email: 'a@b.co', anonymous: true }).item.email, undefined);
+  assert.equal(validate({ app: 'backer', message: 'hi', email: 'garbage', anonymous: true }).ok, true, 'not checked when dropped');
+  assert.equal(validate({ app: 'backer', message: 'hi', email: 'a@b.co', anonymous: false }).item.email, 'a@b.co');
+  assert.equal(validate({ app: 'backer', message: 'hi', anonymous: 'yes' }).ok, false);
+  const { app, items } = setup();
+  const res = await app(signed('golden', { app: 'golden', rating: 3, email: 'me@example.com', anonymous: true }));
+  assert.equal(res.statusCode, 201);
+  assert.equal('email' in items[0], false);
+  assert.equal('anonymous' in items[0], false);
+});
+
+test('older app builds that send email without the anonymous flag keep working', async () => {
+  const { app, items } = setup();
+  const res = await app(signed('ceevee', { app: 'ceevee', message: 'Export to PDF please', email: 'me@example.com' }));
+  assert.equal(res.statusCode, 201);
+  assert.equal(items[0].email, 'me@example.com');
+});
+
 test('health check and unknown routes', async () => {
   const { app } = setup();
   assert.equal((await app({ rawPath: '/v1/health', requestContext: { http: { method: 'GET' } } })).statusCode, 200);

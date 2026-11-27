@@ -41,12 +41,21 @@ function safeEqualHex(a, b) {
   return timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
 }
 
+// Practical address check: one @, no spaces or control characters, a dotted domain made of letters, digits and
+// hyphens, and a top-level domain of 2+ letters. (Full RFC 5322 allows far more than any mailbox really uses.)
+const EMAIL_RE = /^[^\s@"<>()\[\],;:\\\x00-\x1f\x7f]+@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+export function isEmail(v) {
+  if (typeof v !== 'string' || v.length > LIMITS.email) return false;
+  const [local] = v.split('@');
+  return EMAIL_RE.test(v) && local.length <= 64 && !local.startsWith('.') && !local.endsWith('.') && !local.includes('..');
+}
+
 const cleanShort = (v) => (typeof v === 'string' ? v.trim().slice(0, LIMITS.short) : undefined) || undefined;
 
 // Returns { ok: true, item } or { ok: false, error }.
 export function validate(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return { ok: false, error: 'body must be a JSON object' };
-  const { app, rating, message, category, email, appVersion, platform, locale } = input;
+  const { app, rating, message, category, email, anonymous, appVersion, platform, locale } = input;
   if (!APPS.includes(app)) return { ok: false, error: `app must be one of ${APPS.join(', ')}` };
   if (rating !== undefined && rating !== null && !(Number.isInteger(rating) && rating >= 1 && rating <= 5)) {
     return { ok: false, error: 'rating must be a whole number from 1 to 5' };
@@ -58,11 +67,12 @@ export function validate(input) {
   if (category !== undefined && category !== null && !CATEGORIES.includes(category)) {
     return { ok: false, error: `category must be one of ${CATEGORIES.join(', ')}` };
   }
+  if (anonymous !== undefined && anonymous !== null && typeof anonymous !== 'boolean') return { ok: false, error: 'anonymous must be true or false' };
+  // Anonymous wins: whatever arrives in email is dropped unchecked and never stored. Older app builds don't send the
+  // flag, so a missing one means "not anonymous" and an email they send is kept as before.
   let contact;
-  if (email !== undefined && email !== null && email !== '') {
-    if (typeof email !== 'string' || email.length > LIMITS.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      return { ok: false, error: 'email is not a valid address' };
-    }
+  if (anonymous !== true && email !== undefined && email !== null && !(typeof email === 'string' && email.trim() === '')) {
+    if (typeof email !== 'string' || !isEmail(email.trim())) return { ok: false, error: 'email is not a valid address' };
     contact = email.trim();
   }
   const item = {

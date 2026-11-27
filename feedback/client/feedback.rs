@@ -25,6 +25,7 @@ pub struct Feedback {
     #[serde(skip_serializing_if = "Option::is_none")] pub message: Option<String>, // up to 5000 chars
     #[serde(skip_serializing_if = "Option::is_none")] pub category: Option<String>, // feature | issue | praise | other
     #[serde(skip_serializing_if = "Option::is_none")] pub email: Option<String>,    // only if the user offers it
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")] pub anonymous: bool, // true: no email is sent or stored
     #[serde(rename = "appVersion", skip_serializing_if = "Option::is_none")] pub app_version: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")] pub platform: Option<String>,
 }
@@ -38,6 +39,7 @@ pub struct Receipt {
 pub async fn send(mut fb: Feedback) -> Result<Receipt, String> {
     let key = KEY.ok_or("feedback is not configured in this build")?;
     fb.app = APP.to_string();
+    if fb.anonymous { fb.email = None; }
     if fb.app_version.is_none() { fb.app_version = Some(env!("CARGO_PKG_VERSION").to_string()); }
     if fb.platform.is_none() { fb.platform = Some(std::env::consts::OS.to_string()); }
 
