@@ -1,9 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { sign as edSign, createPrivateKey, createPublicKey } from 'node:crypto';
-import { makeApp, signBody, validate, verifyInstall } from '../src/core.mjs';
+import { makeApp, validate, verifyInstall } from '../src/core.mjs';
 
-const KEYS = { backer: 'a'.repeat(64), ceevee: 'b'.repeat(64), golden: 'c'.repeat(64) };
 const NOW = Date.UTC(2026, 10, 26, 12, 0, 0);
 
 function setup(opts = {}) {
@@ -16,7 +15,7 @@ function setup(opts = {}) {
     async hit(key) { const c = (counters.get(key) || 0) + 1; counters.set(key, c); return c; },
     async claim(key) { if (claimed.has(key)) return false; claimed.add(key); return true; },
   };
-  const app = makeApp({ getAppKeys: async () => KEYS, store, now: () => NOW, newId: () => `id-${++n}`, ...opts });
+  const app = makeApp({ store, now: () => NOW, newId: () => `id-${++n}`, ...opts });
   return { app, items };
 }
 
@@ -27,10 +26,9 @@ const post = (body, headers = {}, ip = '1.2.3.4') => ({
   body: typeof body === 'string' ? body : JSON.stringify(body),
 });
 
-const signed = (app, body, { key = KEYS[app], ts = Math.floor(NOW / 1000) } = {}) => {
-  const raw = JSON.stringify(body);
-  return post(raw, { 'x-ht-app': app, 'x-ht-timestamp': String(ts), 'x-ht-signature': signBody(key, String(ts), raw) });
-};
+// Apps sign with per-install Ed25519 keys (helpers defined near the bottom).
+const SEEDS = { backer: 1, ceevee: 2, golden: 3 };
+const signed = (app, body, opts = {}) => installSigned(app, body, { k: installKey(SEEDS[app] || 9), name: app, ...opts });
 
 test('a signed app submission is stored with id, timestamp, app, rating and message', async () => {
   const { app, items } = setup();
@@ -41,7 +39,7 @@ test('a signed app submission is stored with id, timestamp, app, rating and mess
   assert.equal(out.createdAt, '2026-11-26T12:00:00.000Z');
   assert.deepEqual(items[0], {
     id: 'id-1', createdAt: '2026-11-26T12:00:00.000Z', app: 'backer', rating: 4, message: 'Please add scheduled backups',
-    category: 'feature', appVersion: '1.2.0', source: 'app', status: 'new',
+    category: 'feature', appVersion: '1.2.0', installId: installKey(1).pub, source: 'app', status: 'new',
   });
 });
 
@@ -57,29 +55,6 @@ test('unsigned requests from other origins, or with no origin, are refused', asy
   assert.equal((await app(post({ app: 'backer', rating: 5 }, { origin: 'https://evil.example' }))).statusCode, 403);
   assert.equal((await app(post({ app: 'backer', rating: 5 }))).statusCode, 403);
   assert.equal(items.length, 0);
-});
-
-test('bad signature, wrong key, unknown app and stale timestamp are refused', async () => {
-  const { app } = setup();
-  const body = { app: 'backer', rating: 3 };
-  assert.equal((await app(signed('backer', body, { key: KEYS.ceevee }))).statusCode, 401);
-  assert.equal((await app(signed('nope', { app: 'backer', rating: 3 }, { key: 'f'.repeat(64) }))).statusCode, 401);
-  assert.equal((await app(signed('backer', body, { ts: Math.floor(NOW / 1000) - 600 }))).statusCode, 401);
-  const tampered = signed('backer', body);
-  tampered.body = JSON.stringify({ app: 'backer', rating: 1 });
-  assert.equal((await app(tampered)).statusCode, 401);
-});
-
-test('a signature is accepted only once (replay is refused)', async () => {
-  const { app } = setup();
-  const ev = signed('golden', { app: 'golden', rating: 5 });
-  assert.equal((await app(ev)).statusCode, 201);
-  assert.equal((await app(ev)).statusCode, 409);
-});
-
-test('an app key cannot submit feedback as another app', async () => {
-  const { app } = setup();
-  assert.equal((await app(signed('backer', { app: 'golden', rating: 5 }))).statusCode, 403);
 });
 
 test('per-IP rate limit returns 429 after the hourly allowance', async () => {
@@ -153,7 +128,7 @@ test('health check and unknown routes', async () => {
   assert.equal((await app({ rawPath: '/v1/other', requestContext: { http: { method: 'POST' } } })).statusCode, 404);
 });
 
-test('the JS client signs exactly as the server verifies', async () => {
+test('the JS website client posts what the server accepts', async () => {
   const { app, items } = setup();
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (_url, init) => {
@@ -162,13 +137,11 @@ test('the JS client signs exactly as the server verifies', async () => {
   };
   try {
     const { sendFeedback } = await import('../client/feedback.js');
-    const realNow = Date.now;
-    Date.now = () => NOW;
-    try {
-      const out = await sendFeedback({ app: 'ceevee', rating: 2, message: 'Crashes on import', category: 'issue' }, { key: KEYS.ceevee });
-      assert.equal(out.id, 'id-1');
-      assert.equal(items[0].source, 'app');
-    } finally { Date.now = realNow; }
+    const origFetch = globalThis.fetch;
+    globalThis.fetch = async (u, init) => origFetch(u, { ...init, headers: { ...init.headers, origin: 'https://turtlebox.studio' } });
+    const out = await sendFeedback({ app: 'turtlebox-site', rating: 2, message: 'Crashes on import', category: 'issue' });
+    assert.equal(out.id, 'id-1');
+    assert.equal(items[0].source, 'web');
   } finally { globalThis.fetch = realFetch; }
 });
 
@@ -270,7 +243,9 @@ test('a blocked install is refused', async () => {
   assert.equal(items.length, 0);
 });
 
-test('legacy HMAC requests still work alongside install-signed ones', async () => {
-  const { app } = setup();
-  assert.equal((await app(signed('ceevee', { app: 'ceevee', rating: 5 }))).statusCode, 201);
+test('shared-key (HMAC) requests are retired: no install header means 401', async () => {
+  const { app, items } = setup();
+  const res = await app(post('{"app":"ceevee","rating":5}', { 'x-ht-app': 'ceevee', 'x-ht-timestamp': String(Math.floor(NOW / 1000)), 'x-ht-signature': 'ab'.repeat(32) }));
+  assert.equal(res.statusCode, 401);
+  assert.equal(items.length, 0);
 });
