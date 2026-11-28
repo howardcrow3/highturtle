@@ -180,7 +180,7 @@ HOW_TO_BUY = """  <section class="section" aria-labelledby="buying-h">
     <div class="wrap">
       <h2 id="buying-h">How buying works</h2>
       <ul class="points">
-        <li><h3>Pay once</h3><p>Each app has a one-time price, and a license key covers every update within its major version. Golden also has an optional add-on for automatic bank updates (coming soon), $9.97 a month or $100 a year. It is not part of the one-time price, and you pay for it on top of Golden.</p></li>
+        <li><h3>Pay once</h3><p>Each app has a one-time price. Golden also has an optional add-on for automatic bank updates (coming soon), $9.97 a month or $100 a year. It is not part of the one-time price, and you pay for it on top of Golden.</p></li>
         <li><h3>Key by email</h3><p>Your license key arrives by email a few minutes after checkout. It is also in <a href="/account/">your account</a> when you sign in with Google.</p></li>
         <li><h3>14 days to change your mind</h3><p>Paddle, our Merchant of Record, takes payment and adds any tax. Ask for a refund within 14 days. <a href="/refund.html">Refund policy</a></p></li>
       </ul>
