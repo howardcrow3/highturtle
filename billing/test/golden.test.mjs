@@ -19,6 +19,20 @@ test('tokens are byte-identical to the Rust tool', async () => {
   assert.equal(none, 'eyJwcm9kdWN0IjoiZ29sZGVuIiwibWFqb3IiOjEsImlzc3VlZCI6IjIwMjYtMTEtMTgiLCJwbGFpZF91bnRpbCI6bnVsbCwiYnV5ZXIiOiJjdG1fZml4dHVyZSJ9.FpUHS8cx0qPICUpJJUTJROxYqdLPeUTxA2d3DyWDSuRZQLwJlqJsb301yk7AEHoGbmwtI-xiOOvK_oRG4-ApCA');
 });
 
+// Made by the Rust tool with --core / --addon-only (pinned as PINNED_CORE / PINNED_ADDON_ONLY in
+// crates/fin-license/tests/paddle.rs). Keys say whether they unlock the app; the add-on bought on
+// its own must not.
+const RUST_CORE = 'eyJwcm9kdWN0IjoiZ29sZGVuIiwibWFqb3IiOjEsImlzc3VlZCI6IjIwMjYtMTEtMTgiLCJwbGFpZF91bnRpbCI6IjIwMjYtMTItMTgiLCJidXllciI6ImN0bV9maXh0dXJlIiwiY29yZSI6dHJ1ZX0.MYOnJgepFsQYp7k7xKz84Bqltrk-CjqJr8NSNE1bEaT5S8KmplOfClNuUh0_20fYQ1K-XSEj3OTdByp3kjr4Bg';
+const RUST_ADDON_ONLY = 'eyJwcm9kdWN0IjoiZ29sZGVuIiwibWFqb3IiOjEsImlzc3VlZCI6IjIwMjYtMTEtMTgiLCJwbGFpZF91bnRpbCI6IjIwMjYtMTItMTgiLCJidXllciI6ImN0bV9maXh0dXJlIiwiY29yZSI6ZmFsc2V9.dcCSoD4fmIoY2m2yoNG7Ywbe1uKPHKBjtrcJfuAL4cYTe6NZTaa0-pUOFjHrzz_C0H_7_khxP8UHmKIBABmRCA';
+
+test('tokens that say whether they unlock the app are byte-identical to the Rust tool', async () => {
+  const f = { issued: '2026-11-18', plaidUntil: '2026-12-18', buyer: 'ctm_fixture' };
+  assert.equal(await issueGoldenToken(SEED, { ...f, core: true }), RUST_CORE);
+  assert.equal(await issueGoldenToken(SEED, { ...f, core: false }), RUST_ADDON_ONLY);
+  // Leaving core out still gives the legacy bytes.
+  assert.equal(await issueGoldenToken(SEED, f), RUST_WITH_PLAID);
+});
+
 test('the public key matches the seed', async () => {
   const pub = await goldenPublicKey(SEED);
   const [p, s] = RUST_WITH_PLAID.split('.');
@@ -80,6 +94,7 @@ test('a Golden purchase emails a token the app accepts, once', async () => {
   assert.equal(payload.buyer, 'ctm_01');
   assert.equal(payload.issued, '2026-11-15');
   assert.equal(payload.plaid_until, null);
+  assert.equal(payload.core, true);
   await s.deliver(evt); // Paddle redelivers
   assert.equal(s.sent.length, 1);
 });
@@ -91,6 +106,35 @@ test('a Plaid add-on carries its paid-through date', async () => {
   const payload = JSON.parse(Buffer.from(tokenIn(s.sent[0]).split('.')[0], 'base64url'));
   assert.equal(payload.plaid_until, '2026-12-15');
   assert.match(s.sent[0].subject, /renewed/);
+});
+
+const payloadOf = (mail) => JSON.parse(Buffer.from(tokenIn(mail).split('.')[0], 'base64url'));
+
+test('the add-on bought on its own does not unlock the app, and the email says so', async () => {
+  const s = setup();
+  await s.deliver(customerEvent('customer.created'));
+  await s.deliver(transactionCompletedEvent({ id: 'txn_p', priceId: 'pri_golden_plaid' }));
+  assert.equal(payloadOf(s.sent[0]).core, false);
+  assert.match(s.sent[0].text, /Golden itself needs its own licence/);
+  assert.ok(s.sent[0].html.includes('Golden itself needs its own licence'));
+});
+
+test('an add-on renewal for someone who bought the app keeps unlocking it', async () => {
+  const s = setup();
+  await s.deliver(customerEvent('customer.created'));
+  await s.deliver(transactionCompletedEvent({ id: 'txn_core', priceId: 'pri_golden' }));
+  await s.deliver(transactionCompletedEvent({ id: 'txn_renew', priceId: 'pri_golden_plaid' }));
+  assert.equal(s.sent.length, 2);
+  const renewal = payloadOf(s.sent[1]);
+  assert.equal(renewal.core, true);
+  assert.equal(renewal.plaid_until, '2026-12-15');
+  assert.doesNotMatch(s.sent[1].text, /needs its own licence/);
+  // Another customer's app purchase does not count.
+  const t = setup();
+  await t.deliver(customerEvent('customer.created'));
+  await t.store.upsertTransaction({ transaction_id: 'txn_other', customer_id: 'ctm_99', status: 'completed', items: [{ price_id: 'pri_golden', quantity: 1 }] }, '2026-11-15T10:00:00Z');
+  await t.deliver(transactionCompletedEvent({ id: 'txn_mine', priceId: 'pri_golden_plaid' }));
+  assert.equal(payloadOf(t.sent.at(-1)).core, false);
 });
 
 test('other purchases (Backer, CeeVee) are left alone', async () => {

@@ -24,9 +24,12 @@ export async function goldenPublicKey(seed) {
   return jwk.x; // JWK x is already base64url without padding
 }
 
-export function goldenPayload({ issued, plaidUntil = null, buyer }) {
-  // Field order matches Rust's LicensePayload.
-  return JSON.stringify({ product: 'golden', major: MAJOR, issued, plaid_until: plaidUntil, buyer });
+export function goldenPayload({ issued, plaidUntil = null, buyer, core }) {
+  // Field order matches Rust's LicensePayload. `core` says whether the key unlocks the app (false: the
+  // bank add-on bought on its own). Left out, the key is the legacy form, which the app treats as the app.
+  const p = { product: 'golden', major: MAJOR, issued, plaid_until: plaidUntil, buyer };
+  if (typeof core === 'boolean') p.core = core;
+  return JSON.stringify(p);
 }
 
 export async function issueGoldenToken(seed, fields) {
