@@ -1,0 +1,52 @@
+name: Golden bank-sync service (code update)
+
+# Updates only the code of the golden-plaid Lambda from howardcrow3/golden (services/plaid-server).
+# The function's settings (Plaid keys, environment, return address) are left exactly as they are.
+# Run it by hand from the Actions tab after a change to services/plaid-server is merged in golden.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: golden branch, tag or commit to deploy
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      FN: golden-plaid
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: howardcrow3/golden
+          ref: ${{ inputs.ref }}
+          sparse-checkout: services/plaid-server
+      - name: Test the service
+        working-directory: services/plaid-server
+        run: node --test
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Update the function code
+        run: |
+          (cd services/plaid-server && zip -q -j /tmp/golden-plaid.zip handler.mjs package.json)
+          aws lambda update-function-code --function-name "$FN" --zip-file fileb:///tmp/golden-plaid.zip \
+            --query '{sha:CodeSha256,modified:LastModified}' --output table
+          aws lambda wait function-updated --function-name "$FN"
+      - name: Smoke test
+        run: |
+          URL=$(aws lambda get-function-url-config --function-name "$FN" --query FunctionUrl --output text)
+          URL=${URL%/}
+          sleep 5
+          page=$(curl -s -m 30 -o /dev/null -w '%{http_code}' "$URL/link")
+          nolic=$(curl -s -m 30 -o /dev/null -w '%{http_code}' -X POST -H 'content-type: application/json' -d '{}' "$URL/transactions/sync")
+          echo "GET /link -> $page (200 expected); POST /transactions/sync without a licence -> $nolic (401/403 expected)"
+          [ "$page" = 200 ] && { [ "$nolic" = 401 ] || [ "$nolic" = 403 ]; }
