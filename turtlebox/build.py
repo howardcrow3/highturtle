@@ -14,14 +14,14 @@ import html, json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "legal"))
 sys.path.insert(0, HERE)
-from site_legal import footer_block  # policy links and legal name (Paddle requirements)
+from site_legal import footer_block, PADDLE_FOOTNOTE  # policy links and legal name (Paddle requirements)
 from nav import nav_links
 from gtag import add_tag  # Google tag on every page
 from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb16"
+V = "tb17"
 e = html.escape
 
 
@@ -88,7 +88,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
 {body}
 </main>
 <footer class="site-footer">
-  <div class="wrap foot">
+{('  <div class="wrap">' + PADDLE_FOOTNOTE + '</div>' + chr(10)) if 'data-paddle-price' in body else ''}  <div class="wrap foot">
     <p>Turtlebox makes Backer, CeeVee and Golden. Also from us: <a href="https://highturtle.com">High Turtle</a>.</p>
       {footer_block("turtlebox")}
   </div>
@@ -120,7 +120,7 @@ def buy_plate(a, hid, compact=False):
     plats = f'<p class="plats">{e(a["platforms"])}</p>'
     if a.get("on_sale"):
         action = (f'<a class="btn btn-buy" href="{e(a["url"])}#buy" data-paddle-price="{e(a["price_id"])}" data-success="{e(a["success_url"])}">Buy {e(a["name"])}</a>'
-                  f'<p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p>')
+                  f'<p class="fine">14-day free trial in the app.</p>')
     else:
         action = f'<p class="soon">Not on sale yet</p>' + (
             f'<a class="btn btn-small btn-quiet" href="{e(a["url"])}#buy">Get notified</a>' if compact else notify_form(a, hid))
@@ -404,7 +404,7 @@ def app_page(slug):
       <dl class="facts">
 {facts}
       </dl>
-      <p class="fine facts-fine">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a>{help_link}</p>
+      <p class="fine facts-fine"><a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a>{help_link}</p>
     </div>
   </section>"""
 
@@ -419,7 +419,6 @@ def ceevee_simple(h1, body_html):
 ceevee = by_slug["ceevee"]
 ceevee_buy = ceevee_simple("Buy CeeVee", f"""    <p>{e(ceevee["price"])} once. One license works on 2 computers and covers every 1.x version. Your license key arrives by email a few minutes after checkout, with a link that activates it in CeeVee.</p>
     <a class="btn btn-buy" href="/ceevee/" data-paddle-price="{e(ceevee["price_id"])}" data-success="{e(ceevee["success_url"])}">Buy CeeVee</a>
-    <p class="fine">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
     <script>
     /* Opened from the app (?from=app): start the checkout straight away. */
     if (/[?&]from=app/.test(location.search)) window.addEventListener('load', function () {{ var b = document.querySelector('[data-paddle-price]'); if (b && window.Paddle) b.click(); }});
