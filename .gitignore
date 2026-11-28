@@ -5,3 +5,5 @@ turtlebox/backer/releases.json
 .impeccable/config.local.json
 .claude/settings.local.json
 .impeccable/hook.cache.json
+
+__pycache__/
