@@ -51,6 +51,10 @@ def legal_line(site):
     return f"&copy; 2026 {v('legal_name')}. {brand} is a trading name of {v('legal_name')}."
 
 
+PADDLE_FOOTNOTE = ('<p class="fine paddle-note">Checkout and payment are processed by Paddle.com, our Merchant of Record, '
+                   'which also handles billing questions, sales tax and refunds.</p>')
+
+
 def footer_block(site):
     """The policy links and legal name that every footer carries."""
     return (f'<!-- legal:footer -->\n      <p class="legal-links">{policy_links()}</p>\n'
