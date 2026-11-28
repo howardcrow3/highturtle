@@ -22,7 +22,7 @@ export function goldenEmail({ token, site, core, plaidUntil, order }) {
   const lede = renewal
     ? `The add-on is paid through ${plaidUntil}. Open the button below on the computer where Golden is installed to apply the new key.`
     : 'Open the button below on the computer where Golden is installed. It activates your licence in one step.';
-  const extra = !renewal && plaidUntil ? `The bank-connection add-on is included through ${plaidUntil}.` : '';
+  const extra = !renewal && plaidUntil ? `Your bank-connection add-on, bought with Golden, is paid through ${plaidUntil}.` : '';
   const orderLine = `Order ${order} (receipt from Paddle, our Merchant of Record)`;
   const keep = 'It works offline and covers every 1.x update. Keep this email: you can use the key again on a new computer.';
 

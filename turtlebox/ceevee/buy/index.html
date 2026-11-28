@@ -77,7 +77,7 @@
     b.addEventListener('click', function (ev) {
       ev.preventDefault();
       Paddle.Checkout.open({
-        items: [{ priceId: b.getAttribute('data-paddle-price'), quantity: 1 }],
+        items: b.getAttribute('data-paddle-price').split(' ').filter(Boolean).map(function (id) { return { priceId: id, quantity: 1 }; }),
         settings: { displayMode: 'overlay', theme: 'light', successUrl: b.getAttribute('data-success') }
       });
     });
