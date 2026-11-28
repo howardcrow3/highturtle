@@ -77,7 +77,9 @@ A completed transaction with `GOLDEN_PRICE_ID` (core, one-time) or `GOLDEN_PLAID
 buyer a Golden licence key (`src/golden-fulfillment.mjs`, `src/golden.mjs`). The key is an Ed25519-signed token in the exact format of
 `crates/fin-license` in howardcrow3/golden, verified offline by the app (a test pins the bytes to the Rust tool's output). At most once per
 transaction (claim field `golden_fulfillment`). Each monthly add-on renewal is a new transaction, so it emails a fresh key with a later
-paid-through date. Price IDs are repository variables `GOLDEN_PRICE_ID` and `GOLDEN_PLAID_PRICE_ID`, passed to the function by **Billing setup**.
+paid-through date. Each key carries `core`: `true` when this transaction includes the app or the customer bought it in an
+earlier completed transaction (so renewals keep unlocking it), `false` for the add-on bought on its own, which turns on bank sync but
+not the app. Price IDs are repository variables `GOLDEN_PRICE_ID` and `GOLDEN_PLAID_PRICE_ID`, passed to the function by **Billing setup**.
 `GOLDEN_SIGNING_KEY` (base64url seed) is created in Secrets Manager by **Billing setup** if missing; the run prints the public key
 (`license_public_key.txt` in the Golden repo). Until the key exists, orders go to `OPS_EMAIL` and stay replayable from Paddle.
 

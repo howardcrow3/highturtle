@@ -13,7 +13,7 @@ export function activationUrl(site, token) {
   return `${String(site || 'https://turtlebox.studio').replace(/\/$/, '')}/golden/activate/#key=${token}`;
 }
 
-export function goldenEmail({ token, site, core, plaidUntil, order }) {
+export function goldenEmail({ token, site, core, ownsApp = true, plaidUntil, order }) {
   const renewal = !core && !!plaidUntil;
   const url = activationUrl(site, token);
   const base = String(site || 'https://turtlebox.studio').replace(/\/$/, '');
@@ -22,7 +22,11 @@ export function goldenEmail({ token, site, core, plaidUntil, order }) {
   const lede = renewal
     ? `The add-on is paid through ${plaidUntil}. Open the button below on the computer where Golden is installed to apply the new key.`
     : 'Open the button below on the computer where Golden is installed. It activates your licence in one step.';
-  const extra = !renewal && plaidUntil ? `Your bank-connection add-on, bought with Golden, is paid through ${plaidUntil}.` : '';
+  const extra = !renewal && plaidUntil
+    ? `Your bank-connection add-on, bought with Golden, is paid through ${plaidUntil}.`
+    : renewal && !ownsApp
+      ? 'This key turns on bank connections only. Golden itself needs its own licence: buy it from the Licence screen in the app.'
+      : '';
   const orderLine = `Order ${order} (receipt from Paddle, our Merchant of Record)`;
   const keep = 'It works offline and covers every 1.x update. Keep this email: you can use the key again on a new computer.';
 

@@ -9,6 +9,15 @@ import { goldenEmail } from './golden-email.mjs';
 export function makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log }) {
   const ids = { priceId: cfg.goldenPriceId, plaidPriceId: cfg.goldenPlaidPriceId, plaidYearlyPriceId: cfg.goldenPlaidYearlyPriceId };
 
+  // Whether this customer already bought the app in an earlier completed transaction, so an add-on
+  // renewal key keeps unlocking it instead of being a bank-connections-only key.
+  async function ownsApp(customerId, thisTxn) {
+    if (!customerId || !ids.priceId) return false;
+    const rows = await store.listTransactions(customerId);
+    return rows.some((t) => t.transaction_id !== thisTxn && t.status === 'completed'
+      && (t.items || []).some((i) => i.price_id === ids.priceId));
+  }
+
   return async function onPurchase(txn) {
     if (!ids.priceId && !ids.plaidPriceId && !ids.plaidYearlyPriceId) return;
     const fields = goldenFields(txn, ids);
@@ -33,10 +42,11 @@ export function makeGoldenFulfillment({ cfg, store, paddle, sendEmail, log }) {
         return;
       }
 
+      const core = fields.core > 0 || (await ownsApp(txn.customerId, txn.id));
       const token = await issueGoldenToken(cfg.goldenSigningKey, {
-        issued: fields.issued, plaidUntil: fields.plaidUntil, buyer: txn.customerId,
+        issued: fields.issued, plaidUntil: fields.plaidUntil, buyer: txn.customerId, core,
       });
-      const mail = goldenEmail({ token, site: cfg.site, core: fields.core, plaidUntil: fields.plaidUntil, order: txn.invoiceNumber || txn.id });
+      const mail = goldenEmail({ token, site: cfg.site, core: fields.core, ownsApp: core, plaidUntil: fields.plaidUntil, order: txn.invoiceNumber || txn.id });
       await sendEmail({ to: email, subject: mail.subject, text: mail.text, html: mail.html });
       await store.finishFulfillment(txn.id, 'emailed', 'golden_fulfillment');
       log({ golden: 'emailed', transaction: txn.id });
