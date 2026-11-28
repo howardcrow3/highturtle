@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeApp, signBody, validate } from '../src/core.mjs';
+import { sign as edSign, createPrivateKey, createPublicKey } from 'node:crypto';
+import { makeApp, signBody, validate, verifyInstall } from '../src/core.mjs';
 
 const KEYS = { backer: 'a'.repeat(64), ceevee: 'b'.repeat(64), golden: 'c'.repeat(64) };
 const NOW = Date.UTC(2026, 10, 26, 12, 0, 0);
@@ -169,4 +170,107 @@ test('the JS client signs exactly as the server verifies', async () => {
       assert.equal(items[0].source, 'app');
     } finally { Date.now = realNow; }
   } finally { globalThis.fetch = realFetch; }
+});
+
+// ---- Per-install Ed25519 keys ----
+const PKCS8_PREFIX = Buffer.from('302e020100300506032b657004220420', 'hex');
+const installKey = (seedByte = 7) => {
+  const priv = createPrivateKey({ key: Buffer.concat([PKCS8_PREFIX, Buffer.alloc(32, seedByte)]), format: 'der', type: 'pkcs8' });
+  const pub = createPublicKey(priv).export({ type: 'spki', format: 'der' }).subarray(-32).toString('hex');
+  return { priv, pub };
+};
+const installSigned = (app, body, { k = installKey(), ts = Math.floor(NOW / 1000), name = body.app } = {}) => {
+  const raw = typeof body === 'string' ? body : JSON.stringify(body);
+  const sig = edSign(null, Buffer.from(`${name}.${k.pub}.${ts}.${raw}`), k.priv).toString('hex');
+  return post(raw, { 'x-ht-app': name, 'x-ht-install': k.pub, 'x-ht-timestamp': String(ts), 'x-ht-signature': sig });
+};
+
+test('the app test vector verifies (seed 07 x32, ts 1795694400)', () => {
+  const k = installKey(7);
+  const raw = '{"app":"ceevee","rating":5}';
+  const sig = edSign(null, Buffer.from(`ceevee.${k.pub}.1795694400.${raw}`), k.priv).toString('hex');
+  assert.equal(verifyInstall('ceevee', k.pub, '1795694400', raw, sig), true);
+  assert.equal(verifyInstall('ceevee', k.pub, '1795694400', raw + ' ', sig), false);
+});
+
+test('an install-signed submission is stored with its install id', async () => {
+  const { app, items } = setup();
+  const k = installKey();
+  const res = await app(installSigned('ceevee', { app: 'ceevee', rating: 5, message: 'Love it' }, { k }));
+  assert.equal(res.statusCode, 201);
+  assert.equal(items[0].installId, k.pub);
+  assert.equal(items[0].source, 'app');
+});
+
+test('install requests: tampered body, wrong key, stale timestamp, bad shapes are refused', async () => {
+  const { app, items } = setup();
+  const body = { app: 'ceevee', rating: 5 };
+  const good = installSigned('ceevee', body);
+  assert.equal((await app({ ...good, body: JSON.stringify({ app: 'ceevee', rating: 1 }) })).statusCode, 401);
+  const other = installKey(9);
+  assert.equal((await app({ ...good, headers: { ...good.headers, 'x-ht-install': other.pub } })).statusCode, 401);
+  assert.equal((await app(installSigned('ceevee', body, { ts: Math.floor(NOW / 1000) - 3600 }))).statusCode, 401);
+  assert.equal((await app({ ...good, headers: { ...good.headers, 'x-ht-install': 'zz' } })).statusCode, 401);
+  assert.equal((await app({ ...good, headers: { ...good.headers, 'x-ht-signature': 'ab' } })).statusCode, 401);
+  assert.equal((await app(installSigned('x', body, { name: 'website' }))).statusCode, 401);
+  assert.equal(items.length, 0);
+});
+
+test('an install signature is accepted only once', async () => {
+  const { app } = setup();
+  const req = installSigned('ceevee', { app: 'ceevee', rating: 5 });
+  assert.equal((await app(req)).statusCode, 201);
+  assert.equal((await app(req)).statusCode, 409);
+});
+
+test('an install key cannot submit as another app', async () => {
+  const { app } = setup();
+  assert.equal((await app(installSigned('ceevee', { app: 'golden', rating: 5 }, { name: 'ceevee' }))).statusCode, 403);
+});
+
+test('per-install limits: 5 an hour, 20 a day; other installs are unaffected', async () => {
+  const { app } = setup({ perIpPerHour: 1000 });
+  const k = installKey(1);
+  for (let i = 0; i < 5; i++) assert.equal((await app(installSigned('ceevee', { app: 'ceevee', rating: 5, message: `m${i}` }, { k }))).statusCode, 201);
+  assert.equal((await app(installSigned('ceevee', { app: 'ceevee', rating: 5, message: 'sixth' }, { k }))).statusCode, 429);
+  assert.equal((await app(installSigned('ceevee', { app: 'ceevee', rating: 5 }, { k: installKey(2) }))).statusCode, 201);
+});
+
+test('per-install daily cap applies across hours', async () => {
+  let t = NOW;
+  const { app } = setup({ perIpPerHour: 1000, now: () => t });
+  const k = installKey(3);
+  let ok = 0;
+  for (let h = 0; h < 10; h++) {
+    t = NOW + h * 3_600_000;
+    for (let i = 0; i < 5; i++) {
+      const r = await app(installSigned('ceevee', { app: 'ceevee', message: `h${h}i${i}` }, { k, ts: Math.floor(t / 1000) }));
+      if (r.statusCode === 201) ok++;
+    }
+  }
+  assert.equal(ok, 20);
+});
+
+test('per-IP limit also applies to install-signed requests', async () => {
+  const { app } = setup({ perInstallPerHour: 1000, perInstallPerDay: 1000 });
+  for (let i = 0; i < 20; i++) assert.equal((await app(installSigned('ceevee', { app: 'ceevee', message: `m${i}` }, { k: installKey(i + 10) }))).statusCode, 201);
+  assert.equal((await app(installSigned('ceevee', { app: 'ceevee', message: 'over' }, { k: installKey(99) }))).statusCode, 429);
+});
+
+test('install requests are capped at 10 KB', async () => {
+  const { app } = setup();
+  const res = await app(installSigned('ceevee', { app: 'ceevee', message: 'x'.repeat(4000), pad: 'y'.repeat(7000) }));
+  assert.equal(res.statusCode, 413);
+});
+
+test('a blocked install is refused', async () => {
+  const k = installKey(5);
+  const { app, items } = setup({ blockedInstalls: new Set([k.pub]) });
+  assert.equal((await app(installSigned('ceevee', { app: 'ceevee', rating: 5 }, { k }))).statusCode, 403);
+  assert.equal(items.length, 0);
+});
+
+test('legacy HMAC requests still work alongside install-signed ones', async () => {
+  const { app } = setup();
+  assert.equal((await app(signed('ceevee', { app: 'ceevee', rating: 5 }))).statusCode, 201);
 });

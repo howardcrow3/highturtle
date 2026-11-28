@@ -33,7 +33,7 @@ app / website ──HTTPS──> API Gateway HTTP API ──> Lambda highturtle-
 
 Response `201 {"id": "<uuid>", "createdAt": "2026-11-26T12:00:00.000Z"}`.
 Errors are `{"error": "..."}` with 400 (bad input), 401 (bad signature), 403 (origin or app not allowed),
-409 (replayed request), 413 (body over 16 KB), 429 (more than 20 submissions per hour from one IP).
+409 (replayed request), 413 (body over 16 KB), 429 (over the per-IP limit of 20 an hour, or per-install 5 an hour / 20 a day).
 
 ## Stored record
 
@@ -52,7 +52,23 @@ keeps a one-way hash of the IP for two hours only. The table has deletion protec
 
 ## Who can submit
 
-**Desktop apps sign each request** with their own key (HMAC-SHA256 over `"<unix seconds>.<raw body>"`):
+**Desktop apps sign each request, preferably with a per-install key.** Each install makes its own Ed25519 key
+(private half in the OS keychain) and sends:
+
+```
+x-ht-app: ceevee
+x-ht-install: <64 hex, the install's public key = install id>
+x-ht-timestamp: 1795694400
+x-ht-signature: <128 hex Ed25519 signature over "<app>.<install>.<timestamp>.<raw body>">
+```
+
+The server checks the signature, a timestamp within 5 minutes, one use per signature, a 10 KB body cap, and
+limits each install to 5 per hour and 20 per day (plus the per-IP limit). The install id is stored on the record
+(`installId`). To block one install, add its id to `BLOCKED_INSTALLS` (comma-separated) in the Lambda environment.
+The key is self-made, so this does not prove the app is genuine; the rate limits are what bound abuse.
+
+**Legacy builds** (no `x-ht-install`) sign with the shared per-app HMAC key (HMAC-SHA256 over `"<unix seconds>.<raw body>"`). Keep accepting these until the last build that sends them is out of use, then
+remove that app's entry from `/highturtle/feedback/app-keys` (this also rotates the extracted key out):
 
 ```
 x-ht-app: golden

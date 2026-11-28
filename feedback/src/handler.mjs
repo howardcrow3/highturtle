@@ -56,7 +56,9 @@ const store = {
 };
 
 const origins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean) : DEFAULT_ORIGINS;
-const app = makeApp({ getAppKeys, store, origins });
+// Abuse switch: BLOCKED_INSTALLS is a comma-separated list of install ids (public keys) to refuse.
+const blockedInstalls = new Set((process.env.BLOCKED_INSTALLS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
+const app = makeApp({ getAppKeys, store, origins, blockedInstalls });
 
 export const handler = async (event) => {
   try {
