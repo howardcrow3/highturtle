@@ -1,90 +1,56 @@
-/* High Turtle page styles, on the shared Turtlebox tokens and components. */
-.brand-name { white-space: nowrap; }
-/* The gold turtle. Gold is 1.9:1 on ivory, so the mark is large and always sits beside the name. */
+
+/* ---------- High Turtle page styles (sites/highturtle.css), on the Turtlebox UI web layer, light mode ---------- */
+/* The gold turtle. Gold is under 3:1 on paper, so the mark is large and always sits beside the name. */
 .brand-mark { color: var(--accent); }
-.foot-brand { gap: 12px; }
-.foot-brand .brand-mark { height: 28px; }
-.foot-brand .brand-name { font-size: 1.375rem; }
+.foot-brand { gap: 10px; }
+.foot-brand .brand-mark { height: 24px; }
+.foot-brand .brand-name { font-size: 1.125rem; }
 
 /* Hero */
-.hero { padding-block: var(--space-3xl) var(--space-2xl); }
-.hero h1 { font-size: clamp(2.75rem, 5.4vw, 4.25rem); max-width: 13em; }
-.cta-row { margin-top: var(--space-lg); }
+.hero h1 { max-width: 14em; }
 .hero .lede { text-wrap: pretty; }
-/* Text links in a row of actions get a 44px hit area without changing how they look */
-.cta-row .link { display: inline-block; padding-block: 15px; }
-/* Portfolio */
-.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-md); }
-/* Data labels (count, Focus, Stage, Company details terms) read at 12px with light tracking; the 0.3em label is kept for nav, buttons and form labels */
-.count-note, .pf-label, .facts dt { font: 400 0.75rem/1.4 var(--font-sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--body); }
-.pf-go { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.25em; text-transform: uppercase; }
-.portfolio { list-style: none; margin: var(--space-xl) 0 0; padding: 0; border-top: 1px solid var(--ink); }
-.pf-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 11rem 7rem 11rem; gap: var(--space-md) var(--space-lg); align-items: baseline; padding-block: var(--space-lg); border-bottom: 1px solid var(--line); color: var(--body); text-decoration: none; transition: background-color var(--duration-base) var(--ease-out); }
-a.pf-row:hover { background: var(--surface); }
-.pf-go.pf-quiet { border-bottom-color: transparent; color: var(--body); }
-a.pf-row:hover .pf-go { color: var(--ink); }
-.pf-name { color: var(--ink); font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em; }
-.pf-desc { font-size: 1rem; line-height: 1.65; }
-.pf-meta { display: flex; flex-direction: column; gap: 4px; color: var(--ink); font-size: 0.9375rem; }
-.pf-go { justify-self: end; color: var(--ink); border-bottom: 1px solid var(--accent); padding-bottom: 2px; white-space: nowrap; }
+
+/* Portfolio: one dense row per company, like an app table at website scale */
+.count-note, .pf-label, .facts dt { font: 500 0.8125rem/1.4 var(--sans); color: var(--body); }
+.portfolio { list-style: none; margin: var(--space-xl) 0 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); overflow: hidden; }
+.portfolio > li + li { border-top: 1px solid var(--line); }
+.pf-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) 10rem 7rem 9rem; gap: 12px var(--space-lg); align-items: baseline; padding: var(--space-md) var(--space-lg); color: var(--body); text-decoration: none; transition: background-color .15s ease-out; }
+a.pf-row:hover { background: var(--hover); }
+.pf-name { color: var(--ink); font-size: 1.25rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.015em; }
+.pf-desc { line-height: 1.6; }
+.pf-meta { display: flex; flex-direction: column; gap: 2px; color: var(--ink); font-size: 0.9375rem; }
+.pf-go { justify-self: end; font: 500 0.875rem/1.4 var(--sans); color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; white-space: nowrap; }
+.pf-go.pf-quiet { text-decoration-color: transparent; color: var(--body); }
+a.pf-row:hover .pf-go { text-decoration-color: var(--ink); }
 .pf-note { margin-top: var(--space-md); font-size: 0.9375rem; }
 @media (max-width: 960px) {
-  .pf-row { grid-template-columns: 1fr 1fr; padding-inline: 0; }
+  .pf-row { grid-template-columns: 1fr 1fr; padding: var(--space-md); }
   .pf-name, .pf-desc { grid-column: 1 / -1; }
   .pf-go { grid-column: 1 / -1; justify-self: start; }
 }
+
 /* Company details */
 .details-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.6fr); gap: var(--space-md) var(--space-xl); }
-.details h2 { font-size: clamp(1.875rem, 3.4vw, 2.25rem); letter-spacing: -0.02em; line-height: 1.15; }
 .facts { margin: 0; }
-.facts div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-md); padding-block: var(--space-sm); border-top: 1px solid var(--line); }
+.facts div { display: grid; grid-template-columns: 10rem minmax(0, 1fr); gap: var(--space-md); padding-block: 14px; border-top: 1px solid var(--line); }
 .facts div:last-child { border-bottom: 1px solid var(--line); }
-.facts dt { line-height: 2.2; }
+.facts dt { line-height: 1.9; }
 .facts dd { margin: 0; color: var(--ink); }
 .facts dd a { display: inline-block; padding-block: 10px; margin-block: -10px; }
+
+/* Signup */
+.signup { border-top: 1px solid var(--line); padding-block: var(--space-3xl); }
+.signup > .wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--space-xl); }
+.signup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-lg) clamp(2rem, 6vw, 5rem); align-items: start; }
+.signup-grid p { margin-top: var(--space-sm); max-width: 30em; }
+.form label { display: block; margin-bottom: 8px; }
+.form .fine { margin-top: 12px; }
 @media (max-width: 860px) {
   .details-grid, .signup-grid { grid-template-columns: 1fr; }
   .facts div { grid-template-columns: 1fr; gap: 0; }
+  .signup { padding-block: var(--space-2xl); }
+  .signup > .wrap { padding: var(--space-lg) var(--space-md); }
 }
-/* Signup */
-.signup { background: var(--surface); border-top: 1px solid var(--line); padding-block: var(--space-3xl); }
-.signup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-lg) clamp(2rem, 6vw, 5rem); align-items: start; }
-.signup-grid p { margin-top: var(--space-sm); max-width: 30em; }
-@media (max-width: 860px) { .signup-grid { grid-template-columns: 1fr; } }
-.form label { display: block; margin-bottom: 12px; font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }
-.field-row { display: flex; flex-wrap: wrap; gap: 12px; }
-.field-row input { flex: 1 1 14rem; min-width: 0; font: 400 0.9375rem/1.4 var(--font-sans); padding: 16px; border: 1px solid var(--border-control); border-radius: 0; background: var(--paper); color: var(--ink); }
-.field-row input::placeholder { color: color-mix(in srgb, var(--body) 70%, var(--paper)); }
-.field-row .btn { padding-block: 18px; }
-.form .fine { margin-top: var(--space-sm); font: 400 0.75rem/1.6 var(--font-sans); letter-spacing: 0.02em; color: var(--body); }
-.form-status { margin-top: 12px; font: 500 0.8125rem/1.5 var(--font-sans); min-height: 1.5em; }
-.form-status.is-error { color: var(--danger); }
-.form-status.is-ok { color: var(--ink); }
-
-/* Simple pages */
-.simple h1 { font-size: clamp(2.5rem, 5vw, 3.75rem); }
 
 /* Policy pages: keep running text near 70 characters */
 main.legal { max-width: 38rem; }
-
-/* Header nav: a 44px hit area at the same visual size */
-.bar nav a:not(.btn) { padding-block: 14px; margin-block: -10px; }
-
-/* Selection follows the palette */
-::selection { background: var(--accent); color: var(--on-accent); }
-
-/* Dark theme: row rules on charcoal were 1.25:1 and disappeared; lift them so the portfolio rows read as rows */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --line: #3a3a3a; }
-}
-:root[data-theme="dark"] { --line: #3a3a3a; }
-
-/* Smallest phones (320 to 360px): tighten the header so brand and nav stay on one line */
-@media (max-width: 360px) {
-  .bar { gap: 12px; }
-  .bar nav { gap: 10px; }
-  .bar nav a:not(.btn) { letter-spacing: 0.04em; }
-  .brand { gap: 6px; }
-  .brand-mark { height: 22px; }
-  .brand-name { font-size: 1.125rem; }
-}

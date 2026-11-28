@@ -58,12 +58,12 @@ def redirect(path):
 def page(title, heading, text, button=None):
     btn = button or f'<a class="btn" href="/">Back to High Turtle</a>'
     return respond(200, f"""<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><meta name="color-scheme" content="light dark">
+<html lang="en" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><meta name="color-scheme" content="light">
 <title>{html.escape(title)} | High Turtle</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="/assets/styles.css?v=graphite2"></head>
-<body><header class="site-header"><div class="wrap bar"><a class="brand" href="/" style="font-family:var(--font-head);font-size:1.4rem;text-decoration:none">High Turtle</a></div></header>
+<link rel="stylesheet" href="/assets/styles.css?v=hc5"></head>
+<body><header class="site-header"><div class="wrap bar"><a class="brand" href="/"><span class="brand-name">High Turtle</span></a></div></header>
 <main class="simple wrap"><h1>{html.escape(heading)}</h1><p>{html.escape(text)}</p>{btn}</main></body></html>""")
 
 

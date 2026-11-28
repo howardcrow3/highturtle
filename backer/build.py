@@ -17,7 +17,7 @@ import json, os, re, shutil, sys, urllib.parse
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "turtlebox")
-V = "bk3"
+V = "bk4"
 sys.path.insert(0, os.path.join(ROOT, "legal"))
 from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
 sys.path.insert(0, OUT)
@@ -471,14 +471,14 @@ def render(cfg, artifact):
             style = (f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">\n'
                      f'<link rel="stylesheet" href="/assets/store.css?v={TB_V}">\n'
                      f'<link rel="stylesheet" href="/assets/backer.css?v={V}">')
-            fonts = '<link rel="preload" href="/assets/fonts/Inter-Light.woff2" as="font" type="font/woff2" crossorigin>'
+            fonts = '<link rel="preload" href="/assets/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>'
         page = f'''<!doctype html>
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="#F5F0E7">
+<meta name="theme-color" content="#F7F3EA">
 {head_common}{fonts}
 {DETECT}
 {style}

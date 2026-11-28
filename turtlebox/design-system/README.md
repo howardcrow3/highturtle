@@ -1,3 +1,5 @@
+> **2026-11-28: the sites now run on the Turtlebox UI web layer.** `ui/` is a vendored copy of `dist/` from howardcrow3/turtlebox-ui (`web-light.css` and `fonts/`; see that repo's `docs/WEB.md`). `build.py` and `build_highturtle.py` build both sites' `styles.css` from `ui/web-light.css` + `compat.css` (+ `sites/highturtle.css`). Both sites are light only. To update, rebuild in turtlebox-ui (`python3 scripts/build-tokens.py && python3 scripts/build-web.py`), copy its `dist/` here as `ui/`, then run `python3 build.py` and `CSS_ONLY=1 python3 build_highturtle.py`. The rules below (square corners, uppercase labels, Inter Light) describe the earlier marketing system and are superseded where they differ; `tokens.json` and `components/` still feed the Tailwind and Swift outputs only.
+
 Turtlebox builds small AI apps that each do one job. The brand is Grains-derived: warm neutrals, one gold accent, Inter, and only Inter, for everything you read and press. It should feel quiet, exact and unhurried, like a well-set page with a smiling turtle on it.
 
 ## Principles

@@ -9,12 +9,14 @@ HERE = pathlib.Path(__file__).parent
 ROOT = HERE.parent.parent
 A = ROOT / "assets"
 
-css = "\n".join((HERE / p).read_text() for p in ("tokens.css", "components/bundle.css", "sites/highturtle.css"))
+css = "\n".join((HERE / p).read_text() for p in ("ui/web-light.css", "compat.css", "sites/highturtle.css"))
 (A / "styles.css").write_text(css)
 
 (A / "fonts").mkdir(exist_ok=True)
 for old in list((A / "fonts").iterdir()): old.unlink()
-for f in (HERE / "fonts").iterdir(): shutil.copy(f, A / "fonts" / f.name)
+for f in (HERE / "ui" / "fonts").iterdir(): shutil.copy(f, A / "fonts" / f.name)
+if os.environ.get("CSS_ONLY"):
+    print("high turtle stylesheet and fonts built"); sys.exit(0)
 
 with tempfile.TemporaryDirectory() as tmp:
     env = dict(os.environ, BRAND_NAME="High Turtle", BRAND_DOMAIN="highturtle.com", BRAND_OUT=tmp,

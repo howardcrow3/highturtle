@@ -1,0 +1,23 @@
+
+/* ---------- Site glue (turtlebox/design-system/compat.css) ----------
+   The page styles (store.css, backer.css, sites/highturtle.css, inline page styles) were written against the
+   earlier marketing tokens. These names now point at the Turtlebox UI roles, so those sheets keep working. */
+:root {
+  --font-sans: var(--sans);
+  --border-control: var(--control);
+  --frame: var(--line);
+  --focus-ring: var(--ink);
+  --radius-none: 0;
+  --radius-round: 50%;
+  --radius-app-icon: 22%;
+  --duration-base: 150ms;
+  --duration-slow: 250ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Download form on the app pages */
+.dl-form { margin-top: var(--space-xs); display: flex; flex-direction: column; gap: 10px; }
+.dl-form .btn { align-self: flex-start; }
+.dl-form .fine { color: var(--body); }
+.empty { margin-top: var(--space-lg); }
+.feature-plate .eyebrow { color: var(--body); }

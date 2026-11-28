@@ -51,9 +51,15 @@ out.append(f':root[data-theme="dark"] {{\n{body.replace("    ","  ")}\n}}\n')
 tokens_css = "\n".join(out)
 (HERE / "tokens.css").write_text(tokens_css)
 
-# Site stylesheet = tokens + components
-bundle = (HERE / "components" / "bundle.css").read_text()
-(HERE.parent / "assets" / "styles.css").write_text(tokens_css + "\n" + bundle)
+# Site stylesheet = the Turtlebox UI web layer (vendored in ui/, light mode) + compat.css. The older marketing
+# components (components/bundle.css) and the tokens above are kept for the Tailwind and Swift outputs only.
+import shutil
+SITE_CSS = (HERE / "ui" / "web-light.css").read_text() + (HERE / "compat.css").read_text()
+(HERE.parent / "assets" / "styles.css").write_text(SITE_CSS)
+fonts_out = HERE.parent / "assets" / "fonts"
+fonts_out.mkdir(exist_ok=True)
+for old in list(fonts_out.iterdir()): old.unlink()
+for f in (HERE / "ui" / "fonts").iterdir(): shutil.copy(f, fonts_out / f.name)
 
 # Tailwind preset
 (HERE / "dist").mkdir(exist_ok=True)
