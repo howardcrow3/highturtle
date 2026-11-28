@@ -3,8 +3,8 @@ name: Feedback service deploy
 # Deploys feedback/template.yaml (CloudFormation stack highturtle-feedback, us-east-2): the
 # https://feedback.turtlebox.studio/v1/feedback endpoint, its Lambda and DynamoDB tables.
 # Safe to re-run. Never deletes data: the feedback table has deletion protection and is retained.
-# App signing keys live only in SSM (/highturtle/feedback/app-keys). This repo is public, so the
-# workflow never prints them; read them in the AWS console (Systems Manager > Parameter Store).
+# Apps sign with per-install Ed25519 keys; there are no shared app keys any more. The retired shared
+# keys' SSM parameter (/highturtle/feedback/app-keys) is deleted after the new Lambda is live.
 
 on:
   push:
@@ -24,7 +24,6 @@ env:
   ZONE: turtlebox.studio
   DOMAIN: feedback.turtlebox.studio
   KEYS_PARAM: /highturtle/feedback/app-keys
-  APPS: backer ceevee golden
 
 jobs:
   deploy:
@@ -46,28 +45,25 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      - name: Make sure every app has a signing key (values are never printed)
-        run: |
-          set -euo pipefail
-          current=$(aws ssm get-parameter --name "$KEYS_PARAM" --with-decryption --query Parameter.Value --output text 2>/dev/null || echo '{}')
-          updated="$current"
-          for app in $APPS; do
-            if [ "$(jq -r --arg a "$app" '.[$a] // empty' <<<"$updated")" = "" ]; then
-              updated=$(jq -c --arg a "$app" --arg k "$(openssl rand -hex 32)" '. + {($a): $k}' <<<"$updated")
-              echo "Created a signing key for $app"
-            fi
-          done
-          if [ "$updated" != "$current" ]; then
-            aws ssm put-parameter --name "$KEYS_PARAM" --type SecureString --overwrite --value "$updated" >/dev/null
-          fi
       - name: Deploy stack
         run: |
           set -euo pipefail
           ZONE_ID=$(aws route53 list-hosted-zones-by-name --dns-name "$ZONE." --query "HostedZones[?Name=='$ZONE.'].Id | [0]" --output text | sed 's#/hostedzone/##')
           sam deploy --template-file feedback/template.yaml --stack-name highturtle-feedback \
             --resolve-s3 --capabilities CAPABILITY_IAM --no-confirm-changeset --no-fail-on-empty-changeset \
-            --parameter-overrides "HostedZoneId=$ZONE_ID" "DomainName=$DOMAIN" "AppKeysParam=$KEYS_PARAM"
+            --parameter-overrides "HostedZoneId=$ZONE_ID" "DomainName=$DOMAIN"
           aws cloudformation describe-stacks --stack-name highturtle-feedback --query "Stacks[0].Outputs" --output table
+      - name: Delete the retired shared app keys (idempotent)
+        run: |
+          set -u
+          if aws ssm delete-parameter --name "$KEYS_PARAM" 2>/tmp/ssm.err; then
+            echo "Deleted $KEYS_PARAM"
+          elif grep -q ParameterNotFound /tmp/ssm.err; then
+            echo "$KEYS_PARAM already gone"
+          else
+            cat /tmp/ssm.err
+            echo "::warning title=old keys::could not delete $KEYS_PARAM (the service no longer reads it); delete it in the AWS console"
+          fi
       - name: Smoke test (stores nothing)
         run: |
           set -u

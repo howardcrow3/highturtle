@@ -1,6 +1,5 @@
 // Lambda entry point (Node 22; the AWS SDK v3 ships with the runtime, so nothing is bundled).
 import { DynamoDBClient, PutItemCommand, UpdateItemCommand } from '@aws-sdk/client-dynamodb';
-import { SSMClient, GetParameterCommand } from '@aws-sdk/client-ssm';
 import { makeApp, DEFAULT_ORIGINS } from './core.mjs';
 
 const ddb = new DynamoDBClient({});
@@ -8,19 +7,8 @@ const ddb = new DynamoDBClient({});
 // Feedback items hold only strings and whole numbers.
 const marshall = (obj) => Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)
   .map(([k, v]) => [k, typeof v === 'number' ? { N: String(v) } : { S: String(v) }]));
-const ssm = new SSMClient({});
 const TABLE = process.env.FEEDBACK_TABLE;
 const LIMITS_TABLE = process.env.LIMITS_TABLE;
-const KEYS_PARAM = process.env.APP_KEYS_PARAM;
-
-let keysCache = { at: 0, keys: null };
-async function getAppKeys() {
-  // Cached for 5 minutes, so a rotated key takes effect without a redeploy.
-  if (keysCache.keys && Date.now() - keysCache.at < 300_000) return keysCache.keys;
-  const out = await ssm.send(new GetParameterCommand({ Name: KEYS_PARAM, WithDecryption: true }));
-  keysCache = { at: Date.now(), keys: JSON.parse(out.Parameter.Value) };
-  return keysCache.keys;
-}
 
 const store = {
   async put(item) {
@@ -58,7 +46,7 @@ const store = {
 const origins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean) : DEFAULT_ORIGINS;
 // Abuse switch: BLOCKED_INSTALLS is a comma-separated list of install ids (public keys) to refuse.
 const blockedInstalls = new Set((process.env.BLOCKED_INSTALLS || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean));
-const app = makeApp({ getAppKeys, store, origins, blockedInstalls });
+const app = makeApp({ store, origins, blockedInstalls });
 
 export const handler = async (event) => {
   try {

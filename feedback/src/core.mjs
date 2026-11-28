@@ -1,7 +1,7 @@
 // Feedback intake: validation, access control and rate limiting. No AWS imports here, so the logic
-// can be tested with in-memory stand-ins (see test/feedback.test.mjs). handler.mjs wires in DynamoDB/SSM.
+// can be tested with in-memory stand-ins (see test/feedback.test.mjs). handler.mjs wires in DynamoDB.
 
-import { createHmac, createHash, createPublicKey, verify, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHash, createPublicKey, verify, randomUUID } from 'node:crypto';
 
 export const APPS = ['backer', 'ceevee', 'golden', 'highturtle-site', 'turtlebox-site'];
 export const CATEGORIES = ['feature', 'issue', 'praise', 'other'];
@@ -38,10 +38,6 @@ const header = (event, name) => {
   return h[name] ?? h[name.toLowerCase()] ?? Object.entries(h).find(([k]) => k.toLowerCase() === name.toLowerCase())?.[1];
 };
 
-export function signBody(key, timestamp, rawBody) {
-  return createHmac('sha256', Buffer.from(key, 'hex')).update(`${timestamp}.${rawBody}`).digest('hex');
-}
-
 // Per-install signing: the app makes its own Ed25519 key; x-ht-install is the 32-byte public key in hex.
 // Signed text: `<app>.<install>.<timestamp>.<raw body>`.
 const SPKI_ED25519_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
@@ -52,11 +48,6 @@ export function verifyInstall(app, install, timestamp, rawBody, sigHex) {
     const key = createPublicKey({ key: Buffer.concat([SPKI_ED25519_PREFIX, Buffer.from(install, 'hex')]), format: 'der', type: 'spki' });
     return verify(null, Buffer.from(`${app}.${install.toLowerCase()}.${timestamp}.${rawBody}`), key, Buffer.from(sigHex, 'hex'));
   } catch { return false; }
-}
-
-function safeEqualHex(a, b) {
-  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length || !/^[0-9a-f]+$/i.test(a)) return false;
-  return timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
 }
 
 // Practical address check: one @, no spaces or control characters, a dotted domain made of letters, digits and
@@ -107,7 +98,7 @@ export function validate(input) {
   return { ok: true, item };
 }
 
-// deps: { getAppKeys: async () => ({ backer: 'hex', ... }), store: { put(item), hit(key, ttlSec) -> count, claim(key, ttlSec) -> bool },
+// deps: { store: { put(item), hit(key, ttlSec) -> count, claim(key, ttlSec) -> bool },
 //         now: () => ms, newId: () => string, origins: string[] }
 export function makeApp(deps) {
   const now = deps.now || (() => Date.now());
@@ -148,15 +139,8 @@ export function makeApp(deps) {
       if (deps.blockedInstalls?.has?.(installId)) return json(403, { error: 'install is blocked' });
       source = 'app';
     } else if (sigApp || sig || ts) {
-      const keys = await deps.getAppKeys();
-      const key = keys[sigApp];
-      const tsNum = Number(ts);
-      if (!key || !sig || !Number.isInteger(tsNum)) return json(401, { error: 'unknown app or missing signature' });
-      if (Math.abs(now() / 1000 - tsNum) > LIMITS.clockSkewSec) return json(401, { error: 'timestamp is too far from server time' });
-      if (!safeEqualHex(sig, signBody(key, ts, raw))) return json(401, { error: 'bad signature' });
-      // A captured request can't be replayed: each signature is accepted once.
-      if (!(await deps.store.claim(`sig#${sig}`, 2 * LIMITS.clockSkewSec))) return json(409, { error: 'duplicate request' });
-      source = 'app';
+      // Shared per-app HMAC keys are retired; apps must sign with a per-install key.
+      return json(401, { error: 'unknown app or missing signature' });
     } else {
       const origin = header(event, 'origin');
       if (!origin || !origins.includes(origin)) return json(403, { error: 'origin not allowed' });
