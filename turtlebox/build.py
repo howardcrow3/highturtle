@@ -21,7 +21,7 @@ from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb15"
+V = "tb16"
 e = html.escape
 
 
@@ -53,7 +53,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="theme-color" content="#F5F0E7">
+  <meta name="theme-color" content="#F7F3EA">
   {'' if robots else '<meta name="robots" content="noindex">'}
   <title>{e(title)}</title>
   <meta name="description" content="{e(desc)}">
@@ -66,7 +66,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="preload" href="/assets/fonts/Inter-Light.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/styles.css?v={V}">
   <link rel="stylesheet" href="/assets/store.css?v={V}">
 </head>

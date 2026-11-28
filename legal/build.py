@@ -29,7 +29,7 @@ from gtag import GTAG  # Google tag for turtlebox.studio (turtlebox/gtag.py); Hi
 
 STYLE = """<style>
   .legal { padding-block: 4rem; max-width: 46rem; }
-  .legal h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.1; }
+  .legal h1 { font-size: clamp(2.25rem, 5vw, 3.25rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; }
   .legal .updated { margin-top: 0.75rem; font-size: 0.875rem; }
   .legal h2 { font-size: 1.375rem; line-height: 1.3; margin-top: 2.5rem; }
   .legal p, .legal li { margin-top: 0.75rem; line-height: 1.65; }
@@ -42,8 +42,8 @@ STYLE = """<style>
 def shell(site, title, desc, path, body):
     s = SITES[site]
     if site == "highturtle":
-        html_open, scheme = '<html lang="en">', '<meta name="color-scheme" content="light dark">'
-        css = '<link rel="stylesheet" href="/assets/styles.css?v=hc4">'
+        html_open, scheme = '<html lang="en" data-theme="light">', '<meta name="color-scheme" content="light">'
+        css = '<link rel="stylesheet" href="/assets/styles.css?v=hc5">'
         nav = ('<a href="/#portfolio">Portfolio</a>\n'
                               '        <a href="/contact.html">Contact</a>')
         foot_intro = "<p>High Turtle LLC is a holding company for AI companies.</p>"
@@ -51,7 +51,7 @@ def shell(site, title, desc, path, body):
     else:
         gtm_head = "\n" + GTAG
         html_open, scheme = ('<html lang="en" data-theme="light">',
-                             '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F5F0E7">')
+                             '<meta name="color-scheme" content="light">\n  <meta name="theme-color" content="#F7F3EA">')
         css = f'<link rel="stylesheet" href="/assets/styles.css?v={TB_V}">'
         nav = nav_links("", TB_V, indent="        ")
         css += f'\n  <link rel="stylesheet" href="/assets/store.css?v={TB_V}">'
@@ -66,7 +66,7 @@ def shell(site, title, desc, path, body):
   <meta name="description" content="{desc}">
   <link rel="canonical" href="https://{s["domain"]}{path}">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preload" href="/assets/fonts/Inter-Light.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/Inter-Regular.woff2" as="font" type="font/woff2" crossorigin>
   {css}
   {STYLE}
 </head>

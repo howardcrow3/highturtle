@@ -1,32 +1,32 @@
 /* Backer pages on the Turtlebox system. Loaded after /assets/styles.css; every value is a Turtlebox role token.
-   Square corners, 1px line rules, Inter only, gold only for dots and underlines. */
+   Turtlebox UI web layer: rounded plates, 1px line rules, Inter only, gold for dots and underlines. */
 
 [hidden] { display: none !important; }
 .num { font-variant-numeric: tabular-nums; }
 
 /* Hero */
 .bk-hero { padding-block: var(--space-3xl) var(--space-2xl); }
-.bk-hero .eyebrow { display: flex; align-items: center; gap: 12px; font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--body); }
+.bk-hero .eyebrow { display: flex; align-items: center; gap: 12px; font: 500 0.8125rem/1.4 var(--font-sans); color: var(--body); }
 .bk-hero .eyebrow svg { width: 40px; height: 40px; flex: none; }
-.bk-hero h1 { margin-top: 0; font-size: clamp(3rem, 7vw, 5rem); font-weight: 300; letter-spacing: -0.04em; line-height: 1; max-width: 12em; text-wrap: balance; }
+.bk-hero h1 { margin-top: 0; font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; line-height: 1; max-width: 12em; text-wrap: balance; }
 .bk-hero .app-row-meta { margin-top: var(--space-lg); }
-.bk-hero .lede strong { color: var(--ink); font-weight: 400; }
+.bk-hero .lede strong { color: var(--ink); font-weight: 600; }
 
 /* Buy first, trial second */
 .buy { margin-top: var(--space-xl); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm) var(--space-lg); }
-.btn-buy { font-size: 0.8125rem; padding: 24px var(--space-xl); }
+.btn-buy { min-height: var(--button-h-lg); }
 .buy-note { font-size: 1rem; max-width: 30em; }
-.try-h { margin-top: var(--space-2xl); font-size: 1.375rem; line-height: 1.25; letter-spacing: -0.01em; font-weight: 400; }
+.try-h { margin-top: var(--space-2xl); font-size: 1.375rem; line-height: 1.25; letter-spacing: -0.015em; font-weight: 600; }
 .downloads-trial { margin-top: var(--space-md); }
 .downloads-trial .btn, html[data-os] .downloads-trial .btn { background: transparent; color: var(--ink); }
 .downloads-trial .btn:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 /* Download plates */
 .downloads { margin-top: var(--space-xl); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
-.dl { background: var(--surface); border: 1px solid var(--line); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
+.dl { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--space-lg); display: flex; flex-direction: column; gap: var(--space-xs); min-width: 0; }
 html[data-os="win"] .dl-win { order: -1; }
-.dl h2 { font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.02em; display: flex; flex-wrap: wrap; align-items: center; gap: 12px var(--space-sm); }
-.rec { display: none; align-items: center; gap: 12px; font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--body); }
+.dl h2 { font-size: 1.375rem; line-height: 1.2; letter-spacing: -0.02em; display: flex; flex-wrap: wrap; align-items: center; gap: 12px var(--space-sm); }
+.rec { display: none; align-items: center; gap: 12px; font: 500 0.8125rem/1.4 var(--font-sans); color: var(--body); }
 .rec::before { content: ""; width: 10px; height: 10px; border-radius: var(--radius-round); background: var(--accent); }
 html[data-os="mac"] .dl-mac .rec, html[data-os="win"] .dl-win .rec { display: inline-flex; }
 .req { font-weight: 400; color: var(--ink); font-size: 0.9375rem; }
@@ -37,7 +37,7 @@ html[data-os="mac"] .dl-win .btn:hover, html[data-os="win"] .dl-mac .btn:hover {
 .btn[aria-disabled="true"] { opacity: 0.55; cursor: default; pointer-events: none; }
 .file { font: 400 0.75rem/1.6 var(--font-sans); letter-spacing: 0.02em; color: var(--body); overflow-wrap: anywhere; }
 .meta { margin-top: var(--space-md); display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); align-items: center; font-size: 1rem; }
-#version-wrap { display: inline-flex; align-items: center; gap: 12px; font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }
+#version-wrap { display: inline-flex; align-items: center; gap: 12px; font: 500 0.8125rem/1.4 var(--font-sans); color: var(--ink); }
 #version-wrap::before { content: ""; width: 10px; height: 10px; border-radius: var(--radius-round); background: var(--accent); }
 
 /* Content sections reuse .section from styles.css */
@@ -46,15 +46,15 @@ html[data-os="mac"] .dl-win .btn:hover, html[data-os="win"] .dl-mac .btn:hover {
 .features h3, .cols h3, .price h3 { font-size: 1.375rem; line-height: 1.25; letter-spacing: -0.01em; }
 .features p { margin-top: var(--space-xs); font-size: 1rem; }
 
-.price { background: var(--surface); border: 1px solid var(--line); padding: var(--space-xl) 40px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg); align-items: center; }
+.price { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: var(--space-xl) 40px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg); align-items: center; }
 .price ul { margin: var(--space-sm) 0 0; padding-left: 1.2em; display: grid; gap: var(--space-xs); }
-.price strong, .cols strong, .steps strong { color: var(--ink); font-weight: 400; }
+.price strong, .cols strong, .steps strong { color: var(--ink); font-weight: 600; }
 
 .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xl); }
 .cols p { margin-top: var(--space-xs); max-width: 34em; }
 .prose { display: grid; gap: var(--space-sm); max-width: 34em; }
 ol.steps { margin: 0; padding-left: 1.3em; display: grid; gap: var(--space-xs); max-width: 34em; }
-.kbd { font-weight: 400; color: var(--ink); border: 1px solid var(--border-control); padding: 0 0.4em; white-space: nowrap; }
+.kbd { font-weight: 500; color: var(--ink); border: 1px solid var(--border-control); border-radius: 4px; padding: 0 0.4em; white-space: nowrap; }
 
 /* Footer additions */
 .bk-privacy { max-width: 46em; }
@@ -63,17 +63,17 @@ ol.steps { margin: 0; padding-left: 1.3em; display: grid; gap: var(--space-xs); 
 
 /* Simple pages (thanks, report, sent) */
 .bk-simple { padding-block: var(--space-3xl); display: grid; gap: var(--space-md); justify-items: start; }
-.bk-simple h1 { font-size: clamp(2.5rem, 5vw, 3.75rem); font-weight: 300; letter-spacing: -0.03em; line-height: 1.05; }
+.bk-simple h1 { font-size: clamp(2.25rem, 4.5vw, 3rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; }
 .bk-simple .lede { margin-top: 0; }
 .bk-simple .downloads { width: 100%; margin-top: var(--space-sm); }
 
 /* Report form */
 .form { display: grid; gap: var(--space-md); width: 100%; max-width: 40rem; }
 .field { display: grid; gap: var(--space-xs); min-width: 0; }
-.field label { font: 400 0.6875rem/1.4 var(--font-sans); letter-spacing: 0.3em; text-transform: uppercase; color: var(--ink); }
-.field .opt { letter-spacing: 0.1em; text-transform: none; color: var(--body); }
+.field label { font: 500 0.8125rem/1.4 var(--font-sans); color: var(--ink); }
+.field .opt { font-weight: 400; color: var(--body); }
 .field .hint { font: 400 0.75rem/1.6 var(--font-sans); letter-spacing: 0.02em; color: var(--body); }
-.field input, .field select, .field textarea { font: 400 0.9375rem/1.5 var(--font-sans); color: var(--ink); background: var(--paper); border: 1px solid var(--border-control); border-radius: 0; padding: 16px; width: 100%; min-width: 0; }
+.field input, .field select, .field textarea { font: 400 0.9375rem/1.5 var(--font-sans); color: var(--ink); background: var(--surface); border: 1px solid var(--border-control); border-radius: var(--r-sm); padding: 10px 14px; min-height: var(--input-h); width: 100%; min-width: 0; }
 .field textarea { min-height: 9rem; resize: vertical; }
 .field [aria-invalid="true"] { border-color: var(--danger); border-width: 2px; }
 .err { color: var(--danger); font: 500 0.8125rem/1.5 var(--font-sans); }
@@ -96,7 +96,7 @@ ol.steps { margin: 0; padding-left: 1.3em; display: grid; gap: var(--space-xs); 
 
 /* Releases and release notes pages */
 .rel { width: 100%; max-width: 40em; display: grid; gap: var(--space-xs); padding-top: var(--space-md); border-top: 1px solid var(--line, rgba(0,0,0,.12)); }
-.rel h2 { font-size: 1.5rem; font-weight: 400; }
+.rel h2 { font-size: 1.5rem; font-weight: 600; }
 .rel h4 { font-weight: 500; margin-top: var(--space-xs); }
 .rel .prose ul { margin: 0; padding-left: 1.3em; display: grid; gap: var(--space-xs); }
 .rel-dl { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-xs); }
