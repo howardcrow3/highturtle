@@ -77,6 +77,7 @@ Resources:
           FEEDBACK_TABLE: !Ref FeedbackTable
           LIMITS_TABLE: !Ref LimitsTable
           APP_KEYS_PARAM: !Ref AppKeysParam
+          BLOCKED_INSTALLS: ''
           ALLOWED_ORIGINS: !Join [',', !Ref AllowedOrigins]
       Policies:
         - Statement:
@@ -117,7 +118,7 @@ Resources:
           - ','
           - !Join [',', [!Join [',', !Ref AllowedOrigins], 'tauri://localhost,http://tauri.localhost,https://tauri.localhost']]
         AllowMethods: [POST, GET, OPTIONS]
-        AllowHeaders: [content-type, x-ht-app, x-ht-timestamp, x-ht-signature]
+        AllowHeaders: [content-type, x-ht-app, x-ht-install, x-ht-timestamp, x-ht-signature]
         MaxAge: 86400
       Domain:
         DomainName: !Ref DomainName

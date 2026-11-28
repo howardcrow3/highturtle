@@ -167,3 +167,7 @@ html[data-os="mac"] .trial-dl-win .btn, html[data-os="win"] .trial-dl-mac .btn {
   .facts > div { grid-template-columns: minmax(0, 1fr); }
   .fgroups, .trial-dls { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Paddle footnote at the foot of pages with a Buy button */
+.paddle-note { margin: 0 0 var(--space-sm); max-width: 72ch; }
+.bk-privacy + .paddle-note { margin-top: var(--space-sm); }

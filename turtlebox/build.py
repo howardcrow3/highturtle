@@ -14,19 +14,19 @@ import html, json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "legal"))
 sys.path.insert(0, HERE)
-from site_legal import footer_block  # policy links and legal name (Paddle requirements)
+from site_legal import footer_block, PADDLE_FOOTNOTE  # policy links and legal name (Paddle requirements)
 from nav import nav_links
 from gtag import add_tag  # Google tag on every page
 from showcase import gallery, feature_groups
 mark = open(os.path.join(HERE, "..", "assets", "mark.svg")).read()
 mark_path = re.search(r'<path[^>]*/>', mark).group(0)
 mark_vb = re.search(r'viewBox="([^"]+)"', mark).group(1)
-V = "tb16"
+V = "tb17"
 e = html.escape
 
 
 PADDLE_TOKEN = json.load(open(os.path.join(HERE, "..", "backer", "config.json")))["paddle_client_token"]
-# Buy buttons: open Paddle's overlay checkout for the button's price ID. The token and price IDs are public by design.
+# Buy buttons: open Paddle's overlay checkout for the button's price ID (or several, space-separated, bought together). The token and price IDs are public by design.
 # Without Paddle.js the button falls back to the app page.
 PADDLE_BUY = """<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <script>
@@ -37,7 +37,7 @@ PADDLE_BUY = """<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></scrip
     b.addEventListener('click', function (ev) {
       ev.preventDefault();
       Paddle.Checkout.open({
-        items: [{ priceId: b.getAttribute('data-paddle-price'), quantity: 1 }],
+        items: b.getAttribute('data-paddle-price').split(' ').filter(Boolean).map(function (id) { return { priceId: id, quantity: 1 }; }),
         settings: { displayMode: 'overlay', theme: 'light', successUrl: b.getAttribute('data-success') }
       });
     });
@@ -88,7 +88,7 @@ def page(title, desc, body, path, robots=True, nav_current=""):
 {body}
 </main>
 <footer class="site-footer">
-  <div class="wrap foot">
+{('  <div class="wrap">' + PADDLE_FOOTNOTE + '</div>' + chr(10)) if 'data-paddle-price' in body else ''}  <div class="wrap foot">
     <p>Turtlebox makes Backer, CeeVee and Golden. Also from us: <a href="https://highturtle.com">High Turtle</a>.</p>
       {footer_block("turtlebox")}
   </div>
@@ -120,7 +120,7 @@ def buy_plate(a, hid, compact=False):
     plats = f'<p class="plats">{e(a["platforms"])}</p>'
     if a.get("on_sale"):
         action = (f'<a class="btn btn-buy" href="{e(a["url"])}#buy" data-paddle-price="{e(a["price_id"])}" data-success="{e(a["success_url"])}">Buy {e(a["name"])}</a>'
-                  f'<p class="fine">14-day free trial in the app. Sold by Paddle, our Merchant of Record.</p>')
+                  f'<p class="fine">14-day free trial in the app.</p>')
     else:
         action = f'<p class="soon">Not on sale yet</p>' + (
             f'<a class="btn btn-small btn-quiet" href="{e(a["url"])}#buy">Get notified</a>' if compact else notify_form(a, hid))
@@ -128,20 +128,25 @@ def buy_plate(a, hid, compact=False):
 
 
 def plans_block(a, compact=False):
-    """Optional subscription plans under the one-time price (Golden: automatic bank updates, coming soon). A plan without a
-    price_id yet is left out, so nothing shows until Paddle has the price."""
+    """Golden's add-on (automatic bank updates, coming soon), sold on top of the one-time price and never instead of it.
+    New buyers check out Golden and the add-on together; owners can buy the add-on alone. A plan without a price_id yet
+    is left out, so nothing shows until Paddle has the price."""
     plans = [p for p in a.get("plans", []) if p.get("price_id")]
     if not plans or not a.get("on_sale"):
         return ""
+    prices = " or ".join(f'<span class="num">{e(p["price"])}</span> {e(p["per"])}' for p in plans)
     if compact:
-        prices = " or ".join(f'<span class="num">{e(p["price"])}</span> {e(p["per"])}' for p in plans)
-        return f'<p class="plans-line">{e(a["plans_title"])}: {prices}. <a href="{e(a["url"])}#buy">See plans</a></p>'
+        return (f'<p class="plans-line">{e(a["plans_line"])}: {prices}, on top of the {e(a["price"])} purchase. '
+                f'<a href="{e(a["url"])}#buy">About the add-on</a></p>')
     btns = "".join(
-        f'<a class="btn btn-quiet btn-plan" href="{e(a["url"])}#buy" data-paddle-price="{e(p["price_id"])}" data-success="{e(p["success_url"])}">'
-        f'<span class="num">{e(p["price"])}</span> {e(p["per"])}</a>' for p in plans)
+        f'<a class="btn btn-quiet btn-plan" href="{e(a["url"])}#buy" data-paddle-price="{e(a["price_id"])} {e(p["price_id"])}" data-success="{e(p["success_url"])}">'
+        f'{e(a["name"])} {e(a["price"])} + add-on <span class="num">{e(p["price"])}</span> {e(p["per"])}</a>' for p in plans)
+    alone = " or ".join(
+        f'<a href="{e(a["url"])}#buy" data-paddle-price="{e(p["price_id"])}" data-success="{e(p["success_url"])}">{e(p["price"])} {e(p["per"])}</a>' for p in plans)
     return (f'<div class="plans"><p class="plans-title">{e(a["plans_title"])}</p>'
             f'<p class="plans-note">{e(a["plans_note"])}</p><div class="plans-row">{btns}</div>'
-            f'<p class="fine">Renews until you cancel.</p></div>')
+            f'<p class="fine">You pay {e(a["price"])} for {e(a["name"])} once, plus the add-on, which renews until you cancel. '
+            f'Already own {e(a["name"])}? Add it on its own: {alone}.</p></div>')
 
 
 def status_chip(a):
@@ -175,7 +180,7 @@ HOW_TO_BUY = """  <section class="section" aria-labelledby="buying-h">
     <div class="wrap">
       <h2 id="buying-h">How buying works</h2>
       <ul class="points">
-        <li><h3>Pay once</h3><p>Each app has a one-time price, and a license key covers every update within its major version. Golden also offers an optional monthly or yearly plan. Automatic bank updates for those plans are coming soon.</p></li>
+        <li><h3>Pay once</h3><p>Each app has a one-time price. Golden also has an optional add-on for automatic bank updates (coming soon), $9.97 a month or $100 a year. It is not part of the one-time price, and you pay for it on top of Golden.</p></li>
         <li><h3>Key by email</h3><p>Your license key arrives by email a few minutes after checkout. It is also in <a href="/account/">your account</a> when you sign in with Google.</p></li>
         <li><h3>14 days to change your mind</h3><p>Paddle, our Merchant of Record, takes payment and adds any tax. Ask for a refund within 14 days. <a href="/refund.html">Refund policy</a></p></li>
       </ul>
@@ -297,11 +302,11 @@ APP_PAGES = {
             ]),
         ],
         "facts": [
-            ("Price", "$39.99 once. Or $9.97 a month or $100 a year, with automatic bank updates through Plaid coming soon."),
+            ("Price", "$39.99 once for Golden. Automatic bank updates through Plaid (coming soon) are a separate add-on, not included: $9.97 a month or $100 a year on top of the $39.99."),
             ("Trial", "14 days with every feature."),
             ("Computers", "A Mac with Apple silicon running macOS 13 or newer, or Windows 11 (64-bit)."),
             ("Where it works", "United States households. Five states' income tax (AR, MD, MN, NY and VT) is approximate for now."),
-            ("What goes over the internet", "Update and license checks only. Automatic bank updates through Plaid are coming soon. When they arrive they will be optional, part of the monthly or yearly plan."),
+            ("What goes over the internet", "Update and license checks only. Automatic bank updates through Plaid are coming soon. When they arrive they will be optional, part of the paid add-on."),
         ],
         "help": "",
         # Golden's installers are the rolling "nightly" release on GitHub. Their names carry the build number, so
@@ -399,7 +404,7 @@ def app_page(slug):
       <dl class="facts">
 {facts}
       </dl>
-      <p class="fine facts-fine">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a>{help_link}</p>
+      <p class="fine facts-fine"><a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a> &middot; <a href="/privacy.html">Privacy</a>{help_link}</p>
     </div>
   </section>"""
 
@@ -414,7 +419,6 @@ def ceevee_simple(h1, body_html):
 ceevee = by_slug["ceevee"]
 ceevee_buy = ceevee_simple("Buy CeeVee", f"""    <p>{e(ceevee["price"])} once. One license works on 2 computers and covers every 1.x version. Your license key arrives by email a few minutes after checkout, with a link that activates it in CeeVee.</p>
     <a class="btn btn-buy" href="/ceevee/" data-paddle-price="{e(ceevee["price_id"])}" data-success="{e(ceevee["success_url"])}">Buy CeeVee</a>
-    <p class="fine">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
     <script>
     /* Opened from the app (?from=app): start the checkout straight away. */
     if (/[?&]from=app/.test(location.search)) window.addEventListener('load', function () {{ var b = document.querySelector('[data-paddle-price]'); if (b && window.Paddle) b.click(); }});

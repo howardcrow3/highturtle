@@ -1,7 +1,7 @@
 // Feedback intake: validation, access control and rate limiting. No AWS imports here, so the logic
 // can be tested with in-memory stand-ins (see test/feedback.test.mjs). handler.mjs wires in DynamoDB/SSM.
 
-import { createHmac, createHash, randomUUID, timingSafeEqual } from 'node:crypto';
+import { createHmac, createHash, createPublicKey, verify, randomUUID, timingSafeEqual } from 'node:crypto';
 
 export const APPS = ['backer', 'ceevee', 'golden', 'highturtle-site', 'turtlebox-site'];
 export const CATEGORIES = ['feature', 'issue', 'praise', 'other'];
@@ -19,7 +19,13 @@ export const LIMITS = {
   email: 254,
   clockSkewSec: 300,
   perIpPerHour: 20,
+  installBodyBytes: 10 * 1024,
+  perInstallPerHour: 5,
+  perInstallPerDay: 20,
 };
+
+// Apps that may sign with a per-install Ed25519 key.
+export const INSTALL_APPS = ['backer', 'ceevee', 'golden'];
 
 const json = (statusCode, body) => ({
   statusCode,
@@ -34,6 +40,18 @@ const header = (event, name) => {
 
 export function signBody(key, timestamp, rawBody) {
   return createHmac('sha256', Buffer.from(key, 'hex')).update(`${timestamp}.${rawBody}`).digest('hex');
+}
+
+// Per-install signing: the app makes its own Ed25519 key; x-ht-install is the 32-byte public key in hex.
+// Signed text: `<app>.<install>.<timestamp>.<raw body>`.
+const SPKI_ED25519_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
+export function verifyInstall(app, install, timestamp, rawBody, sigHex) {
+  if (typeof install !== 'string' || !/^[0-9a-f]{64}$/i.test(install)) return false;
+  if (typeof sigHex !== 'string' || !/^[0-9a-f]{128}$/i.test(sigHex)) return false;
+  try {
+    const key = createPublicKey({ key: Buffer.concat([SPKI_ED25519_PREFIX, Buffer.from(install, 'hex')]), format: 'der', type: 'spki' });
+    return verify(null, Buffer.from(`${app}.${install.toLowerCase()}.${timestamp}.${rawBody}`), key, Buffer.from(sigHex, 'hex'));
+  } catch { return false; }
 }
 
 function safeEqualHex(a, b) {
@@ -96,6 +114,8 @@ export function makeApp(deps) {
   const newId = deps.newId || (() => randomUUID());
   const origins = deps.origins || DEFAULT_ORIGINS;
   const perIp = deps.perIpPerHour ?? LIMITS.perIpPerHour;
+  const perInstallHour = deps.perInstallPerHour ?? LIMITS.perInstallPerHour;
+  const perInstallDay = deps.perInstallPerDay ?? LIMITS.perInstallPerDay;
 
   return async function handle(event) {
     const method = event.requestContext?.http?.method || event.httpMethod || 'GET';
@@ -106,14 +126,28 @@ export function makeApp(deps) {
 
     let raw = event.body || '';
     if (event.isBase64Encoded) raw = Buffer.from(raw, 'base64').toString('utf8');
-    if (Buffer.byteLength(raw) > LIMITS.bodyBytes) return json(413, { error: 'request is too large' });
+    const rawBytes = Buffer.byteLength(raw);
+    if (rawBytes > LIMITS.bodyBytes) return json(413, { error: 'request is too large' });
 
     // ---- Who is calling: a signed app, or one of our websites ----
     const sigApp = header(event, 'x-ht-app');
     const sig = header(event, 'x-ht-signature');
     const ts = header(event, 'x-ht-timestamp');
+    const install = header(event, 'x-ht-install');
     let source;
-    if (sigApp || sig || ts) {
+    let installId;
+    if (install) {
+      // Per-install key: proves the sender holds this install's key and the body is unaltered.
+      const tsNum = Number(ts);
+      if (!INSTALL_APPS.includes(sigApp) || !sig || !Number.isInteger(tsNum)) return json(401, { error: 'unknown app or missing signature' });
+      if (rawBytes > LIMITS.installBodyBytes) return json(413, { error: 'request is too large' });
+      if (Math.abs(now() / 1000 - tsNum) > LIMITS.clockSkewSec) return json(401, { error: 'timestamp is too far from server time' });
+      if (!verifyInstall(sigApp, install, ts, raw, sig)) return json(401, { error: 'bad signature' });
+      if (!(await deps.store.claim(`sig#${sig.toLowerCase()}`, 2 * LIMITS.clockSkewSec))) return json(409, { error: 'duplicate request' });
+      installId = install.toLowerCase();
+      if (deps.blockedInstalls?.has?.(installId)) return json(403, { error: 'install is blocked' });
+      source = 'app';
+    } else if (sigApp || sig || ts) {
       const keys = await deps.getAppKeys();
       const key = keys[sigApp];
       const tsNum = Number(ts);
@@ -145,8 +179,17 @@ export function makeApp(deps) {
     const count = await deps.store.hit(`ip#${ipHash}#${hour}`, 2 * 3600);
     if (count > perIp) return json(429, { error: 'too many submissions, try again later' });
 
+    // ---- Per-install rate limit (hour and day buckets) ----
+    if (installId) {
+      const day = Math.floor(now() / 86_400_000);
+      const hourCount = await deps.store.hit(`inst#${installId}#h${hour}`, 2 * 3600);
+      if (hourCount > perInstallHour) return json(429, { error: 'too many submissions, try again later' });
+      const dayCount = await deps.store.hit(`inst#${installId}#d${day}`, 2 * 86400);
+      if (dayCount > perInstallDay) return json(429, { error: 'too many submissions, try again later' });
+    }
+
     const createdAt = new Date(now()).toISOString();
-    const item = { id: newId(), createdAt, ...v.item, source, status: 'new' };
+    const item = { id: newId(), createdAt, ...v.item, ...(installId ? { installId } : {}), source, status: 'new' };
     await deps.store.put(item);
     return json(201, { id: item.id, createdAt });
   };

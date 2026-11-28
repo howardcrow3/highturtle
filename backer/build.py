@@ -19,7 +19,7 @@ ROOT = os.path.dirname(HERE)
 OUT = os.path.join(ROOT, "turtlebox")
 V = "bk4"
 sys.path.insert(0, os.path.join(ROOT, "legal"))
-from site_legal import footer_block, todo  # policy links and legal name (Paddle requirements)
+from site_legal import footer_block, todo, PADDLE_FOOTNOTE  # policy links and legal name (Paddle requirements)
 sys.path.insert(0, OUT)
 from nav import nav_links  # same menu as the other Turtlebox pages
 from gtag import add_tag  # Google tag on every Turtlebox page
@@ -69,6 +69,7 @@ def footer(extra=""):
     return f'''<footer class="site-footer">
   <div class="wrap">
     <p class="bk-privacy"><strong>Privacy.</strong> Backer sends nothing anywhere except update checks to our server and the purchase page. There is no telemetry. This website has no tracking scripts and sets no cookies unless you sign in to your account.</p>
+    {PADDLE_FOOTNOTE}
     <div class="foot" style="margin-top:var(--space-sm)">
       <p><a href="/backer/releases.html">Releases</a> &middot; <a href="/backer/notes.html">Release notes</a> &middot; <a href="/backer/report.html">Report an issue</a> &middot; <a href="/apps/">Apps</a> &middot; <a href="https://highturtle.com">High Turtle</a></p>
       {footer_block("turtlebox")}
@@ -182,7 +183,6 @@ INDEX = '''
         </div>
         <a class="btn btn-buy" href="{{CHECKOUT_URL}}" data-paddle-buy>Buy now</a>
       </div>
-      <p class="fine" style="margin-top:var(--space-sm)">Orders are processed by Paddle.com, our online reseller and Merchant of Record. <a href="/refund.html">Refund policy</a> &middot; <a href="/terms.html">Terms</a></p>
     </div></section>
 
     <section class="section" id="install" aria-labelledby="install-h"><div class="wrap">
@@ -518,6 +518,8 @@ def fill(s, cfg):
         checkout = "#pricing"
     if not checkout:
         s = re.sub(r'<a class="btn[^"]*" href="\{\{CHECKOUT_URL\}\}"[^>]*>.*?</a>', soon, s)
+    if "data-paddle-buy" not in s:  # the Paddle footnote belongs only on pages with a Buy button
+        s = s.replace("    " + PADDLE_FOOTNOTE + "\n", "")
     if paddle:
         s = s.replace("</body>", PADDLE_JS.replace("{{TOKEN}}", cfg["paddle_client_token"].strip())
                       .replace("{{PRICE_ID}}", cfg["paddle_price_id"].strip()) + "\n</body>", 1) if "data-paddle-buy" in s else s
